@@ -84,11 +84,11 @@ h1, h2, h3 { line-height: 1.2; }
 .topbar-brand img { display: block; }
 .topbar-nav {
   display: flex; align-items: center; gap: 4px;
-  margin: 0 auto;
+  flex: 1; justify-content: center;
 }
 .topbar-link {
   padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 0.92rem;
-  color: var(--text); transition: 0.2s; display: inline-block;
+  color: var(--text); transition: 0.2s; display: inline-flex;
 }
 .topbar-link:hover { background: var(--cobalt-soft); color: var(--cobalt); }
 .topbar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }

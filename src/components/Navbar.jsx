@@ -40,7 +40,7 @@ export default function Navbar() {
 
         <nav className="topbar-nav">
           {navLinks.map((l) => (
-            <Link key={l.to} onClick={close} to={l.to} className="topbar-link">{l.label}</Link>
+            <Link key={l.to} onClick={close} to={l.to} className="topbar-link">{l.l}</Link>
           ))}
         </nav>
 
@@ -97,7 +97,7 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="mobile-menu">
-          {navLinks.map((l) => <button key={l.to} className="mi" onClick={() => go(l.to)}>{l.label}</button>)}
+          {navLinks.map((l) => <button key={l.to} className="mi" onClick={() => go(l.to)}>{l.l}</button>)}
           {user && isAdmin && <button className="mi" onClick={() => go('/admin')}><IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin'}</button>}
           <button className="mi" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}><IconGlobe /> {isAr ? 'English' : 'العربية'}</button>
           {user
