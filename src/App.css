@@ -239,6 +239,38 @@ h1, h2, h3 { line-height: 1.2; }
 .price b { font-size: 1.7rem; font-weight: 900; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .price small { color: var(--muted); }
 
+/* Store trust & checkout */
+.store-trust { display: flex; justify-content: center; gap: 32px; margin-top: 40px; flex-wrap: wrap; }
+.trust-item { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-weight: 600; font-size: 0.92rem; }
+.trust-item .icon { color: var(--cobalt); width: 20px; height: 20px; }
+.store-checkout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 900px; margin: 0 auto; align-items: start; }
+.cart-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.cart-item:last-child { border-bottom: none; }
+.cart-item-info b { display: block; font-size: 0.95rem; }
+.cart-item-info small { color: var(--muted); font-size: 0.85rem; }
+.cart-item-qty { display: flex; align-items: center; gap: 10px; }
+.qty-btn {
+  width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line);
+  display: grid; place-items: center; color: var(--cobalt); font-size: 1.1rem;
+  transition: 0.15s; background: var(--card);
+}
+.qty-btn:hover { border-color: var(--cobalt); background: var(--cobalt-soft); }
+.qty-val { font-weight: 800; font-size: 1rem; min-width: 20px; text-align: center; }
+.cart-total {
+  display: flex; justify-content: space-between; padding: 16px 0 0; margin-top: 8px;
+  border-top: 2px solid var(--line); font-size: 1.15rem; font-weight: 900;
+}
+.order-success { text-align: center; padding: 60px 20px; }
+.order-success-icon { font-size: 3rem; margin-bottom: 12px; }
+.order-success h3 { font-size: 1.5rem; font-weight: 900; margin-bottom: 8px; }
+.order-success p { color: var(--muted); margin-bottom: 24px; }
+
+@media (max-width: 640px) {
+  .store-checkout { grid-template-columns: 1fr; }
+  .store-trust { gap: 16px; }
+  .trust-item { font-size: 0.82rem; }
+}
+
 /* ---------- Account ---------- */
 .account-bg { background: var(--bg); }
 .auth-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; max-width: 1000px; margin: 0 auto; }
