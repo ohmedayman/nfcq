@@ -32,25 +32,27 @@ export default function Navbar() {
   const initial = (user?.displayName || user?.email || 'U').charAt(0).toUpperCase()
 
   return (
-    <header className="nav">
-      <div className="container nav-inner">
-        <Link to="/" aria-label="home" onClick={close} className="brand-link"><Logo markSize={48} light={false} showText={false} /></Link>
+    <header className="topbar">
+      <div className="container topbar-inner">
+        <Link to="/" aria-label="home" onClick={close} className="topbar-brand">
+          <Logo markSize={40} light={false} />
+        </Link>
 
-        <nav className="nav-links">
-          {navLinks.map((l) => <Link key={l.to} onClick={close} to={l.to}>{l.label}</Link>)}
+        <nav className="topbar-nav">
+          {navLinks.map((l) => (
+            <Link key={l.to} onClick={close} to={l.to} className="topbar-link">{l.label}</Link>
+          ))}
         </nav>
 
-        <div className="nav-right">
-          <button className="lang-btn" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}>
-            <IconGlobe /> <span className="lang-lbl">{isAr ? 'EN' : 'ع'}</span>
+        <div className="topbar-actions">
+          <button className="topbar-lang" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}>
+            <IconGlobe /> {isAr ? 'EN' : 'ع'}
           </button>
 
           {user ? (
             <div className="user-menu-wrap" ref={userMenuRef}>
-              <button className="user-avatar-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
-                <span className="nav-avatar">{initial}</span>
-                <span className="nav-user-name">{user.displayName || user.email?.split('@')[0]}</span>
-                <svg className={`chevron ${userMenuOpen ? 'open' : ''}`} width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 4.5l3 3 3-3"/></svg>
+              <button className="topbar-avatar" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+                <span className="topbar-avatar-circle">{initial}</span>
               </button>
               {userMenuOpen && (
                 <div className="user-dropdown">
@@ -67,7 +69,7 @@ export default function Navbar() {
                   </Link>
                   {isAdmin && (
                     <Link to="/admin" className="ud-item" onClick={close}>
-                      <IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin Panel'}
+                      <IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin'}
                     </Link>
                   )}
                   <Link to="/nfc/demo" className="ud-item" onClick={close}>
@@ -82,12 +84,12 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <Link to="/account" className="btn btn-primary cta-desk" onClick={close}>
-              <IconUser /> {isAr ? 'تسجيل الدخول' : 'Sign in'}
+            <Link to="/account" className="topbar-cta" onClick={close}>
+              {isAr ? 'تسجيل الدخول' : 'Sign in'}
             </Link>
           )}
 
-          <button className="nav-toggle" aria-label="menu" aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="topbar-toggle" aria-label="menu" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
@@ -96,11 +98,11 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="mobile-menu">
           {navLinks.map((l) => <button key={l.to} className="mi" onClick={() => go(l.to)}>{l.label}</button>)}
-          {user && isAdmin && <button className="mi" onClick={() => go('/admin')}><IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin Panel'}</button>}
+          {user && isAdmin && <button className="mi" onClick={() => go('/admin')}><IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin'}</button>}
           <button className="mi" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}><IconGlobe /> {isAr ? 'English' : 'العربية'}</button>
           {user
             ? <button className="mi mi-auth" onClick={logout}>{isAr ? 'تسجيل الخروج' : 'Sign out'}</button>
-            : <button className="mi mi-auth" onClick={() => go('/account')}>{isAr ? 'تسجيل الدخول / إنشاء حساب' : 'Sign in / Sign up'}</button>}
+            : <button className="mi mi-auth" onClick={() => go('/account')}>{isAr ? 'تسجيل الدخول' : 'Sign in'}</button>}
         </div>
       )}
     </header>
