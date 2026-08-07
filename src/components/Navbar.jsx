@@ -34,7 +34,7 @@ export default function Navbar() {
   return (
     <header className="nav">
       <div className="container nav-inner">
-        <Link to="/" aria-label="home" onClick={close} className="brand-link"><Logo markSize={34} light={false} /></Link>
+        <Link to="/" aria-label="home" onClick={close} className="brand-link"><Logo markSize={34} light={false} showText={false} /></Link>
 
         <nav className="nav-links">
           {navLinks.map((l) => <Link key={l.to} onClick={close} to={l.to}>{l.label}</Link>)}
