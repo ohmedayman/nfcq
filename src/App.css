@@ -84,24 +84,28 @@ h1, h2, h3 { line-height: 1.2; }
 /* ---------- Navbar ---------- */
 .nav {
   position: sticky; top: 0; z-index: 60;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--line);
 }
-.nav-inner { display: flex; align-items: center; justify-content: space-between; height: 74px; gap: 16px; }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; height: 70px; gap: 16px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); }
 .brand .dot { color: var(--cyan); }
-.nav-links { display: flex; gap: 28px; font-weight: 600; font-size: 0.95rem; }
-.nav-links a { color: var(--muted); transition: color 0.2s; }
-.nav-links a:hover { color: var(--cobalt); }
-.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-links { display: flex; gap: 6px; font-weight: 700; font-size: 0.9rem; }
+.nav-links a {
+  color: var(--text); padding: 8px 16px; border-radius: 10px;
+  transition: 0.2s; opacity: 0.7;
+}
+.nav-links a:hover { opacity: 1; background: var(--cobalt-soft); color: var(--cobalt); }
+.nav-right { display: flex; align-items: center; gap: 10px; }
 .lang-btn {
-  display: inline-flex; align-items: center; gap: 7px; font-weight: 700;
-  color: var(--text); border: 1px solid var(--line); padding: 8px 14px;
-  border-radius: 999px; font-size: 0.85rem; background: rgba(12,24,48,0.04); transition: 0.2s;
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 700;
+  color: var(--text); border: 1px solid var(--line); padding: 7px 12px;
+  border-radius: 999px; font-size: 0.82rem; background: var(--card); transition: 0.2s;
 }
 .lang-btn:hover { border-color: var(--cobalt); background: var(--cobalt-soft); }
+.btn-primary.cta-desk { padding: 10px 20px; font-size: 0.88rem; border-radius: 12px; }
 
 /* ---------- Buttons ---------- */
 .btn {
