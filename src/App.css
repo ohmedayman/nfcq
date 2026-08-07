@@ -372,6 +372,19 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 .money { font-weight: 800; }
 .mono { font-family: monospace; font-size: 0.85rem; color: var(--muted); }
 
+/* ---------- Mobile nav ---------- */
+.nav-toggle { display: none; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-toggle .icon { width: 1.3em; height: 1.3em; }
+.desk-user { display: flex; gap: 10px; align-items: center; }
+.mobile-menu { display: none; }
+.mi {
+  width: 100%; text-align: start; display: flex; align-items: center; gap: 10px;
+  padding: 15px 18px; font-size: 1.02rem; font-weight: 700; color: var(--text);
+  border-top: 1px solid var(--line); background: transparent; transition: 0.15s;
+}
+.mi:hover { background: rgba(255,255,255,0.04); color: var(--ice); }
+.mi-auth { color: var(--cyan); border-top: 1px solid var(--line); }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 980px) {
   .dash { grid-template-columns: 1fr; }
@@ -381,19 +394,52 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
   .admin-stats { grid-template-columns: repeat(2, 1fr); }
   .admin-table { overflow-x: auto; }
   .admin-table table { min-width: 640px; }
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 980px) {
-  .hero-grid, .split, .auth-wrap { grid-template-columns: 1fr; gap: 44px; }
+  .hero-grid, .split, .auth-wrap { grid-template-columns: 1fr; gap: 40px; }
   .feats { grid-template-columns: repeat(2, 1fr); }
   .store-grid { grid-template-columns: repeat(2, 1fr); }
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
 }
+
 @media (max-width: 640px) {
   .feats, .store-grid { grid-template-columns: 1fr; }
-  .stats-grid { grid-template-columns: 1fr; gap: 18px; }
+  .stats-grid { grid-template-columns: 1fr; gap: 16px; }
+  .section { padding: 56px 0; }
+  .container { padding: 0 16px; }
+
+  /* nav → hamburger */
   .nav-links { display: none; }
-  .fc-2 { left: 12px; }
-  .section { padding: 68px 0; }
+  .desk-user { display: none; }
+  .cta-desk, .admin-top { display: none; }
+  .lang-lbl { display: none; }
+  .lang-btn { padding: 8px; width: 42px; height: 42px; justify-content: center; }
+  .nav-toggle { display: inline-flex; }
+  .mobile-menu { display: block; background: rgba(5, 10, 28, 0.98); border-top: 1px solid var(--line); padding: 8px 0 12px; }
+
+  /* buttons/tap targets */
+  .btn { min-height: 50px; }
+  .hero-grid { padding: 56px 0 64px; }
+  .hero h1 { font-size: clamp(1.9rem, 8.5vw, 2.6rem); }
+  .hero-actions { flex-direction: column; }
+  .hero-actions .btn { width: 100%; justify-content: center; }
+  .hero-img-wrap { max-height: 300px; }
+  .fc-2 { left: 10px; bottom: 16px; }
+  .fc-1 { right: 10px; }
+  .float-chip { font-size: 0.78rem; padding: 10px 12px; }
+
+  /* forms */
+  .field label { font-size: 0.9rem; }
+  .field input, .field textarea { font-size: 1rem; padding: 14px 16px; }
+  .form-row { grid-template-columns: 1fr; }
+  .auth-card { padding: 22px; }
+  .panel { padding: 20px 16px; }
+  .dash-side { grid-template-columns: repeat(2, 1fr); }
+
+  /* cards */
+  .pcard-visual { height: 150px; }
+  .nfc-avatar { width: 96px; height: 96px; }
+  .nfc-body { padding: 22px 18px 30px; }
+  .nfc-socials a { width: 46px; height: 46px; }
+  .toast-wrap { right: 12px; left: 12px; max-width: none; }
+  .cta-inner { padding: 56px 0; }
+  .price b { font-size: 1.5rem; }
 }
