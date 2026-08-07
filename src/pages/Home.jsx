@@ -32,7 +32,7 @@ export default function Home() {
 
           <div className="hero-visual">
             <div className="hero-img-wrap">
-              <img src="/img/hero-card.png" alt="Lamsa NFC card" loading="eager" />
+              <img src="/img/hero-card.webp" alt="Lamsa NFC card" loading="eager" />
             </div>
             <div className="float-chip fc-1"><span className="pulse" /> NFC '<b>{isAr ? 'لمسة' : 'tap'}</b>'</div>
             <div className="float-chip fc-2">
@@ -80,7 +80,7 @@ export default function Home() {
       {/* SHOWCASE — detail */}
       <section className="section section-alt">
         <div className="container split">
-          <div className="split-media"><img src="/img/card-detail.png" alt="Lamsa card detail" /></div>
+          <div className="split-media"><img src="/img/card-detail.webp" alt="Lamsa card detail" /></div>
           <div className="split-body">
             <span className="kicker">Lamsa</span>
             <h3>{isAr ? 'بطاقة بحجم حلمك، ورد بجودة لا تنكر' : 'A card built around you'}</h3>
@@ -108,7 +108,7 @@ export default function Home() {
             </div>
             <Link to="/account" className="btn btn-primary">{isAr ? 'ابدا مجانًا' : 'Start free'}</Link>
           </div>
-          <div className="split-media"><img src="/img/tap-lifestyle.png" alt="lamsa tap" /></div>
+          <div className="split-media"><img src="/img/tap-lifestyle.webp" alt="lamsa tap" /></div>
         </div>
       </section>
 
