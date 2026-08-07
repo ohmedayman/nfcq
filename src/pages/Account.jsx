@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { NfcIcon, IconMail } from '../components/icons'
@@ -8,6 +8,7 @@ export default function Account() {
   const { text, lang } = useLang()
   const isAr = lang === 'ar'
   const { user, loading, error, register, login, loginWithGoogle, logout, ready } = useAuth()
+  const nav = useNavigate()
   const [mode, setMode] = useState('register')
   const [form, setForm] = useState({ name: '', email: '', pass: '' })
   const [busy, setBusy] = useState(false)
