@@ -35,7 +35,7 @@ export default function Navbar() {
     <header className="topbar">
       <div className="container topbar-inner">
         <Link to="/" aria-label="home" onClick={close} className="topbar-brand">
-          <Logo markSize={40} light={false} />
+          <Logo markSize={40} light={false} showText={false} />
         </Link>
 
         <nav className="topbar-nav">
