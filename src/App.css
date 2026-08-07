@@ -87,10 +87,10 @@ h1, h2, h3 { line-height: 1.2; }
   margin: 0 auto;
 }
 .topbar-link {
-  padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 0.9rem;
-  color: var(--text); opacity: 0.65; transition: 0.2s;
+  padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 0.92rem;
+  color: var(--text); transition: 0.2s; display: inline-block;
 }
-.topbar-link:hover { opacity: 1; background: var(--cobalt-soft); color: var(--cobalt); }
+.topbar-link:hover { background: var(--cobalt-soft); color: var(--cobalt); }
 .topbar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .topbar-lang {
   display: inline-flex; align-items: center; gap: 5px; font-weight: 700;
