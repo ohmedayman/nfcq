@@ -78,7 +78,7 @@ h1, h2, h3 { line-height: 1.2; }
 }
 .topbar-inner {
   display: flex; align-items: center; justify-content: space-between;
-  height: 64px; gap: 24px;
+  height: 72px; gap: 24px;
 }
 .topbar-brand { display: flex; align-items: center; flex-shrink: 0; }
 .topbar-brand img { display: block; }
