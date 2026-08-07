@@ -3,6 +3,7 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
 import Store from './pages/Store'
+import ProductDetail from './pages/ProductDetail'
 import Account from './pages/Account'
 import Dashboard from './pages/Dashboard'
 import NfcPage from './pages/NfcPage'
@@ -20,6 +21,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/store" element={<Store />} />
+          <Route path="/store/:id" element={<ProductDetail />} />
           <Route path="/account" element={<Account />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/nfc/demo" element={<NfcPage />} />

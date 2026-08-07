@@ -68,9 +68,9 @@ export default function Store() {
               {PRODUCTS.map((p) => (
                 <div className={`pcard${p.popular ? ' hot' : ''}`} key={p.id}>
                   {p.popular && <span className="pop">{isAr ? 'الأكثر مبيعًا' : 'Popular'}</span>}
-                  <div className="pcard-visual"><img src={`/img/${p.img}`} alt={p.nameEn} /></div>
+                  <Link to={`/store/${p.id}`} className="pcard-visual"><img src={`/img/${p.img}`} alt={p.nameEn} /></Link>
                   <div className="pcard-body">
-                    <h3>{isAr ? p.nameAr : p.nameEn}</h3>
+                    <h3><Link to={`/store/${p.id}`}>{isAr ? p.nameAr : p.nameEn}</Link></h3>
                     <p className="pcard-material">{isAr ? p.materialAr : p.materialEn}</p>
                     <ul className="specs">
                       {(isAr ? p.specs.ar : p.specs.en).map((s, i) => (
@@ -78,9 +78,14 @@ export default function Store() {
                       ))}
                     </ul>
                     <div className="price"><b>{p.price}</b><small>{CURRENCY[lang]}</small></div>
-                    <button className="btn btn-primary btn-block" onClick={() => setQty(p.id, 1)}>
-                      <IconCreditCard /> {text.buy}
-                    </button>
+                    <div className="pcard-btns">
+                      <button className="btn btn-primary btn-block" onClick={() => setQty(p.id, 1)}>
+                        <IconCreditCard /> {text.buy}
+                      </button>
+                      <Link to={`/store/${p.id}`} className="btn btn-ghost btn-block pcard-detail">
+                        {isAr ? 'التفاصيل' : 'Details'}
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
