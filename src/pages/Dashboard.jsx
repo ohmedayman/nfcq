@@ -97,7 +97,7 @@ export default function Dashboard() {
     </div></section>
   }
 
-  const url = `${window.location.origin}/u/${user.uid}`
+  const url = `${window.location.origin}/${window.location.hash ? '' : ''}#/u/${user.uid}`
 
   return (
     <section className="section">

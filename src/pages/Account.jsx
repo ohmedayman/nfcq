@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { NfcIcon, IconMail } from '../components/icons'
@@ -121,7 +122,7 @@ function ProfileView({ isAr }) {
           <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>{user.email}</div>
         </div>
       </div>
-      <a href="/nfc/demo" className="btn btn-primary btn-block">{isAr ? 'اعرض صفحة بطاقتك' : 'View your card page'}</a>
+      <Link to="/nfc/demo" className="btn btn-primary btn-block">{isAr ? 'اعرض صفحة بطاقتك' : 'View your card page'}</Link>
       <button className="btn btn-ghost btn-block" style={{ marginTop: 10 }} onClick={logout}>{isAr ? 'تسجيل الخروج' : 'Logout'}</button>
     </div>
   )
