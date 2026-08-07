@@ -159,6 +159,14 @@ h1, h2, h3 { line-height: 1.2; }
 .hero p.lead { font-size: 1.12rem; color: var(--muted); max-width: 540px; margin-bottom: 32px; }
 .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
 .hero-note { display: inline-flex; align-items: center; gap: 8px; color: var(--ice); font-weight: 700; margin-top: 30px; font-size: 0.92rem; }
+.hero-trust-row { display: flex; align-items: center; gap: 14px; margin-top: 28px; }
+.hero-avatars { display: flex; }
+.hero-av {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--grad); color: #fff;
+  display: grid; place-items: center; font-weight: 800; font-size: 0.78rem;
+  border: 3px solid var(--bg); position: relative;
+}
+.hero-trust-text { color: var(--muted); font-size: 0.88rem; font-weight: 600; }
 
 .hero-visual { position: relative; }
 .hero-img-wrap {
@@ -186,6 +194,29 @@ h1, h2, h3 { line-height: 1.2; }
 .stat { text-align: center; }
 .stat b { display: block; font-size: 1.8rem; font-weight: 900; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .stat span { color: var(--muted); font-size: 0.9rem; }
+
+/* ---------- Steps ---------- */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; position: relative; }
+.step-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 36px 28px; text-align: center; position: relative; transition: 0.3s;
+}
+.step-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); }
+.step-num {
+  position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+  background: var(--grad); color: #fff; font-weight: 900; font-size: 0.78rem;
+  padding: 4px 16px; border-radius: 999px; letter-spacing: 1px;
+}
+.step-icon {
+  width: 60px; height: 60px; border-radius: 16px; display: grid; place-items: center;
+  background: var(--cobalt-soft); color: var(--cobalt); margin: 16px auto 20px;
+}
+.step-card h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 10px; }
+.step-card p { color: var(--muted); font-size: 0.93rem; }
+.step-arrow {
+  position: absolute; right: -22px; top: 50%; transform: translateY(-50%);
+  font-size: 1.5rem; color: var(--muted); font-weight: 800; z-index: 2;
+}
 
 /* ---------- Sections ---------- */
 .section { padding: 96px 0; position: relative; }
@@ -216,6 +247,8 @@ h1, h2, h3 { line-height: 1.2; }
 
 /* ---------- Showcase split ---------- */
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+.split-reverse { direction: ltr; }
+.split-reverse .split-body { direction: ltr; }
 .split-media {
   position: relative; border-radius: 24px; overflow: hidden;
   border: 1px solid var(--line); box-shadow: var(--shadow);
@@ -653,6 +686,9 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
   .admin-table { overflow-x: auto; }
   .admin-table table { min-width: 640px; }
   .hero-grid, .split, .auth-wrap { grid-template-columns: 1fr; gap: 40px; }
+  .split-reverse { direction: inherit; }
+  .steps { grid-template-columns: 1fr; gap: 24px; }
+  .step-arrow { display: none; }
   .feats { grid-template-columns: repeat(2, 1fr); }
   .store-grid { grid-template-columns: repeat(2, 1fr); }
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
@@ -699,6 +735,8 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
   .fc-2 { left: 10px; bottom: 16px; }
   .fc-1 { right: 10px; }
   .float-chip { font-size: 0.78rem; padding: 10px 12px; }
+  .hero-trust-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .step-card { padding: 28px 20px; }
 
   /* forms */
   .field label { font-size: 0.9rem; }
