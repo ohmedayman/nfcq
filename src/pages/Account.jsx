@@ -17,6 +17,10 @@ export default function Account() {
     if (user) setForm((f) => ({ ...f, email: user.email || '' }))
   }, [user])
 
+  useEffect(() => {
+    if (user) nav('/dashboard', { replace: true })
+  }, [user, nav])
+
   const submit = async (e) => {
     e.preventDefault()
     setBusy(true)

@@ -41,6 +41,46 @@ h1, h2, h3 { line-height: 1.2; }
 
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
+/* ---------- User dropdown ---------- */
+.user-menu-wrap { position: relative; }
+.user-avatar-btn {
+  display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px;
+  border-radius: 999px; border: 1px solid var(--line); background: var(--card);
+  transition: 0.2s; cursor: pointer;
+}
+.user-avatar-btn:hover { border-color: var(--cobalt); background: var(--card-hover); }
+.nav-avatar {
+  width: 34px; height: 34px; border-radius: 50%; background: var(--grad);
+  display: grid; place-items: center; font-weight: 900; font-size: 0.85rem; color: #fff; flex: none;
+}
+.nav-user-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.chevron { transition: transform 0.2s; }
+.chevron.open { transform: rotate(180deg); }
+.user-dropdown {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 100;
+  min-width: 240px; background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--r-sm); box-shadow: 0 16px 48px rgba(13,27,63,0.12);
+  padding: 6px; animation: dropIn 0.15s ease;
+}
+@keyframes dropIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.ud-header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.ud-avatar {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--grad);
+  display: grid; place-items: center; font-weight: 900; font-size: 0.9rem; color: #fff; flex: none;
+}
+.ud-name { font-weight: 800; font-size: 0.92rem; }
+.ud-email { color: var(--muted); font-size: 0.78rem; word-break: break-all; }
+.ud-divider { height: 1px; background: var(--line); margin: 4px 8px; }
+.ud-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+  font-weight: 600; font-size: 0.88rem; color: var(--text); transition: 0.15s; cursor: pointer;
+  background: none; border: none; width: 100%; text-align: start;
+}
+.ud-item:hover { background: var(--cobalt-soft); color: var(--cobalt); }
+.ud-item .icon { width: 18px; height: 18px; }
+.ud-logout { color: #e04060; }
+.ud-logout:hover { background: rgba(224,64,96,0.08); color: #e04060; }
+
 /* ---------- Navbar ---------- */
 .nav {
   position: sticky; top: 0; z-index: 60;
@@ -414,6 +454,10 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
   .lang-btn { padding: 8px; width: 42px; height: 42px; justify-content: center; }
   .nav-toggle { display: inline-flex; }
   .mobile-menu { display: block; background: rgba(255,255,255,0.98); border-top: 1px solid var(--line); padding: 8px 0 12px; }
+  .nav-user-name { display: none; }
+  .chevron { display: none; }
+  .user-avatar-btn { padding: 4px; }
+  .user-dropdown { right: 8px; min-width: 200px; }
 
   /* buttons/tap targets */
   .btn { min-height: 50px; }
