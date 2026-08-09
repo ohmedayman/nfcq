@@ -220,6 +220,7 @@ export default function Home() {
                 <Reveal key={p.id}>
                   <div className={`pcard${p.popular ? ' hot' : ''}`}>
                     {p.popular && <span className="pop">{ar ? 'الأكثر مبيعًا' : 'Popular'}</span>}
+                    {p.originalPrice && <span className="pcard-discount">-50%</span>}
                     <div className="pcard-visual" style={{ background: p.color }}>
                       <img src={`/img/${p.img || 'card-detail.png'}`} alt={p.nameEn} />
                     </div>
@@ -231,8 +232,11 @@ export default function Home() {
                           <li key={i}><span className="i">✓</span>{s}</li>
                         ))}
                       </ul>
-                      <div className="price"><b>{p.price}</b><small>{CURRENCY[lang]}</small></div>
-                      <Link to="/store" className="btn btn-primary btn-block">{text.buy}</Link>
+                      <div className="price">
+                        {p.originalPrice && <span className="price-old">{p.originalPrice} {CURRENCY[lang]}</span>}
+                        <b>{p.price}</b><small>{CURRENCY[lang]}</small>
+                      </div>
+                      <Link to={`/store/${p.id}`} className="btn btn-primary btn-block">{text.buy}</Link>
                     </div>
                   </div>
                 </Reveal>

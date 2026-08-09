@@ -311,6 +311,11 @@ h1, h2, h3 { line-height: 1.2; }
   color: #fff; font-weight: 800; font-size: 0.72rem; padding: 5px 12px; border-radius: 999px;
   box-shadow: 0 4px 12px rgba(24,84,232,0.3);
 }
+.pcard-discount {
+  position: absolute; top: 14px; right: 14px; z-index: 2; background: #ef4444;
+  color: #fff; font-weight: 800; font-size: 0.75rem; padding: 5px 12px; border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.4); animation: pulse-badge 2s infinite;
+}
 .pcard-body { padding: 22px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .pcard-body h3 { font-size: 1.15rem; font-weight: 800; }
 .pcard-material { color: var(--muted); font-size: 0.88rem; }
