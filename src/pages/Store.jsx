@@ -54,14 +54,14 @@ export default function Store() {
   }
 
   async function placeOrder() {
-    if (!form.name || !form.phone) return toast(isAr ? 'أكمل بياناتك' : 'Complete your details', 'error')
+    if (!isDigitalOnly && (!form.name || !form.phone)) return toast(isAr ? 'أكمل بياناتك' : 'Complete your details', 'error')
     setPending(true)
     try {
       await createOrder(user?.uid || 'guest', {
         items: items.map((x) => ({ id: x.product.id, name: isAr ? x.product.nameAr : x.product.nameEn, qty: x.qty, price: x.product.price })),
         total: grandTotal,
         currency: CURRENCY[lang],
-        customer: form,
+        customer: { name: user?.displayName || form.name, email: user?.email || '', ...form },
         email: user?.email || '',
       })
       setCart({})
