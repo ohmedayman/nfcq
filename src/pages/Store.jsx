@@ -4,6 +4,7 @@ import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { PRODUCTS, CURRENCY } from '../data/content'
 import { createOrder } from '../lib/firebase'
+import { FIREBASE_READY } from '../firebase.config'
 import { toast } from '../components/Toast'
 import { NfcIcon, IconCreditCard, IconZap, IconShield, IconPlus, IconMinus, IconCheck } from '../components/icons'
 
@@ -57,13 +58,15 @@ export default function Store() {
     if (!isDigitalOnly && (!form.name || !form.phone)) return toast(isAr ? 'أكمل بياناتك' : 'Complete your details', 'error')
     setPending(true)
     try {
-      await createOrder(user?.uid || 'guest', {
-        items: items.map((x) => ({ id: x.product.id, name: isAr ? x.product.nameAr : x.product.nameEn, qty: x.qty, price: x.product.price })),
-        total: grandTotal,
-        currency: CURRENCY[lang],
-        customer: { name: user?.displayName || form.name, email: user?.email || '', ...form },
-        email: user?.email || '',
-      })
+      if (FIREBASE_READY) {
+        await createOrder(user?.uid || 'guest', {
+          items: items.map((x) => ({ id: x.product.id, name: isAr ? x.product.nameAr : x.product.nameEn, qty: x.qty, price: x.product.price })),
+          total: grandTotal,
+          currency: CURRENCY[lang],
+          customer: { name: user?.displayName || form.name, email: user?.email || '', ...form },
+          email: user?.email || '',
+        })
+      }
       setCart({})
       toast(isAr ? 'تم استلام طلبك ✓' : 'Order received ✓')
       nav('/onboarding')
