@@ -3,12 +3,12 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { PRODUCTS, CURRENCY } from '../data/content'
 import Reveal from '../components/Reveal'
-import { NfcIcon, IconShield, IconRefresh } from '../components/icons'
+import { NfcIcon, IconShield, IconRefresh, IconCheck, IconPlus, IconMinus } from '../components/icons'
 
 function getCart() {
   try { return JSON.parse(localStorage.getItem('lamsa_cart') || '{}') } catch { return {} }
 }
-function setCart(c) { localStorage.setItem('lamsa_cart', JSON.stringify(c)) }
+function saveCart(c) { localStorage.setItem('lamsa_cart', JSON.stringify(c)) }
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -17,7 +17,7 @@ export default function ProductDetail() {
   const nav = useNavigate()
   const product = PRODUCTS.find((p) => p.id === id)
   const [activeImg, setActiveImg] = useState(0)
-  const [zoom, setZoom] = useState(false)
+  const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
 
   useEffect(() => { window.scrollTo(0, 0) }, [id])
@@ -41,8 +41,8 @@ export default function ProductDetail() {
 
   function addToCart() {
     const cart = getCart()
-    cart[id] = (cart[id] || 0) + 1
-    setCart(cart)
+    cart[id] = (cart[id] || 0) + qty
+    saveCart(cart)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -54,6 +54,7 @@ export default function ProductDetail() {
 
   return (
     <div className="pd-page">
+      {/* Breadcrumb */}
       <div className="container">
         <nav className="pd-breadcrumb">
           <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
@@ -64,23 +65,19 @@ export default function ProductDetail() {
         </nav>
       </div>
 
-      {/* Main */}
+      {/* Hero Section */}
       <section className="section pd-hero">
         <div className="container pd-grid">
           <Reveal>
             <div className="pd-gallery">
-              <div
-                className={`pd-main-img ${zoom ? 'zoomed' : ''}`}
-                style={{ background: product.color }}
-                onMouseEnter={() => setZoom(true)}
-                onMouseLeave={() => setZoom(false)}
-              >
+              {/* Main Image / GIF */}
+              <div className="pd-main-img" style={{ background: product.color }}>
                 <img src={`/img/${product.gallery[activeImg]}`} alt={product.nameEn} />
                 {product.popular && <span className="pd-badge">{ar ? 'الأكثر مبيعًا' : 'Best Seller'}</span>}
-                <div className="pd-img-zoom-hint">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                </div>
+                {product.originalPrice && <span className="pd-discount-badge">-50%</span>}
               </div>
+
+              {/* Thumbnails */}
               <div className="pd-thumbs">
                 {product.gallery.map((img, i) => (
                   <button
@@ -93,6 +90,24 @@ export default function ProductDetail() {
                   </button>
                 ))}
               </div>
+
+              {/* GIF Showcase */}
+              <div className="pd-gif-section">
+                <div className="pd-gif-header">
+                  <NfcIcon size={20} />
+                  <span>{isAr ? 'شاهد البطاقة بالعمل' : 'See the card in action'}</span>
+                </div>
+                <div className="pd-gif-placeholder">
+                  <div className="pd-gif-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" opacity="0.2"/>
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                  </div>
+                  <p>{isAr ? 'أضف فيديو أو GIF هنا' : 'Add video or GIF here'}</p>
+                  <span className="pd-gif-hint">placeholder.gif</span>
+                </div>
+              </div>
             </div>
           </Reveal>
 
@@ -102,33 +117,53 @@ export default function ProductDetail() {
               <h1>{ar ? product.nameAr : product.nameEn}</h1>
               <p className="pd-desc">{ar ? product.descAr : product.descEn}</p>
 
+              {/* Price Box */}
               <div className="pd-price-box">
-                {product.originalPrice && (
-                  <span className="pd-price-old">{product.originalPrice} {CURRENCY[lang]}</span>
-                )}
-                <span className="pd-price"><b>{product.price}</b><small>{CURRENCY[lang]}</small></span>
-                {product.originalPrice && (
-                  <span className="pd-price-badge">-50%</span>
-                )}
+                <div className="pd-price-main">
+                  {product.originalPrice && (
+                    <span className="pd-price-old">{product.originalPrice} {CURRENCY[lang]}</span>
+                  )}
+                  <span className="pd-price"><b>{product.price}</b><small>{CURRENCY[lang]}</small></span>
+                  {product.originalPrice && (
+                    <span className="pd-price-badge">-50%</span>
+                  )}
+                </div>
                 <span className="pd-stock">{isAr ? '✓ متوفر فوراً' : '✓ In stock'}</span>
               </div>
 
+              {/* Quantity */}
+              <div className="pd-qty-row">
+                <span className="pd-qty-label">{isAr ? 'الكمية' : 'Quantity'}</span>
+                <div className="pd-qty">
+                  <button className="qty-btn" onClick={() => setQty(Math.max(1, qty - 1))}>
+                    <IconMinus />
+                  </button>
+                  <span className="qty-val">{qty}</span>
+                  <button className="qty-btn" onClick={() => setQty(qty + 1)}>
+                    <IconPlus />
+                  </button>
+                </div>
+                <span className="pd-qty-total">{product.price * qty} {CURRENCY[lang]}</span>
+              </div>
+
+              {/* Actions */}
               <div className="pd-actions">
-                <button className="btn btn-primary btn-lg" onClick={addToCart}>
+                <button className="btn btn-primary btn-lg btn-block" onClick={addToCart}>
                   {added
                     ? (isAr ? '✓ تم الإضافة' : '✓ Added')
                     : <><NfcIcon size={18} /> {isAr ? 'أضف للسلة' : 'Add to cart'}</>
                   }
                 </button>
-                <button className="btn btn-ghost btn-lg" onClick={buyNow}>
+                <button className="btn btn-ghost btn-lg btn-block" onClick={buyNow}>
                   {isAr ? 'اشتري الآن' : 'Buy now'}
                 </button>
               </div>
 
+              {/* Trust Badges */}
               <div className="pd-trust-row">
                 <div className="pd-trust-item">
                   <NfcIcon size={18} />
-                  <span>{isAr ? 'إصدار رقمي فوري' : 'Instant digital issue'}</span>
+                  <span>{isAr ? 'NFC فوري' : 'Instant NFC'}</span>
                 </div>
                 <div className="pd-trust-item">
                   <IconShield size={18} />
@@ -136,14 +171,20 @@ export default function ProductDetail() {
                 </div>
                 <div className="pd-trust-item">
                   <IconRefresh size={18} />
-                  <span>{isAr ? 'استبدال مجاني' : 'Free replacement'}</span>
+                  <span>{isAr ? 'تعديلات مجانية' : 'Free edits'}</span>
                 </div>
               </div>
 
+              {/* Specs */}
               <div className="pd-specs">
                 <h3>{isAr ? 'المواصفات' : 'Specifications'}</h3>
                 <ul>
-                  {specs.map((s, i) => <li key={i}><span className="pd-spec-check">✓</span>{s}</li>)}
+                  {specs.map((s, i) => (
+                    <li key={i}>
+                      <span className="pd-spec-check"><IconCheck size={14} /></span>
+                      {s}
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -151,12 +192,12 @@ export default function ProductDetail() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Features Section */}
       <section className="section section-alt">
         <div className="container">
           <Reveal>
             <div className="section-head">
-              <span className="kicker">Features</span>
+              <span className="kicker">{isAr ? 'المميزات' : 'Features'}</span>
               <h2>{isAr ? 'ليه تختار البطاقة دي؟' : 'Why choose this card?'}</h2>
             </div>
           </Reveal>
@@ -174,7 +215,7 @@ export default function ProductDetail() {
         </div>
       </section>
 
-      {/* Steps */}
+      {/* How it works */}
       <section className="section">
         <div className="container">
           <Reveal>
@@ -185,12 +226,13 @@ export default function ProductDetail() {
           </Reveal>
           <div className="pd-steps">
             {[
-              { n: '01', t: isAr ? 'سجّل حسابك' : 'Sign up', d: isAr ? 'إنشاء حساب مجاني في ثوانٍ' : 'Create a free account in seconds' },
-              { n: '02', t: isAr ? 'ادفع وأكمل' : 'Checkout', d: isAr ? 'اختر طريقة الدفع المناسبة لك' : 'Choose your preferred payment method' },
-              { n: '03', t: isAr ? 'استلم بطاقتك' : 'Receive card', d: isAr ? 'البطاقة المادية توصلك خلال 3-5 أيام' : 'Physical card arrives in 3-5 days' },
+              { n: '01', t: isAr ? 'سجّل حسابك' : 'Sign up', d: isAr ? 'إنشاء حساب مجاني في ثوانٍ' : 'Create a free account in seconds', icon: '👤' },
+              { n: '02', t: isAr ? 'ادفع وأكمل' : 'Checkout', d: isAr ? 'اختر طريقة الدفع المناسبة لك' : 'Choose your preferred payment method', icon: '💳' },
+              { n: '03', t: isAr ? 'استلم بطاقتك' : 'Receive card', d: isAr ? product.digital ? 'صفحتك جاهزة فوراً' : 'البطاقة توصلك خلال 3-5 أيام' : product.digital ? 'Your page is ready instantly' : 'Card arrives in 3-5 days', icon: product.digital ? '🚀' : '📦' },
             ].map((s, i) => (
               <Reveal key={i} delay={i * 120}>
                 <div className="pd-step">
+                  <div className="pd-step-icon">{s.icon}</div>
                   <div className="pd-step-n">{s.n}</div>
                   <h4>{s.t}</h4>
                   <p>{s.d}</p>
@@ -216,6 +258,7 @@ export default function ProductDetail() {
                 <Link to={`/store/${p.id}`} className="pd-similar-card">
                   <div className="pd-similar-img" style={{ background: p.color }}>
                     <img src={`/img/${p.img}`} alt={p.nameEn} />
+                    {p.originalPrice && <span className="pd-similar-badge">-50%</span>}
                   </div>
                   <div className="pd-similar-body">
                     <h4>{ar ? p.nameAr : p.nameEn}</h4>
@@ -238,8 +281,8 @@ export default function ProductDetail() {
           <h2>{isAr ? 'مستعد تبدأ؟' : 'Ready to start?'}</h2>
           <p>{isAr ? 'سجّل دلوقتي وابدأ رحلتك الرقمية' : 'Sign up now and start your digital journey'}</p>
           <div className="hero-actions" style={{ justifyContent: 'center' }}>
-            <Link to="/account" className="btn btn-primary">{isAr ? 'سجّل مجاناً' : 'Sign up free'}</Link>
-            <Link to="/store" className="btn btn-ghost">{isAr ? 'العودة للمتجر' : 'Back to store'}</Link>
+            <Link to="/store" className="btn btn-primary">{isAr ? 'اطلب الآن' : 'Order now'}</Link>
+            <Link to="/" className="btn btn-ghost">{isAr ? 'العودة للرئيسية' : 'Back to home'}</Link>
           </div>
         </div>
       </section>
