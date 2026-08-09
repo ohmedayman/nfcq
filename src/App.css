@@ -1021,6 +1021,62 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 .admin-product-price { font-weight: 800; color: var(--cobalt); font-size: 1.05rem; margin-bottom: 12px; }
 .admin-product-actions { display: flex; gap: 8px; }
 
+/* ---------- Onboarding ---------- */
+.onboard-brand { margin-bottom: 20px; }
+.onboard-brand a { display: inline-flex; align-items: center; gap: 8px; color: #fff; font-size: 1.3rem; text-decoration: none; }
+.onboard-progress { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 28px; max-width: 320px; margin-inline: auto; }
+.op-step { display: flex; align-items: center; }
+.op-dot {
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 0.8rem; font-weight: 800; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4);
+  border: 2px solid rgba(255,255,255,0.15); transition: 0.3s;
+}
+.op-step.active .op-dot { background: var(--cobalt); color: #fff; border-color: var(--cobalt); }
+.op-step.done .op-dot { background: #22c55e; border-color: #22c55e; }
+.op-line { width: 40px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 0 6px; transition: 0.3s; }
+.op-line.done { background: #22c55e; }
+.onboard-card {
+  background: rgba(255,255,255,0.06); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 20px;
+  padding: 36px 32px; max-width: 480px; margin: 0 auto; width: 100%;
+}
+.onboard-card.final { max-width: 560px; }
+.ob-content { text-align: center; }
+.ob-content h2 { color: #fff; font-size: 1.5rem; margin-bottom: 6px; }
+.ob-sub { color: rgba(255,255,255,0.65); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.6; }
+.ob-icon { font-size: 3rem; margin-bottom: 12px; }
+.ob-content .field { text-align: start; }
+.ob-content .avatar-upload { margin-bottom: 20px; justify-content: center; }
+.ob-content .avatar-preview { margin-inline: auto; }
+.ob-content .avatar-info { text-align: center; }
+.ob-content .avatar-info b, .ob-content .avatar-info p { color: rgba(255,255,255,0.8); }
+.ob-content .social-field { margin-bottom: 12px; }
+.ob-content .sf-input label { color: rgba(255,255,255,0.8); }
+.ob-content .sf-input input { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #fff; }
+.ob-content .sf-input input::placeholder { color: rgba(255,255,255,0.35); }
+.ob-content .field label { color: rgba(255,255,255,0.8); }
+.ob-content .field input, .ob-content .field textarea {
+  background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #fff;
+}
+.ob-content .field input::placeholder, .ob-content .field textarea::placeholder { color: rgba(255,255,255,0.35); }
+.ob-actions { display: flex; gap: 12px; justify-content: space-between; margin-top: 24px; }
+.ob-actions-col { flex-direction: column; }
+.ob-actions .btn-primary { flex: 1; }
+.ob-auth { max-width: 320px; margin: 0 auto; }
+.ob-auth .btn-block { width: 100%; margin-bottom: 12px; }
+.auth-switch { color: rgba(255,255,255,0.5); font-size: 0.88rem; }
+.auth-switch a { color: var(--cobalt); font-weight: 700; }
+.ob-link-box {
+  display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 12px 16px; margin-bottom: 24px;
+}
+.ob-link-url {
+  flex: 1; color: rgba(255,255,255,0.9); font-size: 0.88rem; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start;
+}
+.ob-preview { display: flex; justify-content: center; margin-bottom: 24px; }
+.ob-done h2 { color: #fff; }
+
 /* ---------- Mobile nav ---------- */
 .mobile-menu { display: none; }
 .mi {

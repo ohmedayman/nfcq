@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { PRODUCTS, CURRENCY } from '../data/content'
@@ -18,6 +18,7 @@ export default function Store() {
   const { text, lang } = useLang()
   const isAr = lang === 'ar'
   const { user } = useAuth()
+  const nav = useNavigate()
   const [cart, setCartState] = useState(getCart)
   const [pending, setPending] = useState(false)
   const [step, setStep] = useState('cart')
@@ -59,8 +60,8 @@ export default function Store() {
         email: user?.email || '',
       })
       setCart({})
-      setStep('done')
       toast(isAr ? 'تم استلام طلبك ✓' : 'Order received ✓')
+      nav('/onboarding')
     } catch {
       toast(isAr ? 'تعذر إتمام الطلب' : 'Could not place order', 'error')
     }
