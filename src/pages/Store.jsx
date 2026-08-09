@@ -12,14 +12,16 @@ function getCart() {
 }
 function saveCart(c) { localStorage.setItem('lamsa_cart', JSON.stringify(c)) }
 
+const STEPS = ['cart', 'shipping', 'done']
+
 export default function Store() {
   const { text, lang } = useLang()
   const isAr = lang === 'ar'
   const { user } = useAuth()
   const [cart, setCartState] = useState(getCart)
   const [pending, setPending] = useState(false)
-  const [done, setDone] = useState(false)
-  const [form, setForm] = useState({ name: user?.displayName || '', phone: '', address: '' })
+  const [step, setStep] = useState('cart')
+  const [form, setForm] = useState({ name: user?.displayName || '', phone: '', address: '', city: '', notes: '' })
 
   useEffect(() => { saveCart(cart) }, [cart])
 
@@ -30,6 +32,8 @@ export default function Store() {
 
   const items = PRODUCTS.map((p) => ({ product: p, qty: cart[p.id] || 0 })).filter((x) => x.qty > 0)
   const total = items.reduce((s, x) => s + x.product.price * x.qty, 0)
+  const shipping = total >= 300 ? 0 : 50
+  const grandTotal = total + shipping
 
   const setQty = (id, qty) => setCart((c) => {
     const n = { ...c, [id]: Math.max(0, qty) }
@@ -37,26 +41,33 @@ export default function Store() {
     return n
   })
 
-  async function placeOrder() {
+  function goToShipping() {
     if (items.length === 0) return toast(isAr ? 'أضف بطاقة أولًا' : 'Add a card first', 'error')
+    setStep('shipping')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function placeOrder() {
     if (!form.name || !form.phone) return toast(isAr ? 'أكمل بياناتك' : 'Complete your details', 'error')
     setPending(true)
     try {
       await createOrder(user?.uid || 'guest', {
         items: items.map((x) => ({ id: x.product.id, name: isAr ? x.product.nameAr : x.product.nameEn, qty: x.qty, price: x.product.price })),
-        total,
+        total: grandTotal,
         currency: CURRENCY[lang],
         customer: form,
         email: user?.email || '',
       })
       setCart({})
-      setDone(true)
+      setStep('done')
       toast(isAr ? 'تم استلام طلبك ✓' : 'Order received ✓')
     } catch {
       toast(isAr ? 'تعذر إتمام الطلب' : 'Could not place order', 'error')
     }
     setPending(false)
   }
+
+  const stepIdx = STEPS.indexOf(step)
 
   return (
     <section className="section store-section">
@@ -67,12 +78,32 @@ export default function Store() {
           <p>{text.store_subtitle}</p>
         </div>
 
-        {done ? (
+        {/* Progress steps */}
+        {step !== 'done' && items.length > 0 && (
+          <div className="checkout-progress">
+            {[
+              { n: 1, l: isAr ? 'السلة' : 'Cart' },
+              { n: 2, l: isAr ? 'الشحن' : 'Shipping' },
+              { n: 3, l: isAr ? 'التأكيد' : 'Confirm' },
+            ].map((s, i) => (
+              <div key={s.n} className={`checkout-step ${s.n <= stepIdx + 1 ? 'active' : ''} ${s.n < stepIdx + 1 ? 'done' : ''}`}>
+                <div className="checkout-step-num">{s.n < stepIdx + 1 ? '✓' : s.n}</div>
+                <div className="checkout-step-label">{s.l}</div>
+                {i < 2 && <div className={`checkout-step-line ${s.n < stepIdx + 1 ? 'done' : ''}`} />}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {step === 'done' ? (
           <div className="order-success">
             <div className="order-success-icon">🎉</div>
             <h3>{isAr ? 'تم استلام طلبك!' : 'Order received!'}</h3>
             <p>{isAr ? 'سنتواصل معك قريباً للدفع عند الاستلام.' : 'We will contact you shortly for cash on delivery.'}</p>
-            <Link to="/dashboard" className="btn btn-primary">{isAr ? 'لوحة التحكم' : 'Dashboard'}</Link>
+            <div className="order-success-actions">
+              <Link to="/dashboard" className="btn btn-primary">{isAr ? 'لوحة التحكم' : 'Dashboard'}</Link>
+              <Link to="/store" className="btn btn-ghost" onClick={() => setStep('cart')}>{isAr ? 'العودة للمتجر' : 'Back to store'}</Link>
+            </div>
           </div>
         ) : items.length === 0 ? (
           <>
@@ -108,7 +139,7 @@ export default function Store() {
               <div className="trust-item"><IconCheck /> {isAr ? 'ضمان سنة' : '1-year warranty'}</div>
             </div>
           </>
-        ) : (
+        ) : step === 'cart' ? (
           <div className="store-checkout">
             {/* Cart */}
             <div className="dash-card">
@@ -118,9 +149,13 @@ export default function Store() {
               </div>
               {items.map((i) => (
                 <div key={i.product.id} className="cart-item">
+                  <div className="cart-item-img" style={{ background: i.product.color }}>
+                    <img src={`/img/${i.product.img}`} alt={i.product.nameEn} />
+                  </div>
                   <div className="cart-item-info">
                     <b>{isAr ? i.product.nameAr : i.product.nameEn}</b>
-                    <small>{i.product.price} {CURRENCY[lang]} × {i.qty}</small>
+                    <small>{i.product.materialEn}</small>
+                    <div className="cart-item-price">{i.product.price} {CURRENCY[lang]} × {i.qty}</div>
                   </div>
                   <div className="cart-item-qty">
                     <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty - 1)}><IconMinus /></button>
@@ -129,23 +164,81 @@ export default function Store() {
                   </div>
                 </div>
               ))}
-              <div className="cart-total">
-                <span>{isAr ? 'الإجمالي' : 'Total'}</span>
-                <span>{total} {CURRENCY[lang]}</span>
+              <div className="cart-summary">
+                <div className="cart-summary-row">
+                  <span>{isAr ? 'المجموع الفرعي' : 'Subtotal'}</span>
+                  <span>{total} {CURRENCY[lang]}</span>
+                </div>
+                <div className="cart-summary-row">
+                  <span>{isAr ? 'الشحن' : 'Shipping'}</span>
+                  <span>{shipping === 0 ? (isAr ? 'مجاني' : 'Free') : `${shipping} ${CURRENCY[lang]}`}</span>
+                </div>
+                {shipping > 0 && (
+                  <div className="cart-free-ship">
+                    {isAr ? 'شحن مجاني للطلبات فوق 300 ج.م' : 'Free shipping on orders over 300 EGP'}
+                  </div>
+                )}
+                <div className="cart-summary-row cart-total">
+                  <span>{isAr ? 'الإجمالي' : 'Total'}</span>
+                  <span>{grandTotal} {CURRENCY[lang]}</span>
+                </div>
+              </div>
+              <button className="btn btn-primary btn-block btn-lg" onClick={goToShipping}>
+                {isAr ? 'التالي' : 'Continue'} →
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="store-checkout">
+            {/* Review */}
+            <div className="dash-card">
+              <div className="dash-card-header">
+                <h3>{isAr ? 'مراجعة الطلب' : 'Order review'}</h3>
+              </div>
+              {items.map((i) => (
+                <div key={i.product.id} className="cart-item" style={{ padding: '10px 0' }}>
+                  <div className="cart-item-info">
+                    <b>{isAr ? i.product.nameAr : i.product.nameEn}</b>
+                    <small>{i.qty} × {i.product.price} {CURRENCY[lang]}</small>
+                  </div>
+                  <div className="money">{i.product.price * i.qty} {CURRENCY[lang]}</div>
+                </div>
+              ))}
+              <div className="cart-summary">
+                <div className="cart-summary-row">
+                  <span>{isAr ? 'المجموع' : 'Subtotal'}</span>
+                  <span>{total} {CURRENCY[lang]}</span>
+                </div>
+                <div className="cart-summary-row">
+                  <span>{isAr ? 'الشحن' : 'Shipping'}</span>
+                  <span>{shipping === 0 ? (isAr ? 'مجاني' : 'Free') : `${shipping} ${CURRENCY[lang]}`}</span>
+                </div>
+                <div className="cart-summary-row cart-total">
+                  <span>{isAr ? 'الإجمالي' : 'Total'}</span>
+                  <span>{grandTotal} {CURRENCY[lang]}</span>
+                </div>
               </div>
             </div>
 
-            {/* Checkout form */}
+            {/* Shipping form */}
             <div className="dash-card">
               <div className="dash-card-header">
                 <h3>{isAr ? 'بيانات الشحن' : 'Shipping details'}</h3>
               </div>
               <div className="field"><label>{isAr ? 'الاسم' : 'Name'}</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
               <div className="field"><label>{isAr ? 'الهاتف' : 'Phone'}</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-              <div className="field"><label>{isAr ? 'العنوان' : 'Address'}</label><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
-              <button className="btn btn-primary btn-block" onClick={placeOrder} disabled={pending}>
-                <IconCheck /> {pending ? '…' : (isAr ? 'إتمام الطلب' : 'Place order')}
-              </button>
+              <div className="form-row">
+                <div className="field"><label>{isAr ? 'المدينة' : 'City'}</label><input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
+                <div className="field"><label>{isAr ? 'العنوان' : 'Address'}</label><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              </div>
+              <div className="field"><label>{isAr ? 'ملاحظات' : 'Notes'}</label><textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+
+              <div className="checkout-actions">
+                <button className="btn btn-ghost" onClick={() => setStep('cart')}>← {isAr ? 'العودة' : 'Back'}</button>
+                <button className="btn btn-primary btn-lg" onClick={placeOrder} disabled={pending}>
+                  <IconCheck /> {pending ? '…' : (isAr ? 'إتمام الطلب' : 'Place order')}
+                </button>
+              </div>
               {!user && <p className="auth-switch" style={{ marginTop: 12 }}>{isAr ? 'يمكنك إتمام الشراء كزائر، أو سجّل لحفظ طلبك.' : 'Order as guest, or sign in to save it.'}</p>}
             </div>
           </div>

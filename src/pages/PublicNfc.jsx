@@ -5,7 +5,7 @@ import { fetchPublic } from '../lib/firebase'
 import { CUSTOMER } from '../data/content'
 import Logo from '../components/Logo'
 import {
-  NfcIcon, IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconMail, IconPhone, IconPin, IconLink,
+  NfcIcon, IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconMail, IconPhone, IconLink,
 } from '../components/icons'
 
 export default function PublicNfc() {
@@ -15,10 +15,14 @@ export default function PublicNfc() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [missing, setMissing] = useState(false)
+  const [tapped, setTapped] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     let alive = true
     setLoading(true)
+    setTapped(false)
+    setSaved(false)
     fetchPublic(uid).then((d) => {
       if (!alive) return
       if (d) setData(d)
@@ -27,6 +31,13 @@ export default function PublicNfc() {
     }).catch(() => { if (alive) { setMissing(true); setLoading(false) } })
     return () => { alive = false }
   }, [uid])
+
+  useEffect(() => {
+    if (data) {
+      const t = setTimeout(() => setTapped(true), 300)
+      return () => clearTimeout(t)
+    }
+  }, [data])
 
   if (loading) {
     return (
@@ -45,7 +56,7 @@ export default function PublicNfc() {
       <div className="nfc-page">
         <div className="aurora" />
         <div className="container nfc-wrap" style={{ textAlign: 'center', paddingTop: 80 }}>
-          <div className="nfc-missing-icon">🗂️</div>
+          <div className="nfc-missing-icon" style={{ fontSize: 48, marginBottom: 16 }}>🗂️</div>
           <h2 style={{ color: 'var(--text)', marginBottom: 8, fontSize: '1.6rem' }}>{isAr ? 'الصفحة غير موجودة' : 'Page not found'}</h2>
           <p style={{ color: 'var(--muted)', marginBottom: 24 }}>{isAr ? 'لم ينشئ هذا المستخدم صفحته بعد.' : 'This user has not set up their page yet.'}</p>
           <Link to="/" className="btn btn-primary">{isAr ? 'العودة للرئيسية' : 'Go home'}</Link>
@@ -67,14 +78,55 @@ export default function PublicNfc() {
 
   const hasSocial = profile.social?.instagram || profile.social?.linkedin || profile.social?.twitter || profile.social?.whatsapp
 
+  function downloadVCard() {
+    const parts = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `N:${profile.name.split(' ').slice(-1)[0] || profile.name};${profile.name.split(' ').slice(0, -1).join(' ')};;;`,
+      `FN:${profile.name}`,
+      profile.role ? `TITLE:${profile.role}` : '',
+      profile.email ? `EMAIL;TYPE=INTERNET:${profile.email}` : '',
+      profile.phone ? `TEL;TYPE=CELL:${profile.phone}` : '',
+      profile.bio ? `NOTE:${profile.bio.replace(/\n/g, '\\n')}` : '',
+      'END:VCARD',
+    ].filter(Boolean).join('\r\n')
+
+    const blob = new Blob([parts], { type: 'text/vcard;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${profile.name.replace(/\s+/g, '_')}.vcf`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function shareCard() {
+    const url = window.location.href
+    const text = `${profile.name} — ${profile.role || ''}`
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: profile.name, text, url })
+      } catch { /* cancelled */ }
+    } else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(url)
+      alert(isAr ? 'تم نسخ الرابط' : 'Link copied!')
+    }
+  }
+
   return (
     <div className="nfc-page">
       <div className="aurora" />
       <div className="container nfc-wrap">
         {/* Brand */}
-        <div className="nfc-brand"><Link to="/" aria-label="home"><Logo markSize={28} /></Link></div>
+        <div className={`nfc-brand ${tapped ? 'show' : ''}`}>
+          <Link to="/" aria-label="home"><Logo markSize={28} /></Link>
+        </div>
 
-        <div className="nfc-card">
+        <div className={`nfc-card ${tapped ? 'show' : ''}`}>
           {/* Cover gradient */}
           <div className="nfc-cover">
             <div className="nfc-cover-shimmer" />
@@ -126,7 +178,7 @@ export default function PublicNfc() {
             {profile.links.length > 0 && (
               <div className="nfc-links">
                 {profile.links.map((l, i) => (
-                  <a key={i} href={l.url || '#'} className="nfc-link" target="_blank" rel="noreferrer">
+                  <a key={i} href={l.url || '#'} className="nfc-link" target="_blank" rel="noreferrer" style={{ animationDelay: `${i * 80}ms` }}>
                     <span className="nfc-link-icon"><IconLink /></span>
                     <span className="nfc-link-label">{l.label || l.url}</span>
                     <span className="nfc-link-arrow">→</span>
@@ -150,11 +202,23 @@ export default function PublicNfc() {
                 )}
               </div>
             )}
+
+            {/* Action buttons */}
+            <div className="nfc-actions">
+              <button className="nfc-action-btn nfc-action-primary" onClick={downloadVCard}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                {saved ? (isAr ? '✓ تم الحفظ' : '✓ Saved') : (isAr ? 'حفظ جهات الاتصال' : 'Save to Contacts')}
+              </button>
+              <button className="nfc-action-btn nfc-action-secondary" onClick={shareCard}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                {isAr ? 'مشاركة' : 'Share'}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="nfc-footer">
+        <div className={`nfc-footer ${tapped ? 'show' : ''}`}>
           <div className="nfc-powered">
             <NfcIcon /> {isAr ? 'مدعومة بـ' : 'Powered by'} <b>Lamsa</b>
           </div>
