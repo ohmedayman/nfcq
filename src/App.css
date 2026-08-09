@@ -630,9 +630,22 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 /* ---------- Dashboard ---------- */
 .dash-section { padding-top: 40px; }
 .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+.dash-header-left { display: flex; align-items: center; gap: 16px; }
+.dash-avatar-lg { width: 56px; height: 56px; border-radius: 50%; background: var(--grad); display: grid; place-items: center; font-weight: 900; font-size: 1.4rem; color: #fff; flex-shrink: 0; overflow: hidden; }
+.dash-avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
 .dash-title { font-size: 1.6rem; font-weight: 900; }
 .dash-sub { color: var(--muted); font-size: 0.92rem; }
 .dash-header-actions { display: flex; gap: 10px; }
+.dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.dash-stat {
+  display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--card);
+  border: 1px solid var(--line); border-radius: 16px; transition: 0.2s;
+}
+.dash-stat.active { border-color: rgba(24,84,232,0.25); background: rgba(24,84,232,0.04); }
+.ds-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--cobalt-soft); display: grid; place-items: center; color: var(--cobalt); flex-shrink: 0; }
+.ds-icon .icon, .ds-icon svg { width: 20px; height: 20px; }
+.dash-stat b { display: block; font-size: 1.15rem; font-weight: 900; color: var(--text); }
+.dash-stat span { color: var(--muted); font-size: 0.8rem; }
 .dash-tabs {
   display: flex; gap: 6px; background: var(--card); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 6px; margin-bottom: 24px; overflow-x: auto;
@@ -656,14 +669,26 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .field textarea { width: 100%; padding: 13px 16px; border: 1.5px solid var(--line); border-radius: 12px; font-family: inherit; font-size: 0.95rem; background: rgba(12,24,48,0.04); color: var(--text); resize: vertical; min-height: 90px; }
 .field textarea:focus { outline: none; border-color: var(--cyan); }
-.link-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.link-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; }
 .link-row .field { flex: 1; margin: 0; }
+.link-handle { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; padding-bottom: 2px; }
+.link-move { width: 28px; height: 20px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); font-size: 0.7rem; color: var(--muted); display: grid; place-items: center; transition: 0.15s; }
+.link-move:hover:not(:disabled) { border-color: var(--cobalt); color: var(--cobalt); }
+.link-move:disabled { opacity: 0.3; cursor: not-allowed; }
+.link-fields { display: flex; gap: 10px; flex: 1; }
 .link-del { flex: none; width: 42px; height: 42px; border-radius: 10px; color: #ff5a6e; border: 1px solid var(--line); font-weight: 800; }
 .link-del:hover { background: rgba(255,90,110,0.1); }
 .add-link { color: var(--cobalt); font-weight: 700; margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; }
 .add-link:hover { text-decoration: underline; }
 .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
 .empty .big { font-size: 2.2rem; margin-bottom: 10px; }
+.empty-state { text-align: center; padding: 40px 16px; }
+.empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.empty-state h4 { font-weight: 800; margin-bottom: 6px; }
+.empty-state p { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
+.tab-badge { background: var(--cobalt); color: #fff; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 800; margin-left: 4px; min-width: 20px; text-align: center; }
+.field-hint { display: block; text-align: right; color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+.sf-check { color: #22c55e; font-weight: 900; font-size: 1.1rem; }
 
 /* Avatar upload */
 .avatar-upload { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; padding: 16px; background: rgba(12,24,48,0.03); border-radius: 16px; border: 1px solid var(--line); }
@@ -697,6 +722,12 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 .nfc-link-info b { display: block; font-size: 0.88rem; margin-bottom: 2px; }
 .nfc-link-url { color: var(--cobalt); font-size: 0.82rem; word-break: break-all; }
 
+/* NFC QR */
+.nfc-qr-section { display: flex; align-items: center; gap: 24px; padding: 20px; background: rgba(12,24,48,0.03); border: 1px solid var(--line); border-radius: 16px; }
+.nfc-qr { flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #fff; padding: 4px; }
+.nfc-qr-info h4 { font-weight: 800; margin-bottom: 6px; }
+.nfc-qr-info p { color: var(--muted); font-size: 0.88rem; margin-bottom: 12px; }
+
 /* Live preview sidebar */
 .dash-preview { position: sticky; top: 100px; }
 .preview-label { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.85rem; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -724,6 +755,8 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 .preview-link { padding: 10px; background: #fff; border-radius: 10px; text-align: center; font-weight: 700; font-size: 0.82rem; color: #0c1830; }
 .preview-open { display: block; text-align: center; margin-top: 14px; color: var(--cobalt); font-weight: 700; font-size: 0.85rem; }
 .preview-open:hover { text-decoration: underline; }
+.preview-contact { display: grid; gap: 6px; padding: 8px 16px 16px; }
+.preview-contact span { color: rgba(255,255,255,0.7); font-size: 0.75rem; text-align: center; }
 
 /* ---------- Testimonials ---------- */
 .tests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -821,6 +854,7 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 
   /* Dashboard */
   .dash-header { flex-direction: column; align-items: flex-start; }
+  .dash-stats { grid-template-columns: repeat(2, 1fr); }
   .dash-tabs { gap: 4px; padding: 4px; }
   .dash-tab { padding: 8px 14px; font-size: 0.82rem; }
   .dash-tab span { display: none; }
@@ -828,7 +862,10 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
   .dash-card { padding: 20px 16px; }
   .form-row { grid-template-columns: 1fr; }
   .link-row { flex-direction: column; align-items: stretch; }
+  .link-handle { flex-direction: row; }
+  .link-fields { flex-direction: column; }
   .link-del { width: 100%; height: 44px; }
+  .nfc-qr-section { flex-direction: column; text-align: center; }
   .social-field { flex-direction: column; align-items: stretch; gap: 10px; }
   .sf-icon { width: 100%; height: 36px; border-radius: 8px; }
   .nfc-link-box { flex-direction: column; align-items: stretch; text-align: center; }

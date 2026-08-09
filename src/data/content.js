@@ -13,7 +13,7 @@ export const PRODUCTS = [
     specs: { en: ['One tap sharing', 'Basic page template', '1-year warranty'], ar: ['بلمسة واحدة', 'قالب صفحة أساسي', 'ضمان سنة'] },
     gallery: ['business-stack.webp', 'card-detail.webp'],
     descEn: 'The perfect entry into digital networking. Our Standard Card gives you a clean, professional NFC card with everything you need to share your digital presence instantly.',
-    descAr: 'المدخل المثالي للتواصل الرقمي. البطاقة القياسية ت给你 بطاقة NFC احترافية نظيفة بكل ما تحتاجه لتشارك حضورك الرقمي فوراً.',
+    descAr: 'المدخل المثالي للتواصل الرقمي. البطاقة القياسية تقدم لك بطاقة NFC احترافية نظيفة بكل ما تحتاجه لتشارك حضورك الرقمي فوراً.',
     featuresEn: [
       { t: 'One-Tap NFC', d: 'Tap your card to any smartphone and your page opens instantly' },
       { t: 'Custom Page', d: 'A beautiful digital profile with your name, photo, and links' },
