@@ -35,7 +35,7 @@ export default function Store() {
   const items = PRODUCTS.map((p) => ({ product: p, qty: cart[p.id] || 0 })).filter((x) => x.qty > 0)
   const total = items.reduce((s, x) => s + x.product.price * x.qty, 0)
   const isDigitalOnly = items.length > 0 && items.every((x) => x.product.digital)
-  const shipping = isDigitalOnly ? 0 : (total >= 300 ? 0 : 50)
+  const shipping = isDigitalOnly ? 0 : 120
   const grandTotal = total + shipping
 
   const setQty = (id, qty) => setCart((c) => {
@@ -184,13 +184,8 @@ export default function Store() {
                 </div>
                 <div className="cart-summary-row">
                   <span>{isAr ? 'الشحن' : 'Shipping'}</span>
-                  <span>{isDigitalOnly ? (isAr ? 'مجاني — منتج رقمي' : 'Free — Digital product') : (shipping === 0 ? (isAr ? 'مجاني' : 'Free') : `${shipping} ${CURRENCY[lang]}`)}</span>
+                  <span>{isDigitalOnly ? (isAr ? 'مجاني — منتج رقمي' : 'Free — Digital product') : `${shipping} ${CURRENCY[lang]}`}</span>
                 </div>
-                {!isDigitalOnly && shipping > 0 && (
-                  <div className="cart-free-ship">
-                    {isAr ? 'شحن مجاني للطلبات فوق 300 ج.م' : 'Free shipping on orders over 300 EGP'}
-                  </div>
-                )}
                 <div className="cart-summary-row cart-total">
                   <span>{isAr ? 'الإجمالي' : 'Total'}</span>
                   <span>{grandTotal} {CURRENCY[lang]}</span>
@@ -224,7 +219,7 @@ export default function Store() {
                 </div>
                 <div className="cart-summary-row">
                   <span>{isAr ? 'الشحن' : 'Shipping'}</span>
-                  <span>{shipping === 0 ? (isAr ? 'مجاني' : 'Free') : `${shipping} ${CURRENCY[lang]}`}</span>
+                  <span>{isDigitalOnly ? (isAr ? 'مجاني — منتج رقمي' : 'Free — Digital product') : `${shipping} ${CURRENCY[lang]}`}</span>
                 </div>
                 <div className="cart-summary-row cart-total">
                   <span>{isAr ? 'الإجمالي' : 'Total'}</span>
