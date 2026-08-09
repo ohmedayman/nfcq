@@ -1054,10 +1054,9 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
   .dash-tab.on span { display: inline; }
   .dash-card { padding: 20px 16px; }
   .form-row { grid-template-columns: 1fr; }
-  .link-row { flex-direction: column; align-items: stretch; }
-  .link-handle { flex-direction: row; }
-  .link-fields { flex-direction: column; }
-  .link-del { width: 100%; height: 44px; }
+  .link-card-editor { flex-direction: column; }
+  .link-card-num { align-self: flex-start; }
+  .link-card-actions { flex-direction: row; justify-content: flex-end; }
   .nfc-qr-section { flex-direction: column; text-align: center; }
   .social-field { flex-direction: column; align-items: stretch; gap: 10px; }
   .sf-icon { width: 100%; height: 36px; border-radius: 8px; }
@@ -1098,9 +1097,8 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
   .panel { padding: 20px 16px; }
   .dash-side { grid-template-columns: repeat(2, 1fr); }
   .dash-link { min-height: 50px; justify-content: flex-start; }
-  .link-row { flex-direction: column; align-items: stretch; gap: 10px; }
-  .link-row .field { width: 100%; }
-  .link-del { width: 100%; height: 46px; }
+  .link-card-editor { flex-direction: column; gap: 10px; }
+  .link-card-actions { flex-direction: row; justify-content: flex-end; }
   .meta-card { flex-wrap: wrap; gap: 12px; padding: 14px; }
   .meta-card .mc-on { width: 42px; height: 42px; }
   .copy-btn { width: 100%; margin-left: 0; justify-content: center; }
