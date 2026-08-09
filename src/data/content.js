@@ -66,7 +66,7 @@ export const PRODUCTS = [
     nameAr: 'البطاقة البريميوم',
     materialEn: 'Frosted acrylic',
     materialAr: 'أكريليك مضبب فاخر',
-    price: 200,
+    price: 299,
     img: 'hero-card.webp',
     color: 'linear-gradient(135deg,#1854E8,#15D8F2)',
     popular: true,
