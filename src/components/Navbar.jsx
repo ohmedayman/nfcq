@@ -3,7 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
-import { IconGlobe, IconUser, IconShield, IconMenu, IconClose, IconHome } from './icons'
+import { IconGlobe, IconUser, IconShield, IconMenu, IconClose, IconHome, IconCreditCard } from './icons'
+
+function getCartCount() {
+  try {
+    const cart = JSON.parse(localStorage.getItem('lamsa_cart') || '{}')
+    return Object.values(cart).reduce((s, v) => s + (v || 0), 0)
+  } catch { return 0 }
+}
 
 export default function Navbar() {
   const { lang, setLang } = useLang()
@@ -11,6 +18,7 @@ export default function Navbar() {
   const isAr = lang === 'ar'
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [cartCount, setCartCount] = useState(getCartCount)
   const userMenuRef = useRef(null)
   const nav = useNavigate()
 
@@ -23,6 +31,11 @@ export default function Navbar() {
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  useEffect(() => {
+    const interval = setInterval(() => setCartCount(getCartCount()), 500)
+    return () => clearInterval(interval)
   }, [])
 
   const navLinks = user
@@ -45,6 +58,11 @@ export default function Navbar() {
         </nav>
 
         <div className="topbar-actions">
+          <Link to="/store" className="topbar-cart" aria-label="cart">
+            <IconCreditCard />
+            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+          </Link>
+
           <button className="topbar-lang" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}>
             <IconGlobe /> {isAr ? 'EN' : 'ع'}
           </button>
@@ -98,6 +116,9 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="mobile-menu">
           {navLinks.map((l) => <button key={l.to} className="mi" onClick={() => go(l.to)}>{l.l}</button>)}
+          <button className="mi" onClick={() => go('/store')}>
+            <IconCreditCard /> {isAr ? 'السلة' : 'Cart'}{cartCount > 0 ? ` (${cartCount})` : ''}
+          </button>
           {user && isAdmin && <button className="mi" onClick={() => go('/admin')}><IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin'}</button>}
           <button className="mi" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}><IconGlobe /> {isAr ? 'English' : 'العربية'}</button>
           {user
