@@ -8,6 +8,39 @@ import {
   NfcIcon, IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconMail, IconPhone, IconLink,
 } from '../components/icons'
 
+const LINK_COLORS = [
+  'linear-gradient(135deg,#667eea,#764ba2)',
+  'linear-gradient(135deg,#f093fb,#f5576c)',
+  'linear-gradient(135deg,#4facfe,#00f2fe)',
+  'linear-gradient(135deg,#43e97b,#38f9d7)',
+  'linear-gradient(135deg,#fa709a,#fee140)',
+  'linear-gradient(135deg,#a18cd1,#fbc2eb)',
+  'linear-gradient(135deg,#fccb90,#d57eeb)',
+  'linear-gradient(135deg,#e0c3fc,#8ec5fc)',
+]
+
+function getLinkIcon(url) {
+  if (!url) return '🔗'
+  const u = url.toLowerCase()
+  if (u.includes('github')) return '💻'
+  if (u.includes('linkedin')) return '💼'
+  if (u.includes('instagram')) return '📸'
+  if (u.includes('twitter') || u.includes('x.com')) return '🐦'
+  if (u.includes('youtube')) return '🎬'
+  if (u.includes('tiktok')) return '🎵'
+  if (u.includes('behance') || u.includes('dribbble')) return '🎨'
+  if (u.includes('medium') || u.includes('substack')) return '📝'
+  if (u.includes('wa.me') || u.includes('whatsapp')) return '💬'
+  if (u.includes('tel:') || u.includes('phone')) return '📞'
+  if (u.includes('mailto') || u.includes('email')) return '✉️'
+  if (u.includes('maps') || u.includes('location')) return '📍'
+  if (u.includes('spotify')) return '🎶'
+  if (u.includes('twitch')) return '🎮'
+  if (u.includes('calendly') || u.includes('calendar')) return '📅'
+  if (u.includes('shop') || u.includes('store') || u.includes('buy')) return '🛒'
+  return '🔗'
+}
+
 export default function PublicNfc() {
   const { uid } = useParams()
   const { lang } = useLang()
@@ -126,10 +159,11 @@ export default function PublicNfc() {
           <Link to="/" aria-label="home"><Logo markSize={28} /></Link>
         </div>
 
-        <div className={`nfc-card ${tapped ? 'show' : ''}`}>
+        <div className={`nfc-card nfc-glass ${tapped ? 'show' : ''}`}>
           {/* Cover gradient */}
           <div className="nfc-cover">
             <div className="nfc-cover-shimmer" />
+            <div className="nfc-cover-pattern" />
           </div>
 
           {/* Avatar */}
@@ -152,22 +186,22 @@ export default function PublicNfc() {
             {hasSocial && (
               <div className="nfc-socials">
                 {profile.social.instagram && (
-                  <a href={profile.social.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="nfc-social-btn">
+                  <a href={profile.social.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="nfc-social-btn" style={{ '--sc': '#E4405F' }}>
                     <IconInstagram />
                   </a>
                 )}
                 {profile.social.linkedin && (
-                  <a href={profile.social.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="nfc-social-btn">
+                  <a href={profile.social.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="nfc-social-btn" style={{ '--sc': '#0A66C2' }}>
                     <IconLinkedin />
                   </a>
                 )}
                 {profile.social.twitter && (
-                  <a href={profile.social.twitter} target="_blank" rel="noreferrer" aria-label="X" className="nfc-social-btn">
+                  <a href={profile.social.twitter} target="_blank" rel="noreferrer" aria-label="X" className="nfc-social-btn" style={{ '--sc': '#000' }}>
                     <IconTwitter />
                   </a>
                 )}
                 {profile.social.whatsapp && (
-                  <a href={profile.social.whatsapp} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="nfc-social-btn">
+                  <a href={profile.social.whatsapp} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="nfc-social-btn" style={{ '--sc': '#25D366' }}>
                     <IconWhatsApp />
                   </a>
                 )}
@@ -178,8 +212,17 @@ export default function PublicNfc() {
             {profile.links.length > 0 && (
               <div className="nfc-links">
                 {profile.links.map((l, i) => (
-                  <a key={i} href={l.url || '#'} className="nfc-link" target="_blank" rel="noreferrer" style={{ animationDelay: `${i * 80}ms` }}>
-                    <span className="nfc-link-icon"><IconLink /></span>
+                  <a
+                    key={i}
+                    href={l.url || '#'}
+                    className="nfc-link"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ animationDelay: `${i * 100}ms`, '--lc': LINK_COLORS[i % LINK_COLORS.length] }}
+                  >
+                    <span className="nfc-link-icon" style={{ background: LINK_COLORS[i % LINK_COLORS.length] }}>
+                      {getLinkIcon(l.url)}
+                    </span>
                     <span className="nfc-link-label">{l.label || l.url}</span>
                     <span className="nfc-link-arrow">→</span>
                   </a>

@@ -248,16 +248,17 @@ export default function Dashboard() {
                 {links.length > 0 && (
                   <>
                     {links.map((l, i) => (
-                      <div className="link-row" key={i}>
-                        <div className="link-handle">
-                          <button className="link-move" onClick={() => moveLink(i, -1)} disabled={i === 0}>↑</button>
-                          <button className="link-move" onClick={() => moveLink(i, 1)} disabled={i === links.length - 1}>↓</button>
-                        </div>
-                        <div className="link-fields">
+                      <div className="link-card-editor" key={i}>
+                        <div className="link-card-num">{String(i + 1).padStart(2, '0')}</div>
+                        <div className="link-card-fields">
                           <div className="field"><label>{isAr ? 'العنوان' : 'Label'}</label><input value={l.label} onChange={(e) => setLink(i, 'label', e.target.value)} placeholder={isAr ? 'أعمالي' : 'Portfolio'} /></div>
                           <div className="field"><label>URL</label><input value={l.url} onChange={(e) => setLink(i, 'url', e.target.value)} placeholder="https://" dir="ltr" style={{ textAlign: 'left' }} /></div>
                         </div>
-                        <button className="link-del" onClick={() => delLink(i)} title={isAr ? 'حذف' : 'Delete'}>✕</button>
+                        <div className="link-card-actions">
+                          <button className="link-move-btn" onClick={() => moveLink(i, -1)} disabled={i === 0} title={isAr ? 'تحريك لأعلى' : 'Move up'}>↑</button>
+                          <button className="link-move-btn" onClick={() => moveLink(i, 1)} disabled={i === links.length - 1} title={isAr ? 'تحريك لأسفل' : 'Move down'}>↓</button>
+                          <button className="link-del-btn" onClick={() => delLink(i)} title={isAr ? 'حذف' : 'Delete'}>✕</button>
+                        </div>
                       </div>
                     ))}
                     <button className="add-link" onClick={addLink}><IconPlus /> {isAr ? 'إضافة رابط' : 'Add link'}</button>
@@ -334,9 +335,15 @@ export default function Dashboard() {
 
                 {links.filter(l => l.label || l.url).length > 0 && (
                   <div className="preview-links">
-                    {links.filter(l => l.label || l.url).slice(0, 5).map((l, i) => (
-                      <div key={i} className="preview-link">{l.label || l.url}</div>
-                    ))}
+                    {links.filter(l => l.label || l.url).slice(0, 5).map((l, i) => {
+                      const colors = ['#667eea','#f5576c','#4facfe','#43e97b','#fa709a','#a18cd1']
+                      return (
+                        <div key={i} className="preview-link" style={{ '--plc': colors[i % colors.length] }}>
+                          <span className="pl-dot" style={{ background: colors[i % colors.length] }} />
+                          {l.label || l.url}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
 
