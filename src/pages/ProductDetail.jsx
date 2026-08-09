@@ -103,7 +103,13 @@ export default function ProductDetail() {
               <p className="pd-desc">{ar ? product.descAr : product.descEn}</p>
 
               <div className="pd-price-box">
+                {product.originalPrice && (
+                  <span className="pd-price-old">{product.originalPrice} {CURRENCY[lang]}</span>
+                )}
                 <span className="pd-price"><b>{product.price}</b><small>{CURRENCY[lang]}</small></span>
+                {product.originalPrice && (
+                  <span className="pd-price-badge">-50%</span>
+                )}
                 <span className="pd-stock">{isAr ? '✓ متوفر فوراً' : '✓ In stock'}</span>
               </div>
 
@@ -214,7 +220,10 @@ export default function ProductDetail() {
                   <div className="pd-similar-body">
                     <h4>{ar ? p.nameAr : p.nameEn}</h4>
                     <p className="pd-similar-mat">{ar ? p.materialAr : p.materialEn}</p>
-                    <div className="pd-similar-price"><b>{p.price}</b><small>{CURRENCY[lang]}</small></div>
+                    <div className="pd-similar-price">
+                      {p.originalPrice && <span className="price-old">{p.originalPrice} {CURRENCY[lang]}</span>}
+                      <b>{p.price}</b><small>{CURRENCY[lang]}</small>
+                    </div>
                   </div>
                 </Link>
               </Reveal>

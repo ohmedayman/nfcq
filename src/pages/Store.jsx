@@ -129,7 +129,11 @@ export default function Store() {
                         <li key={i}><span className="i">✓</span>{s}</li>
                       ))}
                     </ul>
-                    <div className="price"><b>{p.price}</b><small>{CURRENCY[lang]}</small></div>
+                    <div className="price">
+                      {p.originalPrice && <span className="price-old">{p.originalPrice} {CURRENCY[lang]}</span>}
+                      <b>{p.price}</b><small>{CURRENCY[lang]}</small>
+                      {p.originalPrice && <span className="price-badge">-50%</span>}
+                    </div>
                     <div className="pcard-btns">
                       <button className="btn btn-primary btn-block" onClick={() => setQty(p.id, 1)}>
                         <IconCreditCard /> {text.buy}
