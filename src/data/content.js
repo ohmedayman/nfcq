@@ -9,6 +9,7 @@ export const PRODUCTS = [
     img: 'card-detail.webp',
     color: 'linear-gradient(135deg,#0aa5c8,#1854e8)',
     popular: false,
+    digital: true,
     specs: { en: ['Instant digital page', 'Custom links & socials', 'QR code included', 'Unlimited edits'], ar: ['صفحة رقمية فورية', 'روابط ومنصات مخصصة', 'رمز QR مشمول', 'تعديلات غير محدودة'] },
     gallery: ['card-detail.webp', 'hero-card.webp'],
     descEn: 'Get your professional digital page instantly — no shipping, no wait. Perfect for anyone who wants a shareable profile with QR code, social links, and contact info.',
