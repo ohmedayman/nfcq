@@ -1,16 +1,26 @@
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { PRODUCTS, CURRENCY } from '../data/content'
 import Reveal from '../components/Reveal'
 import { NfcIcon, IconShield, IconRefresh } from '../components/icons'
 
+function getCart() {
+  try { return JSON.parse(localStorage.getItem('lamsa_cart') || '{}') } catch { return {} }
+}
+function setCart(c) { localStorage.setItem('lamsa_cart', JSON.stringify(c)) }
+
 export default function ProductDetail() {
   const { id } = useParams()
   const { lang } = useLang()
   const isAr = lang === 'ar'
+  const nav = useNavigate()
   const product = PRODUCTS.find((p) => p.id === id)
   const [activeImg, setActiveImg] = useState(0)
+  const [zoom, setZoom] = useState(false)
+  const [added, setAdded] = useState(false)
+
+  useEffect(() => { window.scrollTo(0, 0) }, [id])
 
   if (!product) {
     return (
@@ -27,10 +37,23 @@ export default function ProductDetail() {
   const ar = isAr
   const features = ar ? product.featuresAr : product.featuresEn
   const specs = ar ? product.specs.ar : product.specs.en
+  const similar = PRODUCTS.filter((p) => p.id !== id)
+
+  function addToCart() {
+    const cart = getCart()
+    cart[id] = (cart[id] || 0) + 1
+    setCart(cart)
+    setAdded(true)
+    setTimeout(() => setAdded(false), 2000)
+  }
+
+  function buyNow() {
+    addToCart()
+    nav('/store')
+  }
 
   return (
     <div className="pd-page">
-      {/* Breadcrumb */}
       <div className="container">
         <nav className="pd-breadcrumb">
           <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
@@ -41,15 +64,22 @@ export default function ProductDetail() {
         </nav>
       </div>
 
-      {/* Main product section */}
+      {/* Main */}
       <section className="section pd-hero">
         <div className="container pd-grid">
-          {/* Gallery */}
           <Reveal>
             <div className="pd-gallery">
-              <div className="pd-main-img" style={{ background: product.color }}>
+              <div
+                className={`pd-main-img ${zoom ? 'zoomed' : ''}`}
+                style={{ background: product.color }}
+                onMouseEnter={() => setZoom(true)}
+                onMouseLeave={() => setZoom(false)}
+              >
                 <img src={`/img/${product.gallery[activeImg]}`} alt={product.nameEn} />
                 {product.popular && <span className="pd-badge">{ar ? 'الأكثر مبيعًا' : 'Best Seller'}</span>}
+                <div className="pd-img-zoom-hint">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                </div>
               </div>
               <div className="pd-thumbs">
                 {product.gallery.map((img, i) => (
@@ -66,7 +96,6 @@ export default function ProductDetail() {
             </div>
           </Reveal>
 
-          {/* Info */}
           <Reveal delay={150}>
             <div className="pd-info">
               <span className="pd-material">{ar ? product.materialAr : product.materialEn}</span>
@@ -79,12 +108,15 @@ export default function ProductDetail() {
               </div>
 
               <div className="pd-actions">
-                <Link to="/store" className="btn btn-primary btn-lg">
-                  <NfcIcon size={18} /> {isAr ? 'أضف للسلة' : 'Add to cart'}
-                </Link>
-                <Link to="/store" className="btn btn-ghost btn-lg">
+                <button className="btn btn-primary btn-lg" onClick={addToCart}>
+                  {added
+                    ? (isAr ? '✓ تم الإضافة' : '✓ Added')
+                    : <><NfcIcon size={18} /> {isAr ? 'أضف للسلة' : 'Add to cart'}</>
+                  }
+                </button>
+                <button className="btn btn-ghost btn-lg" onClick={buyNow}>
                   {isAr ? 'اشتري الآن' : 'Buy now'}
-                </Link>
+                </button>
               </div>
 
               <div className="pd-trust-row">
@@ -102,7 +134,6 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              {/* Specs */}
               <div className="pd-specs">
                 <h3>{isAr ? 'المواصفات' : 'Specifications'}</h3>
                 <ul>
@@ -137,7 +168,7 @@ export default function ProductDetail() {
         </div>
       </section>
 
-      {/* How it works for this product */}
+      {/* Steps */}
       <section className="section">
         <div className="container">
           <Reveal>
@@ -158,6 +189,34 @@ export default function ProductDetail() {
                   <h4>{s.t}</h4>
                   <p>{s.d}</p>
                 </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Similar products */}
+      <section className="section section-alt">
+        <div className="container">
+          <Reveal>
+            <div className="section-head">
+              <span className="kicker">{isAr ? 'منتجات مشابهة' : 'You may also like'}</span>
+              <h2>{isAr ? 'بطاقات تانية' : 'Other cards'}</h2>
+            </div>
+          </Reveal>
+          <div className="pd-similar">
+            {similar.map((p, i) => (
+              <Reveal key={p.id} delay={i * 120}>
+                <Link to={`/store/${p.id}`} className="pd-similar-card">
+                  <div className="pd-similar-img" style={{ background: p.color }}>
+                    <img src={`/img/${p.img}`} alt={p.nameEn} />
+                  </div>
+                  <div className="pd-similar-body">
+                    <h4>{ar ? p.nameAr : p.nameEn}</h4>
+                    <p className="pd-similar-mat">{ar ? p.materialAr : p.materialEn}</p>
+                    <div className="pd-similar-price"><b>{p.price}</b><small>{CURRENCY[lang]}</small></div>
+                  </div>
+                </Link>
               </Reveal>
             ))}
           </div>

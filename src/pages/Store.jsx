@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
@@ -7,14 +7,26 @@ import { createOrder } from '../lib/firebase'
 import { toast } from '../components/Toast'
 import { NfcIcon, IconCreditCard, IconZap, IconShield, IconPlus, IconMinus, IconCheck } from '../components/icons'
 
+function getCart() {
+  try { return JSON.parse(localStorage.getItem('lamsa_cart') || '{}') } catch { return {} }
+}
+function saveCart(c) { localStorage.setItem('lamsa_cart', JSON.stringify(c)) }
+
 export default function Store() {
   const { text, lang } = useLang()
   const isAr = lang === 'ar'
   const { user } = useAuth()
-  const [cart, setCart] = useState({})
+  const [cart, setCartState] = useState(getCart)
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState(false)
   const [form, setForm] = useState({ name: user?.displayName || '', phone: '', address: '' })
+
+  useEffect(() => { saveCart(cart) }, [cart])
+
+  const setCart = (fn) => setCartState((prev) => {
+    const next = typeof fn === 'function' ? fn(prev) : fn
+    return next
+  })
 
   const items = PRODUCTS.map((p) => ({ product: p, qty: cart[p.id] || 0 })).filter((x) => x.qty > 0)
   const total = items.reduce((s, x) => s + x.product.price * x.qty, 0)
