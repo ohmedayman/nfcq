@@ -1,15 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
 import { toast } from '../components/Toast'
 import { initProfileIfMissing, fetchProfile, saveProfile, uploadAvatar } from '../lib/firebase'
 import {
-  NfcIcon, IconUser, IconLink, IconCheck, IconPlus, IconRefresh,
-  IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconMail, IconPhone,
+  NfcIcon, IconCheck, IconRefresh,
+  IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp,
 } from '../components/icons'
-
-const STEPS = ['welcome', 'profile', 'social', 'done']
 
 export default function Onboarding() {
   const { user } = useAuth()
@@ -22,17 +20,14 @@ export default function Onboarding() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
 
-  const [form, setForm] = useState({ name: '', role: '', email: '', phone: '', bio: '', avatar: '' })
+  const [form, setForm] = useState({ name: '', role: '', bio: '', avatar: '' })
   const [social, setSocial] = useState({ instagram: '', linkedin: '', twitter: '', whatsapp: '' })
 
   const setV = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const setS = (k) => (e) => setSocial((s) => ({ ...s, [k]: e.target.value }))
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
+    if (!user) { setLoading(false); return }
     let alive = true
     ;(async () => {
       try {
@@ -43,8 +38,6 @@ export default function Onboarding() {
           setForm({
             name: d.name || user.displayName || '',
             role: d.role || '',
-            email: d.email || user.email || '',
-            phone: d.phone || '',
             bio: d.bio || '',
             avatar: d.avatar || '',
           })
@@ -78,12 +71,24 @@ export default function Onboarding() {
     e.target.value = ''
   }
 
-  async function saveAndNext() {
+  async function saveProfileStep() {
     setSaving(true)
     try {
       await saveProfile(user.uid, { ...form, social })
       toast(isAr ? 'تم الحفظ ✓' : 'Saved ✓')
       setStep((s) => s + 1)
+    } catch {
+      toast(isAr ? 'تعذر الحفظ' : 'Save failed', 'error')
+    }
+    setSaving(false)
+  }
+
+  async function finishSetup() {
+    setSaving(true)
+    try {
+      await saveProfile(user.uid, { ...form, social })
+      toast(isAr ? 'تم الحفظ ✓' : 'Saved ✓')
+      setStep(3)
     } catch {
       toast(isAr ? 'تعذر الحفظ' : 'Save failed', 'error')
     }
@@ -112,18 +117,19 @@ export default function Onboarding() {
           <Link to="/"><NfcIcon size="1.8em" /> <b>Lamsa</b></Link>
         </div>
 
-        {/* Progress */}
-        <div className="onboard-progress">
-          {STEPS.map((s, i) => (
-            <div key={s} className={`op-step ${i <= step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
-              <div className="op-dot">{i < step ? '✓' : i + 1}</div>
-              {i < 3 && <div className={`op-line ${i < step ? 'done' : ''}`} />}
-            </div>
-          ))}
-        </div>
+        {step < 3 && (
+          <div className="onboard-progress">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={`op-step ${i <= step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
+                <div className="op-dot">{i < step ? '✓' : i + 1}</div>
+                {i < 2 && <div className={`op-line ${i < step ? 'done' : ''}`} />}
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className={`onboard-card ${step === 3 ? 'final' : ''}`}>
-          {/* Step 0: Welcome */}
+          {/* Step 0: Welcome / Auth */}
           {step === 0 && (
             <div className="ob-content">
               <div className="ob-icon">🎉</div>
@@ -139,12 +145,12 @@ export default function Onboarding() {
                 </button>
               ) : (
                 <div className="ob-auth">
-                  <Link to="/account" className="btn btn-primary btn-lg btn-block">
+                  <Link to="/account?redirect=/onboarding" className="btn btn-primary btn-lg btn-block">
                     {isAr ? 'سجّل دخولك' : 'Sign in'}
                   </Link>
                   <p className="auth-switch">
                     {isAr ? 'ما عندكش حساب؟' : "Don't have an account?"}{' '}
-                    <Link to="/account">{isAr ? 'سجّل الآن' : 'Sign up'}</Link>
+                    <Link to="/account?redirect=/onboarding">{isAr ? 'سجّل الآن' : 'Sign up'}</Link>
                   </p>
                 </div>
               )}
@@ -182,13 +188,14 @@ export default function Onboarding() {
               <div className="field">
                 <label>{isAr ? 'نبذة عنك' : 'Bio'} <small>({isAr ? 'اختياري' : 'optional'})</small></label>
                 <textarea value={form.bio} onChange={setV('bio')} rows={2} maxLength={160} placeholder={isAr ? '几句 عن نفسك…' : 'A short bio about you…'} />
+                <span className="field-hint">{form.bio.length}/160</span>
               </div>
 
               <div className="ob-actions">
                 <button className="btn btn-ghost" onClick={() => setStep(0)}>← {isAr ? 'رجوع' : 'Back'}</button>
                 <button className="btn btn-primary btn-lg" onClick={() => {
                   if (!form.name || !form.role) return toast(isAr ? 'أكمل الاسم والمهنة' : 'Name and role required', 'error')
-                  saveAndNext()
+                  saveProfileStep()
                 }} disabled={saving}>
                   {saving ? '…' : (isAr ? 'التالي' : 'Continue')} →
                 </button>
@@ -233,8 +240,8 @@ export default function Onboarding() {
 
               <div className="ob-actions">
                 <button className="btn btn-ghost" onClick={() => setStep(1)}>← {isAr ? 'رجوع' : 'Back'}</button>
-                <button className="btn btn-primary btn-lg" onClick={saveAndNext} disabled={saving}>
-                  {saving ? '…' : (isAr ? 'التالي' : 'Continue')} →
+                <button className="btn btn-primary btn-lg" onClick={finishSetup} disabled={saving}>
+                  {saving ? '…' : (isAr ? 'إنهاء' : 'Finish')} ✓
                 </button>
               </div>
             </div>
@@ -243,7 +250,7 @@ export default function Onboarding() {
           {/* Step 3: Done */}
           {step === 3 && (
             <div className="ob-content ob-done">
-              <div className="ob-icon">🚀</div>
+              <div className="ob-success-icon">🚀</div>
               <h2>{isAr ? 'بطاقتك جاهزة!' : 'Your card is ready!'}</h2>
               <p className="ob-sub">{isAr ? 'ده رابط بطاقتك — امسحه أو شاركه مع أي حد.' : 'This is your card link — share it with anyone.'}</p>
 

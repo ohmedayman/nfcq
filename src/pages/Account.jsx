@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { NfcIcon, IconMail } from '../components/icons'
@@ -9,6 +9,8 @@ export default function Account() {
   const isAr = lang === 'ar'
   const { user, loading, error, register, login, loginWithGoogle, logout, ready } = useAuth()
   const nav = useNavigate()
+  const [searchParams] = useSearchParams()
+  const redirectTo = searchParams.get('redirect') || '/dashboard'
   const [mode, setMode] = useState('register')
   const [form, setForm] = useState({ name: '', email: '', pass: '' })
   const [busy, setBusy] = useState(false)
@@ -19,8 +21,8 @@ export default function Account() {
   }, [user])
 
   useEffect(() => {
-    if (user) nav('/dashboard', { replace: true })
-  }, [user, nav])
+    if (user) nav(redirectTo, { replace: true })
+  }, [user, nav, redirectTo])
 
   const submit = async (e) => {
     e.preventDefault()

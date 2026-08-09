@@ -235,7 +235,10 @@ export default function Store() {
                 <h3>{isAr ? 'بيانات الشحن' : 'Shipping details'}</h3>
               </div>
               <div className="field"><label>{isAr ? 'الاسم' : 'Name'}</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-              <div className="field"><label>{isAr ? 'الهاتف' : 'Phone'}</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+              <div className="form-row">
+                <div className="field"><label>{isAr ? 'الهاتف' : 'Phone'}</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                <div className="field"><label>{isAr ? 'البريد الإلكتروني' : 'Email'} <small>({isAr ? 'لإرسال الإيصال' : 'for receipt'})</small></label><input type="email" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@email.com" dir="ltr" style={{ textAlign: 'left' }} /></div>
+              </div>
               <div className="form-row">
                 <div className="field"><label>{isAr ? 'المدينة' : 'City'}</label><input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
                 <div className="field"><label>{isAr ? 'العنوان' : 'Address'}</label><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
