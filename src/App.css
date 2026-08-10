@@ -720,6 +720,28 @@ h1, h2, h3 { line-height: 1.2; }
 .nfc-wrap { position: relative; max-width: 480px; margin: 0 auto; }
 .nfc-brand { text-align: center; margin-bottom: 24px; }
 .nfc-brand a { display: inline-flex; }
+.nfc-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.nfc-demo-badge {
+  background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); color: rgba(255,255,255,0.8);
+  padding: 4px 14px; border-radius: 99px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em;
+}
+.nfc-contact-info { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.nfc-contact-row { display: flex; align-items: center; gap: 8px; color: rgba(234,242,255,0.6); font-size: 0.85rem; }
+.nfc-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(234,242,255,0.15), transparent); margin: 16px 0; }
+.nfc-scan { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; color: rgba(234,242,255,0.7); font-size: 0.88rem; padding: 14px; background: rgba(255,255,255,0.06); border-radius: 14px; }
+.nfc-scan-pulse {
+  position: absolute; inset: 0; border: 2px solid rgba(24,84,232,0.3); border-radius: 14px;
+  animation: nfcPulse 2s ease-in-out infinite;
+}
+@keyframes nfcPulse { 0%,100% { opacity: 0; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
+.nfc-social-link {
+  width: 48px; height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.12);
+  display: grid; place-items: center; color: rgba(255,255,255,0.8); transition: 0.25s;
+  background: rgba(255,255,255,0.06);
+}
+.nfc-social-link:hover { background: rgba(24,84,232,0.3); border-color: rgba(24,84,232,0.5); transform: translateY(-3px); color: #fff; }
+.nfc-link-icon { font-size: 1.2rem; }
+.nfc-footer-text { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 20px; }
 
 /* Card */
 .nfc-card {

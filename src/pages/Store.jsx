@@ -102,6 +102,11 @@ export default function Store() {
   return (
     <section className="section store-section">
       <div className="container">
+        <nav className="pd-breadcrumb">
+          <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+          <span>/</span>
+          <span className="pd-bc-current">{isAr ? 'المتجر' : 'Store'}</span>
+        </nav>
         <div className="section-head">
           <span className="kicker">Lamsa</span>
           <h2>{text.store_title}</h2>

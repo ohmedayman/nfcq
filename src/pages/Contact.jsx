@@ -27,6 +27,11 @@ export default function Contact() {
     <div className="pd-page">
       <section className="section">
         <div className="container">
+          <nav className="pd-breadcrumb">
+            <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+            <span>/</span>
+            <span className="pd-bc-current">{isAr ? 'تواصل معنا' : 'Contact'}</span>
+          </nav>
           <div className="section-head">
             <span className="kicker">{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
             <h1>{isAr ? 'احنا هنا عشانك' : 'We\'re here for you'}</h1>

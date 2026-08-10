@@ -176,6 +176,11 @@ export default function Blog() {
     <div className="pd-page">
       <section className="section">
         <div className="container">
+          <nav className="pd-breadcrumb">
+            <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+            <span>/</span>
+            <span className="pd-bc-current">{isAr ? 'المدونة' : 'Blog'}</span>
+          </nav>
           <div className="section-head">
             <span className="kicker">Blog</span>
             <h1>{isAr ? 'المدونة' : 'Blog'}</h1>
