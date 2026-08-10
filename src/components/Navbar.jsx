@@ -39,8 +39,8 @@ export default function Navbar() {
   }, [])
 
   const navLinks = user
-    ? [{ to: '/', l: isAr ? 'الرئيسية' : 'Home' }, { to: '/store', l: isAr ? 'المتجر' : 'Store' }, { to: '/blog', l: isAr ? 'المدونة' : 'Blog' }, { to: '/dashboard', l: isAr ? 'لوحة التحكم' : 'Dashboard' }]
-    : [{ to: '/', l: isAr ? 'الرئيسية' : 'Home' }, { to: '/store', l: isAr ? 'المتجر' : 'Store' }, { to: '/blog', l: isAr ? 'المدونة' : 'Blog' }, { to: '/nfc/demo', l: isAr ? 'بطاقتي' : 'My Card' }]
+    ? [{ to: '/', l: isAr ? 'الرئيسية' : 'Home' }, { to: '/store', l: isAr ? 'المتجر' : 'Store' }, { to: '/blog', l: isAr ? 'المدونة' : 'Blog' }, { to: '/contact', l: isAr ? 'تواصل' : 'Contact' }, { to: '/dashboard', l: isAr ? 'لوحة التحكم' : 'Dashboard' }]
+    : [{ to: '/', l: isAr ? 'الرئيسية' : 'Home' }, { to: '/store', l: isAr ? 'المتجر' : 'Store' }, { to: '/blog', l: isAr ? 'المدونة' : 'Blog' }, { to: '/contact', l: isAr ? 'تواصل' : 'Contact' }, { to: '/nfc/demo', l: isAr ? 'بطاقتي' : 'My Card' }]
 
   const initial = (user?.displayName || user?.email || 'U').charAt(0).toUpperCase()
 

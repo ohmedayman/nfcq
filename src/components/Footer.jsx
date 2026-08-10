@@ -67,7 +67,7 @@ export default function Footer() {
           <div className="footer-col">
             <h4>{isAr ? 'الدعم' : 'Support'}</h4>
             <Link to="/">{isAr ? 'الأسئلة الشائعة' : 'FAQ'}</Link>
-            <Link to="/">{isAr ? 'تواصل معنا' : 'Contact'}</Link>
+            <Link to="/contact">{isAr ? 'تواصل معنا' : 'Contact'}</Link>
             <Link to="/">{isAr ? 'الخصوصية' : 'Privacy'}</Link>
             <Link to="/settings">{isAr ? 'الإعدادات' : 'Settings'}</Link>
           </div>

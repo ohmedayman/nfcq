@@ -15,6 +15,7 @@ const Onboarding = lazy(() => import('./pages/Onboarding'))
 const Blog = lazy(() => import('./pages/Blog').then(m => ({ default: m.default })))
 const BlogPost = lazy(() => import('./pages/Blog').then(m => ({ default: m.BlogPost })))
 const Settings = lazy(() => import('./pages/Settings'))
+const Contact = lazy(() => import('./pages/Contact'))
 
 function PageLoader() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<Home />} />
           </Routes>
         </Suspense>
