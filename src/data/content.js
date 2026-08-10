@@ -133,7 +133,7 @@ export const PRODUCTS = [
     nameAr: 'شاشة تقييمات جوجل',
     materialEn: 'Acrylic NFC stand + QR code display',
     materialAr: 'حامل أكريليك NFC + رمز QR',
-    price: 350,
+    price: 349,
     originalPrice: 498,
     img: 'google-reviews.avif',
     color: 'linear-gradient(135deg,#4285f4,#34a853)',
