@@ -83,7 +83,7 @@ export default function Home() {
           <div className="hero-visual">
             <Reveal delay={200}>
               <div className="hero-img-wrap">
-                <img src="/img/hero-card.webp" alt="Lamsa NFC card" loading="eager" />
+                <img src="/img/hero-card.webp" alt="Lamsa NFC card" loading="eager" width="520" height="360" />
               </div>
             </Reveal>
             <div className="float-chip fc-1">
@@ -229,7 +229,7 @@ export default function Home() {
       <section className="section section-alt">
         <div className="container split">
           <Reveal>
-            <div className="split-media"><img src="/img/card-detail.webp" alt="Lamsa card detail" /></div>
+            <div className="split-media"><img src="/img/card-detail.webp" alt="Lamsa card detail" loading="lazy" /></div>
           </Reveal>
           <Reveal delay={150}>
             <div className="split-body">
@@ -263,7 +263,7 @@ export default function Home() {
             </div>
           </Reveal>
           <Reveal>
-            <div className="split-media"><img src="/img/tap-lifestyle.webp" alt="lamsa tap" /></div>
+            <div className="split-media"><img src="/img/tap-lifestyle.webp" alt="lamsa tap" loading="lazy" /></div>
           </Reveal>
         </div>
       </section>
@@ -285,7 +285,7 @@ export default function Home() {
                     {p.popular && <span className="pop">{ar ? 'الأكثر مبيعًا' : 'Popular'}</span>}
                     {p.originalPrice && <span className="pcard-discount">-50%</span>}
                     <Link to={`/store/${p.id}`} className="pcard-visual" style={{ background: p.color }}>
-                      <img src={`/img/${p.img || 'card-detail.png'}`} alt={p.nameEn} />
+                      <img src={`/img/${p.img || 'card-detail.png'}`} alt={p.nameEn} loading="lazy" />
                     </Link>
                     <div className="pcard-body">
                       <h3><Link to={`/store/${p.id}`}>{ar ? p.nameAr : p.nameEn}</Link></h3>

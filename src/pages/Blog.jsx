@@ -187,7 +187,7 @@ export default function Blog() {
               <Reveal key={post.slug} delay={i * 120}>
                 <Link to={`/blog/${post.slug}`} className="blog-card">
                   <div className="blog-card-img">
-                    <img src={`/img/${post.img}`} alt={isAr ? post.titleAr : post.titleEn} />
+                    <img src={`/img/${post.img}`} alt={isAr ? post.titleAr : post.titleEn} loading="lazy" />
                   </div>
                   <div className="blog-card-body">
                     <div className="blog-card-meta">
@@ -258,7 +258,7 @@ export function BlogPost() {
               <span>{isAr ? `${post.readTime} قراءة` : `${post.readTime} read`}</span>
             </div>
             <div className="blog-article-img">
-              <img src={`/img/${post.img}`} alt={isAr ? post.titleAr : post.titleEn} />
+              <img src={`/img/${post.img}`} alt={isAr ? post.titleAr : post.titleEn} loading="lazy" />
             </div>
             <div className="blog-article-content" dangerouslySetInnerHTML={{
               __html: content

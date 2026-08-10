@@ -1,197 +1,98 @@
-import { initializeApp, getApps, getApp } from 'firebase/app'
-import {
-  getAuth as fbGetAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail,
-} from 'firebase/auth'
-import { getFirestore, doc, setDoc, getDoc, updateDoc, addDoc, collection, getDocs, query, orderBy } from 'firebase/firestore'
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import firebaseConfig, { FIREBASE_READY } from '../firebase.config'
 
+let app = null
 let auth = null
-let db = null
-let storage = null
+let _authModule = null
 
-function ensure() {
+async function loadAuth() {
+  if (!_authModule) {
+    _authModule = await import('firebase/auth')
+  }
+  return _authModule
+}
+
+async function ensureApp() {
   if (!FIREBASE_READY) return false
-  const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
-  if (!auth) auth = fbGetAuth(app)
-  if (!db) db = getFirestore(app)
-  if (!storage) storage = getStorage(app)
+  if (!app) {
+    const { initializeApp, getApps, getApp } = await import('firebase/app')
+    app = getApps().length ? getApp() : initializeApp(firebaseConfig)
+  }
+  if (!auth) {
+    const authMod = await loadAuth()
+    auth = authMod.getAuth(app)
+  }
   return true
 }
 
-export const getAuth = () => { ensure(); return auth }
-export const getDb = () => { ensure(); return db }
-export const getStorageRef = () => { ensure(); return storage }
+export async function getAuth() { await ensureApp(); return auth }
 
-// ---- Storage: avatar upload ----
-export async function uploadAvatar(uid, file) {
-  if (!FIREBASE_READY) throw new Error('FIREBASE_NOT_CONFIGURED')
-  ensure()
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-  const storageRef = ref(storage, `avatars/${uid}.${ext}`)
-  await uploadBytes(storageRef, file)
-  const url = await getDownloadURL(storageRef)
-  await updateDoc(getUserProfileRef(uid), { avatar: url })
-  return url
-}
-
-// ---- Auth API ----
+// ---- Auth API (all lazy) ----
 export const authApi = {
   isReady: () => FIREBASE_READY,
-  register: (email, password) => {
-    if (!FIREBASE_READY) return Promise.reject(new Error('FIREBASE_NOT_CONFIGURED'))
-    ensure()
+  register: async (email, password) => {
+    if (!FIREBASE_READY) throw new Error('FIREBASE_NOT_CONFIGURED')
+    await ensureApp()
+    const { createUserWithEmailAndPassword } = await loadAuth()
     return createUserWithEmailAndPassword(auth, email, password)
   },
-  login: (email, password) => {
-    if (!FIREBASE_READY) return Promise.reject(new Error('FIREBASE_NOT_CONFIGURED'))
-    ensure()
+  login: async (email, password) => {
+    if (!FIREBASE_READY) throw new Error('FIREBASE_NOT_CONFIGURED')
+    await ensureApp()
+    const { signInWithEmailAndPassword } = await loadAuth()
     return signInWithEmailAndPassword(auth, email, password)
   },
-  loginWithGoogle: () => {
-    if (!FIREBASE_READY) return Promise.reject(new Error('FIREBASE_NOT_CONFIGURED'))
-    ensure()
+  loginWithGoogle: async () => {
+    if (!FIREBASE_READY) throw new Error('FIREBASE_NOT_CONFIGURED')
+    await ensureApp()
+    const { signInWithPopup, GoogleAuthProvider } = await loadAuth()
     return signInWithPopup(auth, new GoogleAuthProvider())
   },
-  logout: () => {
-    if (!FIREBASE_READY) return Promise.resolve()
-    ensure()
+  logout: async () => {
+    if (!FIREBASE_READY) return
+    await ensureApp()
+    const { signOut } = await loadAuth()
     return signOut(auth)
   },
-  sendPasswordReset: (email) => {
-    if (!FIREBASE_READY) return Promise.reject(new Error('FIREBASE_NOT_CONFIGURED'))
-    ensure()
+  sendPasswordReset: async (email) => {
+    if (!FIREBASE_READY) throw new Error('FIREBASE_NOT_CONFIGURED')
+    await ensureApp()
+    const { sendPasswordResetEmail } = await loadAuth()
     return sendPasswordResetEmail(auth, email)
   },
   onState: (cb) => {
     if (!FIREBASE_READY) { cb(null); return () => {} }
-    ensure()
-    return onAuthStateChanged(auth, cb)
+    let unsub = null
+    ensureApp().then(async () => {
+      const { onAuthStateChanged } = await loadAuth()
+      unsub = onAuthStateChanged(auth, cb)
+    })
+    return () => { if (unsub) unsub() }
   },
 }
 
-// ---- Firestore helpers ----
-// Each user profile stored at: profiles/{uid}
-export function getUserProfileRef(uid) {
-  const d = getDb()
-  return doc(d, 'profiles', uid)
+// Lazy-load firestore/storage services
+async function loadServices() {
+  if (!FIREBASE_READY) return null
+  await ensureApp()
+  return import('./firebase-services')
 }
 
-export function initProfileIfMissing(uid, email, name) {
-  if (!FIREBASE_READY) return Promise.resolve()
-  const ref = getUserProfileRef(uid)
-  return getDoc(ref).then((snap) => {
-    if (!snap.exists()) {
-      return setDoc(ref, {
-        uid,
-        email,
-        name,
-        role: '',
-        bio: '',
-        links: [],
-        createdAt: Date.now(),
-      })
-    }
-    return snap
-  })
-}
-
-export const fetchProfile = (uid) => {
-  if (!FIREBASE_READY) return Promise.resolve(null)
-  return getDoc(getUserProfileRef(uid)).then((s) => (s.exists() ? s.data() : null))
-}
-
-export const saveProfile = (uid, data) => {
-  if (!FIREBASE_READY) return Promise.resolve()
-  return updateDoc(getUserProfileRef(uid), data)
-}
-
-// ---- Orders ----
-export const createOrder = (uid, payload) => {
-  const d = getDb()
-  return addDoc(collection(d, 'orders'), {
-    uid,
-    items: payload.items,
-    total: payload.total,
-    currency: payload.currency,
-    customer: payload.customer,
-    createdAt: Date.now(),
-    status: 'pending',
-  })
-}
-
-// ---- Per-user public profile read (no auth required for reading) ----
+export async function getUserProfileRef(uid) { return (await loadServices()).getUserProfileRef(uid) }
+export async function initProfileIfMissing(uid, email, name) { return (await loadServices()).initProfileIfMissing(uid, email, name) }
+export async function fetchProfile(uid) { return (await loadServices()).fetchProfile(uid) }
+export async function saveProfile(uid, data) { return (await loadServices()).saveProfile(uid, data) }
+export async function uploadAvatar(uid, file) { return (await loadServices()).uploadAvatar(uid, file) }
+export async function createOrder(uid, payload) { return (await loadServices()).createOrder(uid, payload) }
 export async function fetchPublic(uid) {
   if (!FIREBASE_READY) return null
-  try {
-    const data = await fetchProfile(uid)
-    return data
-  } catch {
-    return null
-  }
+  try { return (await loadServices()).fetchProfile(uid) } catch { return null }
 }
-
-// ---- Admin helpers ----
-export async function listOrders() {
-  if (!FIREBASE_READY) return []
-  const d = getDb()
-  const q = query(collection(d, 'orders'), orderBy('createdAt', 'desc'))
-  const snap = await getDocs(q)
-  return snap.docs.map((s) => ({ id: s.id, ...s.data() }))
-}
-
-export function updateOrderStatus(orderId, status) {
-  const d = getDb()
-  return updateDoc(doc(d, 'orders', orderId), { status })
-}
-
-export async function listProfiles() {
-  if (!FIREBASE_READY) return []
-  const d = getDb()
-  const snap = await getDocs(query(collection(d, 'profiles')))
-  return snap.docs.map((s) => ({ id: s.id, ...s.data() }))
-}
-
-export async function isAdminUser(uid) {
-  if (!FIREBASE_READY) return false
-  try {
-    const s = await getDoc(doc(getDb(), 'admins', uid))
-    return !!s.data()
-  } catch {
-    return false
-  }
-}
-
-export const grantAdmin = (uid) => setDoc(doc(getDb(), 'admins', uid), { granted: true, at: Date.now() })
-
-// ---- Product management (products/{id}) ----
-export async function listProducts() {
-  if (!FIREBASE_READY) return []
-  const d = getDb()
-  const snap = await getDocs(query(collection(d, 'products')))
-  return snap.docs.map((s) => ({ id: s.id, ...s.data() }))
-}
-
-export function setProductActive(id, on) {
-  const d = getDb()
-  return updateDoc(doc(d, 'products', id), { active: !!on })
-}
-
-export function upsertProduct(id, data) {
-  const d = getDb()
-  return setDoc(doc(d, 'products', id), data, { merge: true })
-}
-
-// ---- Orders belonging to a specific user ----
-export async function listUserOrders(uid) {
-  if (!FIREBASE_READY) return []
-  const d = getDb()
-  const snap = await getDocs(collection(d, 'orders'))
-  return snap.docs
-    .map((s) => ({ id: s.id, ...s.data() }))
-    .filter((o) => o.uid === uid)
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-}
-
-export { GoogleAuthProvider }
+export async function listOrders() { return (await loadServices()).listOrders() }
+export async function updateOrderStatus(orderId, status) { return (await loadServices()).updateOrderStatus(orderId, status) }
+export async function listProfiles() { return (await loadServices()).listProfiles() }
+export async function isAdminUser(uid) { return (await loadServices()).isAdminUser(uid) }
+export async function grantAdmin(uid) { return (await loadServices()).grantAdmin(uid) }
+export async function listProducts() { return (await loadServices()).listProducts() }
+export async function setProductActive(id, on) { return (await loadServices()).setProductActive(id, on) }
+export async function upsertProduct(id, data) { return (await loadServices()).upsertProduct(id, data) }
+export async function listUserOrders(uid) { return (await loadServices()).listUserOrders(uid) }

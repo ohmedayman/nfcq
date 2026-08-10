@@ -146,7 +146,7 @@ export default function Store() {
                 <div className={`pcard${p.popular ? ' hot' : ''}`} key={p.id}>
                   {p.popular && <span className="pop">{isAr ? 'الأكثر مبيعًا' : 'Popular'}</span>}
                   {p.originalPrice && <span className="pcard-discount">-50%</span>}
-                  <Link to={`/store/${p.id}`} className="pcard-visual" style={{ background: p.color }}><img src={`/img/${p.img}`} alt={p.nameEn} /></Link>
+                  <Link to={`/store/${p.id}`} className="pcard-visual" style={{ background: p.color }}><img src={`/img/${p.img}`} alt={p.nameEn} loading="lazy" /></Link>
                   <div className="pcard-body">
                     <h3><Link to={`/store/${p.id}`}>{isAr ? p.nameAr : p.nameEn}</Link></h3>
                     <p className="pcard-material">{isAr ? p.materialAr : p.materialEn}</p>
@@ -210,7 +210,7 @@ export default function Store() {
                 return (
                   <div key={i.product.id} className="cart-item">
                     <div className="cart-item-img" style={{ background: i.product.color }}>
-                      <img src={`/img/${i.product.img}`} alt={i.product.nameEn} />
+                      <img src={`/img/${i.product.img}`} alt={i.product.nameEn} loading="lazy" />
                     </div>
                     <div className="cart-item-info">
                       <b>{isAr ? i.product.nameAr : i.product.nameEn}</b>
@@ -322,7 +322,7 @@ export default function Store() {
                 return (
                   <div key={i.product.id} className="cart-item" style={{ padding: '12px 0' }}>
                     <div className="cart-item-img" style={{ background: i.product.color, width: 56, height: 56 }}>
-                      <img src={`/img/${i.product.img}`} alt={i.product.nameEn} />
+                      <img src={`/img/${i.product.img}`} alt={i.product.nameEn} loading="lazy" />
                     </div>
                     <div className="cart-item-info">
                       <b style={{ fontSize: '0.92rem' }}>{isAr ? i.product.nameAr : i.product.nameEn}</b>

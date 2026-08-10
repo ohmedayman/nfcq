@@ -103,7 +103,7 @@ export default function ProductDetail() {
                     onClick={() => setActiveImg(i)}
                     style={{ background: product.color }}
                   >
-                    <img src={`/img/${img}`} alt={`${product.nameEn} thumbnail ${i + 1}`} />
+                    <img src={`/img/${img}`} alt={`${product.nameEn} thumbnail ${i + 1}`} loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -293,7 +293,7 @@ export default function ProductDetail() {
               <Reveal key={p.id} delay={i * 120}>
                 <Link to={`/store/${p.id}`} className="pd-similar-card">
                   <div className="pd-similar-img" style={{ background: p.color }}>
-                    <img src={`/img/${p.img}`} alt={p.nameEn} />
+                    <img src={`/img/${p.img}`} alt={p.nameEn} loading="lazy" />
                     {p.originalPrice && <span className="pd-similar-badge">-50%</span>}
                   </div>
                   <div className="pd-similar-body">

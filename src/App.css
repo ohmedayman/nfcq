@@ -872,7 +872,7 @@ h1, h2, h3 { line-height: 1.2; }
 /* ---------- Footer ---------- */
 .footer { background: var(--bg2); border-top: 1px solid var(--line); padding: 64px 0 0; }
 
-/* Newsletter */
+/* Footer newsletter */
 .footer-newsletter {
   display: flex; align-items: center; justify-content: space-between; gap: 40px;
   background: var(--card); border: 1px solid var(--line); border-radius: 20px;
