@@ -34,8 +34,10 @@ export default function Store() {
 
   const items = PRODUCTS.map((p) => ({ product: p, qty: cart[p.id] || 0 })).filter((x) => x.qty > 0)
   const total = items.reduce((s, x) => s + x.product.price * x.qty, 0)
+  const totalOriginal = items.reduce((s, x) => s + (x.product.originalPrice || x.product.price) * x.qty, 0)
+  const totalDiscount = totalOriginal - total
   const isDigitalOnly = items.length > 0 && items.every((x) => x.product.digital)
-  const shipping = isDigitalOnly ? 0 : 120
+  const shipping = isDigitalOnly ? 0 : (total >= 500 ? 0 : 120)
   const grandTotal = total + shipping
 
   const setQty = (id, qty) => setCart((c) => {
@@ -167,46 +169,116 @@ export default function Store() {
           </>
         ) : step === 'cart' ? (
           <div className="store-checkout">
-            {/* Cart */}
+            {/* Cart items */}
             <div className="dash-card">
               <div className="dash-card-header">
                 <h3>{isAr ? 'سلة الطلب' : 'Your cart'}</h3>
                 <p>{items.length} {isAr ? 'منتج' : 'items'}</p>
               </div>
-              {items.map((i) => (
-                <div key={i.product.id} className="cart-item">
-                  <div className="cart-item-img" style={{ background: i.product.color }}>
-                    <img src={`/img/${i.product.img}`} alt={i.product.nameEn} />
+              {items.map((i) => {
+                const hasDiscount = i.product.originalPrice && i.product.originalPrice > i.product.price
+                const discountPct = hasDiscount ? Math.round((1 - i.product.price / i.product.originalPrice) * 100) : 0
+                return (
+                  <div key={i.product.id} className="cart-item">
+                    <div className="cart-item-img" style={{ background: i.product.color }}>
+                      <img src={`/img/${i.product.img}`} alt={i.product.nameEn} />
+                    </div>
+                    <div className="cart-item-info">
+                      <b>{isAr ? i.product.nameAr : i.product.nameEn}</b>
+                      <small>{isAr ? i.product.materialAr : i.product.materialEn}</small>
+                      <div className="cart-item-price">
+                        <span className="price-now">{i.product.price} {CURRENCY[lang]}</span>
+                        {hasDiscount && <span className="price-old">{i.product.originalPrice} {CURRENCY[lang]}</span>}
+                        {hasDiscount && <span className="discount-badge">-{discountPct}%</span>}
+                      </div>
+                    </div>
+                    <div className="cart-item-qty">
+                      <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty - 1)}><IconMinus /></button>
+                      <span className="qty-val">{i.qty}</span>
+                      <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty + 1)}><IconPlus /></button>
+                    </div>
                   </div>
-                  <div className="cart-item-info">
-                    <b>{isAr ? i.product.nameAr : i.product.nameEn}</b>
-                    <small>{i.product.materialEn}</small>
-                    <div className="cart-item-price">{i.product.price} {CURRENCY[lang]} × {i.qty}</div>
+                )
+              })}
+            </div>
+
+            {/* Sidebar */}
+            <div className="cart-sidebar">
+              <div className="cart-sidebar-card">
+                <div className="cart-sidebar-title">{isAr ? 'ملخص الطلب' : 'Order summary'}</div>
+
+                {/* Urgency */}
+                {!isDigitalOnly && (
+                  <div className="cart-urgency">
+                    <div className="cart-urgency-icon">🔥</div>
+                    <div className="cart-urgency-text">
+                      <b>{isAr ? 'عرض لفترة محدودة!' : 'Limited time offer!'}</b>
+                      <small>{isAr ? 'خصم إضافي عند الطلب اليوم' : 'Extra discount when you order today'}</small>
+                    </div>
+                    <div className="cart-urgency-timer">
+                      <span>02</span>:<span>14</span>:<span>36</span>
+                    </div>
                   </div>
-                  <div className="cart-item-qty">
-                    <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty - 1)}><IconMinus /></button>
-                    <span className="qty-val">{i.qty}</span>
-                    <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty + 1)}><IconPlus /></button>
+                )}
+
+                <div className="cart-summary">
+                  <div className="cart-summary-row">
+                    <span>{isAr ? 'المجموع الفرعي' : 'Subtotal'}</span>
+                    <span>{total} {CURRENCY[lang]}</span>
+                  </div>
+                  {totalDiscount > 0 && (
+                    <div className="cart-summary-row" style={{ color: '#22c55e' }}>
+                      <span>{isAr ? 'الخصم' : 'Discount'}</span>
+                      <span>-{totalDiscount} {CURRENCY[lang]}</span>
+                    </div>
+                  )}
+                  <div className="cart-summary-row">
+                    <span>{isAr ? 'الشحن' : 'Shipping'}</span>
+                    {isDigitalOnly ? (
+                      <span className="cart-free-ship">✓ {isAr ? 'مجاني' : 'Free'}</span>
+                    ) : (
+                      <span>{shipping} {CURRENCY[lang]}</span>
+                    )}
+                  </div>
+                  {!isDigitalOnly && (
+                    <div className="cart-free-ship">✓ {isAr ? 'شحن مجاني للطلبات فوق 500 ج.م' : 'Free shipping over 500 EGP'}</div>
+                  )}
+                  <div className="cart-summary-row cart-total">
+                    <span>{isAr ? 'الإجمالي' : 'Total'}</span>
+                    <span>{grandTotal} {CURRENCY[lang]}</span>
                   </div>
                 </div>
-              ))}
-              <div className="cart-summary">
-                <div className="cart-summary-row">
-                  <span>{isAr ? 'المجموع الفرعي' : 'Subtotal'}</span>
-                  <span>{total} {CURRENCY[lang]}</span>
+
+                {/* Coupon */}
+                <div className="cart-coupon">
+                  <input type="text" placeholder={isAr ? 'كود الخصم' : 'Coupon code'} />
+                  <button>{isAr ? 'تطبيق' : 'Apply'}</button>
                 </div>
-                <div className="cart-summary-row">
-                  <span>{isAr ? 'الشحن' : 'Shipping'}</span>
-                  <span>{isDigitalOnly ? (isAr ? 'مجاني — منتج رقمي' : 'Free — Digital product') : `${shipping} ${CURRENCY[lang]}`}</span>
+
+                <button className="cart-pay-btn" onClick={goToShipping}>
+                  {isAr ? 'إتمام الشراء' : 'Checkout'} — {grandTotal} {CURRENCY[lang]}
+                </button>
+
+                <div className="cart-secure">
+                  <span>🔒</span>
+                  <span>{isAr ? 'دفع آمن ومشفر' : 'Secure encrypted checkout'}</span>
                 </div>
-                <div className="cart-summary-row cart-total">
-                  <span>{isAr ? 'الإجمالي' : 'Total'}</span>
-                  <span>{grandTotal} {CURRENCY[lang]}</span>
+
+                <div className="cart-trust-row">
+                  <div className="cart-trust-item">
+                    <div className="icon">🚚</div>
+                    <p>{isAr ? 'شحن سريع' : 'Fast shipping'}</p>
+                  </div>
+                  <div className="cart-trust-item">
+                    <div className="icon">🔄</div>
+                    <p>{isAr ? 'استبدال' : 'Easy returns'}</p>
+                  </div>
+                  <div className="cart-trust-item">
+                    <div className="icon">🛡️</div>
+                    <p>{isAr ? 'ضمان' : 'Warranty'}</p>
+                  </div>
                 </div>
               </div>
-              <button className="btn btn-primary btn-block btn-lg" onClick={goToShipping}>
-                {isAr ? 'التالي' : 'Continue'} →
-              </button>
             </div>
           </div>
         ) : (
@@ -216,23 +288,43 @@ export default function Store() {
               <div className="dash-card-header">
                 <h3>{isAr ? 'مراجعة الطلب' : 'Order review'}</h3>
               </div>
-              {items.map((i) => (
-                <div key={i.product.id} className="cart-item" style={{ padding: '10px 0' }}>
-                  <div className="cart-item-info">
-                    <b>{isAr ? i.product.nameAr : i.product.nameEn}</b>
-                    <small>{i.qty} × {i.product.price} {CURRENCY[lang]}</small>
+              {items.map((i) => {
+                const hasDiscount = i.product.originalPrice && i.product.originalPrice > i.product.price
+                return (
+                  <div key={i.product.id} className="cart-item" style={{ padding: '12px 0' }}>
+                    <div className="cart-item-img" style={{ background: i.product.color, width: 56, height: 56 }}>
+                      <img src={`/img/${i.product.img}`} alt={i.product.nameEn} />
+                    </div>
+                    <div className="cart-item-info">
+                      <b style={{ fontSize: '0.92rem' }}>{isAr ? i.product.nameAr : i.product.nameEn}</b>
+                      <small>{isAr ? i.product.materialAr : i.product.materialEn}</small>
+                      <div className="cart-item-price" style={{ marginTop: 4 }}>
+                        <span className="price-now" style={{ fontSize: '0.95rem' }}>{i.product.price} {CURRENCY[lang]}</span>
+                        {hasDiscount && <span className="price-old" style={{ fontSize: '0.8rem' }}>{i.product.originalPrice} {CURRENCY[lang]}</span>}
+                      </div>
+                    </div>
+                    <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>×{i.qty}</div>
                   </div>
-                  <div className="money">{i.product.price * i.qty} {CURRENCY[lang]}</div>
-                </div>
-              ))}
+                )
+              })}
               <div className="cart-summary">
                 <div className="cart-summary-row">
                   <span>{isAr ? 'المجموع' : 'Subtotal'}</span>
                   <span>{total} {CURRENCY[lang]}</span>
                 </div>
+                {totalDiscount > 0 && (
+                  <div className="cart-summary-row" style={{ color: '#22c55e' }}>
+                    <span>{isAr ? 'خصم المنتجات' : 'Product discount'}</span>
+                    <span>-{totalDiscount} {CURRENCY[lang]}</span>
+                  </div>
+                )}
                 <div className="cart-summary-row">
                   <span>{isAr ? 'الشحن' : 'Shipping'}</span>
-                  <span>{isDigitalOnly ? (isAr ? 'مجاني — منتج رقمي' : 'Free — Digital product') : `${shipping} ${CURRENCY[lang]}`}</span>
+                  {isDigitalOnly || shipping === 0 ? (
+                    <span className="cart-free-ship">✓ {isAr ? 'مجاني' : 'Free'}</span>
+                  ) : (
+                    <span>{shipping} {CURRENCY[lang]}</span>
+                  )}
                 </div>
                 <div className="cart-summary-row cart-total">
                   <span>{isAr ? 'الإجمالي' : 'Total'}</span>
