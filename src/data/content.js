@@ -139,7 +139,7 @@ export const PRODUCTS = [
     color: 'linear-gradient(135deg,#4285f4,#34a853)',
     popular: false,
     specs: { en: ['Acrylic stand (12.7x7.6cm)', 'NFC + QR code', 'Black or White', 'No app needed', 'Instant setup'], ar: ['حامل أكريليك (12.7x7.6سم)', 'NFC + رمز QR', 'أسود أو أبيض', 'بدون تطبيق', 'إعداد فوري'] },
-    gallery: ['google-reviews.avif', 'google-reviews-2.avif', 'google-reviews-3.avif'],
+    gallery: ['google-reviews.avif', 'google-reviews-2.avif', 'google-reviews-3.avif', 'google-reviews-4.avif', 'google-reviews-5.avif'],
     descEn: 'Boost your Google reviews effortlessly. This elegant acrylic stand sits on your counter — customers simply tap or scan to leave a review. No app needed. Available in Black and White.',
     descAr: 'زِد تقييمات جوجل بسهولة. حامل أكريليك أنيق يوضع على الكاونتر — العملاء يضغطون أو يمسحون الرمز وتظهر صفحة التقييم فوراً. بدون تطبيق. متوفر بالأسود والأبيض.',
     featuresEn: [
