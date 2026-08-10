@@ -335,6 +335,14 @@ h1, h2, h3 { line-height: 1.2; }
 .pcard-body h3 a { color: inherit; }
 .pcard-body h3 a:hover { color: var(--cobalt); }
 
+/* Variant selector */
+.variant-selector { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; }
+.variant-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+.variant-options { display: flex; gap: 6px; }
+.variant-btn { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transition: 0.15s; padding: 0; }
+.variant-btn:hover { transform: scale(1.15); }
+.variant-btn.active { box-shadow: 0 0 0 2px var(--cobalt); transform: scale(1.1); }
+
 /* ---------- Product Detail ---------- */
 .pd-page { background: var(--bg); }
 .pd-breadcrumb { display: flex; align-items: center; gap: 8px; padding: 20px 0 0; font-size: 0.85rem; color: var(--muted); }

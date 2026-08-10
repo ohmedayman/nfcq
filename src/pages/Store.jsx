@@ -24,6 +24,7 @@ export default function Store() {
   const [pending, setPending] = useState(false)
   const [step, setStep] = useState('cart')
   const [form, setForm] = useState({ name: user?.displayName || '', phone: '', address: '', city: '', notes: '' })
+  const [selectedVariants, setSelectedVariants] = useState({})
 
   useEffect(() => { saveCart(cart) }, [cart])
 
@@ -32,7 +33,11 @@ export default function Store() {
     return next
   })
 
-  const items = PRODUCTS.map((p) => ({ product: p, qty: cart[p.id] || 0 })).filter((x) => x.qty > 0)
+  const items = PRODUCTS.map((p) => {
+    const variant = selectedVariants[p.id] || (p.variants ? p.variants[0].id : null)
+    const cartKey = variant ? `${p.id}_${variant}` : p.id
+    return { product: p, qty: cart[cartKey] || 0, variant }
+  }).filter((x) => x.qty > 0)
   const total = items.reduce((s, x) => s + x.product.price * x.qty, 0)
   const totalOriginal = items.reduce((s, x) => s + (x.product.originalPrice || x.product.price) * x.qty, 0)
   const totalDiscount = totalOriginal - total
@@ -40,9 +45,10 @@ export default function Store() {
   const shipping = isDigitalOnly ? 0 : (total >= 500 ? 0 : 120)
   const grandTotal = total + shipping
 
-  const setQty = (id, qty) => setCart((c) => {
-    const n = { ...c, [id]: Math.max(0, qty) }
-    if (n[id] === 0) delete n[id]
+  const setQty = (id, qty, variant) => setCart((c) => {
+    const cartKey = variant ? `${id}_${variant}` : id
+    const n = { ...c, [cartKey]: Math.max(0, qty) }
+    if (n[cartKey] === 0) delete n[cartKey]
     return n
   })
 
@@ -132,7 +138,11 @@ export default function Store() {
         ) : items.length === 0 ? (
           <>
             <div className="store-grid">
-              {PRODUCTS.map((p) => (
+              {PRODUCTS.map((p) => {
+                const currentVariant = selectedVariants[p.id] || (p.variants ? p.variants[0].id : null)
+                const cartKey = currentVariant ? `${p.id}_${currentVariant}` : p.id
+                const inCart = cart[cartKey] || 0
+                return (
                 <div className={`pcard${p.popular ? ' hot' : ''}`} key={p.id}>
                   {p.popular && <span className="pop">{isAr ? 'الأكثر مبيعًا' : 'Popular'}</span>}
                   {p.originalPrice && <span className="pcard-discount">-50%</span>}
@@ -140,6 +150,24 @@ export default function Store() {
                   <div className="pcard-body">
                     <h3><Link to={`/store/${p.id}`}>{isAr ? p.nameAr : p.nameEn}</Link></h3>
                     <p className="pcard-material">{isAr ? p.materialAr : p.materialEn}</p>
+
+                    {p.variants && (
+                      <div className="variant-selector">
+                        <span className="variant-label">{isAr ? 'اللون' : 'Color'}:</span>
+                        <div className="variant-options">
+                          {p.variants.map((v) => (
+                            <button
+                              key={v.id}
+                              className={`variant-btn ${currentVariant === v.id ? 'active' : ''}`}
+                              onClick={(e) => { e.preventDefault(); setSelectedVariants({ ...selectedVariants, [p.id]: v.id }) }}
+                              style={{ background: v.id === 'black' ? '#1a1a2e' : '#f5f5f5', border: v.id === 'black' ? '2px solid #333' : '2px solid #ddd' }}
+                              title={isAr ? v.nameAr : v.nameEn}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <ul className="specs">
                       {(isAr ? p.specs.ar : p.specs.en).map((s, i) => (
                         <li key={i}><span className="i">✓</span>{s}</li>
@@ -150,8 +178,8 @@ export default function Store() {
                       <b>{p.price}</b><small>{CURRENCY[lang]}</small>
                     </div>
                     <div className="pcard-btns">
-                      <button className="btn btn-primary btn-block" onClick={() => setQty(p.id, 1)}>
-                        <IconCreditCard /> {text.buy}
+                      <button className="btn btn-primary btn-block" onClick={() => setQty(p.id, (cart[cartKey] || 0) + 1, currentVariant)}>
+                        <IconCreditCard /> {inCart > 0 ? `${text.buy} (${inCart})` : text.buy}
                       </button>
                       <Link to={`/store/${p.id}`} className="btn btn-ghost btn-block pcard-detail">
                         {isAr ? 'التفاصيل' : 'Details'}
@@ -159,7 +187,8 @@ export default function Store() {
                     </div>
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
             <div className="store-trust">
               <div className="trust-item"><IconZap /> {isAr ? 'إصدار رقمي فوري' : 'Instant digital issue'}</div>
