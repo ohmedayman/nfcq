@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import Reveal from '../components/Reveal'

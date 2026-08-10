@@ -506,6 +506,16 @@ h1, h2, h3 { line-height: 1.2; }
 .pd-similar-price small { color: var(--muted); font-size: 0.82rem; }
 .pd-similar-price .price-old { font-size: 0.82rem; }
 
+/* Product share */
+.pd-share { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pd-share-label { font-size: 0.88rem; color: var(--muted); font-weight: 600; }
+.pd-share-btns { display: flex; gap: 8px; }
+.pd-share-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: 0.2s;
+}
+.pd-share-btn:hover { transform: scale(1.15); }
+
 @media (max-width: 980px) {
   .pd-grid { grid-template-columns: 1fr; gap: 32px; }
   .pd-gallery { position: static; }
@@ -1328,6 +1338,42 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 }
 .ob-preview { display: flex; justify-content: center; margin-bottom: 24px; }
 .ob-done h2 { color: #fff; }
+
+/* Onboarding features list */
+.ob-features { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; text-align: start; }
+.ob-feature {
+  display: flex; gap: 14px; align-items: flex-start; padding: 14px;
+  background: rgba(255,255,255,0.06); border-radius: 12px; transition: 0.2s;
+}
+.ob-feature:hover { background: rgba(255,255,255,0.1); }
+.ob-feature-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 2px; }
+.ob-feature b { font-size: 0.95rem; color: #fff; display: block; margin-bottom: 2px; }
+.ob-feature p { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 0; }
+
+/* Onboarding mini preview (step 1) */
+.ob-mini-preview {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  overflow: hidden; margin: 16px 0; text-align: center;
+}
+.ob-mp-cover {
+  height: 60px; background: linear-gradient(135deg, var(--cobalt), #004de6);
+}
+.ob-mp-avatar {
+  width: 56px; height: 56px; border-radius: 50%; background: var(--cobalt);
+  color: #fff; display: grid; place-items: center; margin: -28px auto 8px;
+  font-size: 1.4rem; font-weight: 800; border: 3px solid var(--card);
+}
+.ob-mp-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.ob-mp-name { font-weight: 800; font-size: 1rem; }
+.ob-mp-role { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+/* Onboarding share row */
+.ob-share-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+.ob-share-link {
+  padding: 8px 18px; border-radius: 8px; color: #fff; font-weight: 700;
+  font-size: 0.85rem; text-decoration: none; transition: 0.2s;
+}
+.ob-share-link:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
 /* ---------- Mobile nav ---------- */
 .mobile-menu { display: none; }

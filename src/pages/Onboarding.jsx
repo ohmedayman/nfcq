@@ -9,6 +9,13 @@ import {
   IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp,
 } from '../components/icons'
 
+const STEPS = [
+  { key: 'welcome', icon: '👋' },
+  { key: 'profile', icon: '👤' },
+  { key: 'social', icon: '📱' },
+  { key: 'done', icon: '🚀' },
+]
+
 export default function Onboarding() {
   const { user } = useAuth()
   const { lang } = useLang()
@@ -119,9 +126,9 @@ export default function Onboarding() {
 
         {step < 3 && (
           <div className="onboard-progress">
-            {[0, 1, 2].map((i) => (
+            {STEPS.slice(0, 3).map((s, i) => (
               <div key={i} className={`op-step ${i <= step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
-                <div className="op-dot">{i < step ? '✓' : i + 1}</div>
+                <div className="op-dot">{i < step ? '✓' : s.icon}</div>
                 {i < 2 && <div className={`op-line ${i < step ? 'done' : ''}`} />}
               </div>
             ))}
@@ -139,6 +146,29 @@ export default function Onboarding() {
                   ? 'بطاقتك الرقمية جاهزة! دلوقتي نحتاج نعرف عنك شوية عشان نعمل صفحتك.'
                   : 'Your digital card is ready! Now let\'s set up your page.'}
               </p>
+              <div className="ob-features">
+                <div className="ob-feature">
+                  <span className="ob-feature-icon">✨</span>
+                  <div>
+                    <b>{isAr ? 'بطاقة احترافية' : 'Professional card'}</b>
+                    <p>{isAr ? 'تصميم جذاب يعكس هويتك' : 'A design that reflects your identity'}</p>
+                  </div>
+                </div>
+                <div className="ob-feature">
+                  <span className="ob-feature-icon">🔗</span>
+                  <div>
+                    <b>{isAr ? 'رابط مخصص' : 'Custom link'}</b>
+                    <p>{isAr ? 'رابط يبدأ بـ lamsa.ink/u/...' : 'A link starting with lamsa.ink/u/...'}</p>
+                  </div>
+                </div>
+                <div className="ob-feature">
+                  <span className="ob-feature-icon">📊</span>
+                  <div>
+                    <b>{isAr ? 'إحصائيات' : 'Analytics'}</b>
+                    <p>{isAr ? 'تابع عدد الزيارات والتفاعل' : 'Track visits and engagement'}</p>
+                  </div>
+                </div>
+              </div>
               {user ? (
                 <button className="btn btn-primary btn-lg" onClick={() => setStep(1)}>
                   {isAr ? 'ابدأ الإعداد' : 'Start setup'} →
@@ -191,6 +221,18 @@ export default function Onboarding() {
                 <span className="field-hint">{form.bio.length}/160</span>
               </div>
 
+              {/* Live preview */}
+              {(form.name || form.role) && (
+                <div className="ob-mini-preview">
+                  <div className="ob-mp-cover" />
+                  <div className="ob-mp-avatar">
+                    {form.avatar ? <img src={form.avatar} alt="" /> : (form.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="ob-mp-name">{form.name || (isAr ? 'اسمك' : 'Your name')}</div>
+                  {form.role && <div className="ob-mp-role">{form.role}</div>}
+                </div>
+              )}
+
               <div className="ob-actions">
                 <button className="btn btn-ghost" onClick={() => setStep(0)}>← {isAr ? 'رجوع' : 'Back'}</button>
                 <button className="btn btn-primary btn-lg" onClick={() => {
@@ -238,6 +280,10 @@ export default function Onboarding() {
                 </div>
               </div>
 
+              <button className="btn btn-ghost" style={{ fontSize: '0.88rem', marginTop: 4 }} onClick={finishSetup}>
+                {isAr ? 'تخطي — أكمل لاحقاً' : 'Skip — add later'}
+              </button>
+
               <div className="ob-actions">
                 <button className="btn btn-ghost" onClick={() => setStep(1)}>← {isAr ? 'رجوع' : 'Back'}</button>
                 <button className="btn btn-primary btn-lg" onClick={finishSetup} disabled={saving}>
@@ -262,6 +308,13 @@ export default function Onboarding() {
                 }}>
                   <IconCheck /> {isAr ? 'نسخ' : 'Copy'}
                 </button>
+              </div>
+
+              {/* Share buttons */}
+              <div className="ob-share-row">
+                <a href={`https://wa.me/?text=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" className="ob-share-link" style={{ background: '#25D366' }}>WhatsApp</a>
+                <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Check my digital card')}&url=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" className="ob-share-link" style={{ background: '#000' }}>X</a>
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" className="ob-share-link" style={{ background: '#1877F2' }}>Facebook</a>
               </div>
 
               <div className="ob-preview">
