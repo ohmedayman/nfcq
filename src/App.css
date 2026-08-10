@@ -166,7 +166,7 @@ h1, h2, h3 { line-height: 1.2; }
   background: rgba(126, 237, 250, 0.08); border: 1px solid rgba(126, 237, 250, 0.28);
   color: var(--ice); padding: 7px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; margin-bottom: 24px;
 }
-.hero h1 { font-size: clamp(2.2rem, 5vw, 3.7rem); font-weight: 900; margin-bottom: 20px; letter-spacing: -0.5px; }
+.hero h1 { font-size: clamp(2.2rem, 5vw, 3.7rem); font-weight: 900; margin-bottom: 20px; letter-spacing: -0.5px; line-height: 1.2; }
 .hero h1 .grad {
   background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
@@ -1544,14 +1544,13 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 
   /* buttons/tap targets */
   .btn { min-height: 48px; }
-  .hero-grid { padding: 48px 0 56px; }
-  .hero h1 { font-size: clamp(1.8rem, 8vw, 2.4rem); }
+  .hero-grid { padding: 36px 0 48px; gap: 32px; }
+  .hero h1 { font-size: clamp(1.7rem, 7vw, 2.2rem); line-height: 1.25; }
+  .hero p.lead { font-size: 0.95rem; }
   .hero-actions { flex-direction: column; }
   .hero-actions .btn { width: 100%; justify-content: center; }
-  .hero-img-wrap { max-height: 260px; }
-  .fc-2 { left: 10px; bottom: 16px; }
-  .fc-1 { right: 10px; }
-  .float-chip { font-size: 0.78rem; padding: 10px 12px; }
+  .hero-img-wrap { max-height: 240px; }
+  .float-chip { display: none !important; }
   .hero-trust-row { flex-direction: column; align-items: flex-start; gap: 10px; }
   .step-card { padding: 24px 18px; }
 
