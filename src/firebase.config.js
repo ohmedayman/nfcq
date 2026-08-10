@@ -23,6 +23,6 @@ export const FIREBASE_READY =
 //  (انظر "منح صلاحية مدير" أدناه) — هذا القائمة وسيلة استضافة
 //  لمسح سريع دون الحاجة لرخص Firestore متقدمة.
 // ============================================================
-export const ADMIN_EMAILS = ['your-owner-email@example.com']
+export const ADMIN_EMAILS = ['admin@lamsa.ink', 'm44408335@gmail.com']
 
 export default firebaseConfig
