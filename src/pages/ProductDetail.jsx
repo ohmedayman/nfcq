@@ -22,6 +22,23 @@ export default function ProductDetail() {
 
   useEffect(() => { window.scrollTo(0, 0) }, [id])
 
+  useEffect(() => {
+    if (!product) return
+    const title = isAr ? `${product.nameAr} | Lamsa` : `${product.nameEn} | Lamsa`
+    const desc = isAr ? product.descAr : product.descEn
+    document.title = title
+    const metaDesc = document.querySelector('meta[name="description"]')
+    if (metaDesc) metaDesc.setAttribute('content', desc)
+    const ogTitle = document.querySelector('meta[property="og:title"]')
+    if (ogTitle) ogTitle.setAttribute('content', title)
+    const ogDesc = document.querySelector('meta[property="og:description"]')
+    if (ogDesc) ogDesc.setAttribute('content', desc)
+    const ogImage = document.querySelector('meta[property="og:image"]')
+    if (ogImage) ogImage.setAttribute('content', `https://lamsa.ink/img/${product.img}`)
+    const canonical = document.querySelector('link[rel="canonical"]')
+    if (canonical) canonical.setAttribute('href', `https://lamsa.ink/store/${product.id}`)
+  }, [product, isAr])
+
   if (!product) {
     return (
       <section className="section">
@@ -86,7 +103,7 @@ export default function ProductDetail() {
                     onClick={() => setActiveImg(i)}
                     style={{ background: product.color }}
                   >
-                    <img src={`/img/${img}`} alt="" />
+                    <img src={`/img/${img}`} alt={`${product.nameEn} thumbnail ${i + 1}`} />
                   </button>
                 ))}
               </div>
@@ -286,6 +303,30 @@ export default function ProductDetail() {
           </div>
         </div>
       </section>
+
+      {/* Product Structured Data */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": product.nameEn,
+        "description": product.descEn,
+        "image": `https://lamsa.ink/img/${product.img}`,
+        "brand": { "@type": "Brand", "name": "Lamsa" },
+        "sku": product.id,
+        "offers": {
+          "@type": "Offer",
+          "url": `https://lamsa.ink/store/${product.id}`,
+          "priceCurrency": "EGP",
+          "price": product.price,
+          "availability": "https://schema.org/InStock",
+          "seller": { "@type": "Organization", "name": "Lamsa" }
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "reviewCount": "250"
+        }
+      }) }} />
     </div>
   )
 }

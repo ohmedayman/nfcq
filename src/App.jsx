@@ -10,6 +10,7 @@ import NfcPage from './pages/NfcPage'
 import PublicNfc from './pages/PublicNfc'
 import Admin from './pages/Admin'
 import Onboarding from './pages/Onboarding'
+import Blog, { BlogPost } from './pages/Blog'
 
 export default function App() {
   const location = useLocation()
@@ -29,6 +30,8 @@ export default function App() {
           <Route path="/u/:uid" element={<PublicNfc />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
