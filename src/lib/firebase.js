@@ -3,19 +3,23 @@ import firebaseConfig, { FIREBASE_READY } from '../firebase.config'
 let app = null
 let auth = null
 let _authModule = null
+let _appModule = null
 
 async function loadAuth() {
-  if (!_authModule) {
-    _authModule = await import('firebase/auth')
-  }
+  if (!_authModule) _authModule = await import('firebase/auth')
   return _authModule
+}
+
+async function loadApp() {
+  if (!_appModule) _appModule = await import('firebase/app')
+  return _appModule
 }
 
 async function ensureApp() {
   if (!FIREBASE_READY) return false
   if (!app) {
-    const { initializeApp, getApps, getApp } = await import('firebase/app')
-    app = getApps().length ? getApp() : initializeApp(firebaseConfig)
+    const appMod = await loadApp()
+    app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(firebaseConfig)
   }
   if (!auth) {
     const authMod = await loadAuth()
@@ -24,9 +28,10 @@ async function ensureApp() {
   return true
 }
 
+function getAppRef() { return app }
+
 export async function getAuth() { await ensureApp(); return auth }
 
-// ---- Auth API (all lazy) ----
 export const authApi = {
   isReady: () => FIREBASE_READY,
   register: async (email, password) => {
@@ -70,10 +75,15 @@ export const authApi = {
   },
 }
 
-// Lazy-load firestore/storage services
+let _servicesLoaded = false
 async function loadServices() {
   if (!FIREBASE_READY) return null
   await ensureApp()
+  if (!_servicesLoaded) {
+    const svc = await import('./firebase-services')
+    svc.setFirebaseDeps(getAppRef)
+    _servicesLoaded = true
+  }
   return import('./firebase-services')
 }
 

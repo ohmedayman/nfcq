@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
@@ -9,7 +9,7 @@ import './App.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <HashRouter>
+    <BrowserRouter>
       <LanguageProvider>
         <AuthProvider>
           <ToastProvider>
@@ -17,6 +17,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           </ToastProvider>
         </AuthProvider>
       </LanguageProvider>
-    </HashRouter>
+    </BrowserRouter>
   </React.StrictMode>
 )

@@ -102,7 +102,7 @@ export default function Onboarding() {
     setSaving(false)
   }
 
-  const url = user ? `${window.location.origin}/#/u/${user.uid}` : ''
+  const url = user ? `https://lamsa.ink/u/${user.uid}` : ''
 
   if (loading) {
     return (
