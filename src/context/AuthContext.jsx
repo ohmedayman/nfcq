@@ -19,13 +19,13 @@ export function AuthProvider({ children }) {
     }
     const unsub = authApi.onState(async (u) => {
       setUser(u)
-      setLoading(false)
       if (u) {
         const admin = ADMIN_EMAILS.includes((u.email || '').toLowerCase()) || await isAdminUser(u.uid)
         setIsAdmin(admin)
       } else {
         setIsAdmin(false)
       }
+      setLoading(false)
     })
     return unsub
   }, [])
