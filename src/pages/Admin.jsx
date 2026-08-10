@@ -24,6 +24,7 @@ export default function Admin() {
   const [products, setProducts] = useState(PRODUCTS)
   const [boot, setBoot] = useState(true)
   const [timeFilter, setTimeFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const cur = isAr ? 'ج.م' : 'EGP'
 
@@ -57,24 +58,59 @@ export default function Admin() {
     toast(on ? (isAr ? 'تم تنشيط المنتج' : 'Enabled') : isAr ? 'تم إيقاف المنتج' : 'Disabled')
   }
 
+  function exportOrders() {
+    const headers = ['#', 'Customer', 'Phone', 'Email', 'Items', 'Total', 'Status', 'Date']
+    const rows = filteredOrders.map((o, i) => [
+      i + 1,
+      o.customer?.name || '',
+      o.customer?.phone || '',
+      o.email || '',
+      (o.items || []).map((x) => `${x.name} x${x.qty}`).join('; '),
+      o.total || 0,
+      o.status || 'pending',
+      o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '',
+    ])
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast(isAr ? 'تم تصدير الطلبات ✓' : 'Orders exported ✓')
+  }
+
   if (loading) return <Centered t={isAr ? 'جاري التحميل…' : 'Loading…'} />
   if (!user || !isAdmin) return <Centered t={isAr ? 'هذه الصفحة للمشرفين فقط' : 'Admin access only'} />
 
   const filteredOrders = useMemo(() => {
     const now = Date.now()
     return orders.filter((o) => {
-      if (timeFilter === 'all') return true
-      const t = o.createdAt ? new Date(o.createdAt).getTime() : 0
-      if (timeFilter === 'today') return now - t < 86400000
-      if (timeFilter === 'week') return now - t < 604800000
-      if (timeFilter === 'month') return now - t < 2592000000
+      if (timeFilter !== 'all') {
+        const t = o.createdAt ? new Date(o.createdAt).getTime() : 0
+        if (timeFilter === 'today' && now - t >= 86400000) return false
+        if (timeFilter === 'week' && now - t >= 604800000) return false
+        if (timeFilter === 'month' && now - t >= 2592000000) return false
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        const matchName = (o.customer?.name || '').toLowerCase().includes(q)
+        const matchPhone = (o.customer?.phone || '').includes(q)
+        const matchEmail = (o.email || '').toLowerCase().includes(q)
+        const matchId = (o.id || '').toLowerCase().includes(q)
+        if (!matchName && !matchPhone && !matchEmail && !matchId) return false
+      }
       return true
     })
-  }, [orders, timeFilter])
+  }, [orders, timeFilter, searchQuery])
 
   const revenue = filteredOrders.reduce((s, o) => s + Number(o.total || 0), 0)
   const pending = filteredOrders.filter((o) => o.status === 'pending').length
+  const processing = filteredOrders.filter((o) => o.status === 'processing').length
+  const shipped = filteredOrders.filter((o) => o.status === 'shipped').length
   const completed = filteredOrders.filter((o) => o.status === 'done').length
+  const cancelled = filteredOrders.filter((o) => o.status === 'cancelled').length
   const productCount = products.filter((p) => p.active !== false).length
 
   const tabs = [
@@ -100,9 +136,16 @@ export default function Admin() {
             <h2 className="dash-title"><IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin Panel'}</h2>
             <p className="dash-sub">{isAr ? 'إدارة الطلبات والمستخدمين والمنتجات' : 'Manage orders, users, and products'}</p>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={loadAll}>
-            <IconRefresh /> {isAr ? 'تحديث' : 'Refresh'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-ghost btn-sm" onClick={loadAll}>
+              <IconRefresh /> {isAr ? 'تحديث' : 'Refresh'}
+            </button>
+            {tab === 'orders' && (
+              <button className="btn btn-primary btn-sm" onClick={exportOrders}>
+                📥 {isAr ? 'تصدير CSV' : 'Export CSV'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Time filter */}
@@ -113,6 +156,19 @@ export default function Admin() {
             </button>
           ))}
         </div>
+
+        {/* Search */}
+        {tab === 'orders' && (
+          <div className="admin-search">
+            <input
+              type="text"
+              placeholder={isAr ? 'بحث بالاسم، الهاتف، الإيميل، أو رقم الطلب…' : 'Search by name, phone, email, or order ID…'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && <button className="admin-search-clear" onClick={() => setSearchQuery('')}>✕</button>}
+          </div>
+        )}
 
         <div className="dash-tabs">
           {tabs.map((t) => (
@@ -126,7 +182,7 @@ export default function Admin() {
         <div className="dash-content" style={{ gridTemplateColumns: '1fr' }}>
           <div className="dash-main">
             {boot ? <Centered t={isAr ? 'جاري تحميل البيانات…' : 'Loading data…'} />
-              : tab === 'overview' ? <Overview orders={filteredOrders} total={revenue} pending={pending} completed={completed} users={profiles.length} productCount={productCount} cur={cur} isAr={isAr} />
+              : tab === 'overview' ? <Overview orders={filteredOrders} total={revenue} pending={pending} processing={processing} shipped={shipped} completed={completed} cancelled={cancelled} users={profiles.length} productCount={productCount} cur={cur} isAr={isAr} />
               : tab === 'orders' ? <Orders orders={filteredOrders} change={setStatus} i18n={i18n} cur={cur} isAr={isAr} />
               : tab === 'users' ? <Users profiles={profiles} isAr={isAr} />
               : <ProductsPanel products={products} toggle={toggleProduct} isAr={isAr} />}
@@ -141,11 +197,9 @@ function Centered({ t }) {
   return <section className="section"><div className="container" style={{ textAlign: 'center', color: 'var(--muted)' }}>{t}</div></section>
 }
 
-function Overview({ orders, total, pending, completed, users, productCount, cur, isAr }) {
+function Overview({ orders, total, pending, processing, shipped, completed, cancelled, users, productCount, cur, isAr }) {
   const recent = orders.slice(0, 5)
-  const cancelled = orders.filter((o) => o.status === 'cancelled').length
 
-  // Build simple bar chart data
   const barData = useMemo(() => {
     const days = 7
     const now = Date.now()
@@ -169,6 +223,7 @@ function Overview({ orders, total, pending, completed, users, productCount, cur,
 
   return (
     <div>
+      {/* Stats Grid */}
       <div className="admin-stats">
         <div className="stat-card">
           <div className="stat-card-icon" style={{ background: 'rgba(24,84,232,0.1)', color: 'var(--cobalt)' }}>💰</div>
@@ -186,19 +241,29 @@ function Overview({ orders, total, pending, completed, users, productCount, cur,
           <div className="lbl">{isAr ? 'قيد الانتظار' : 'Pending'}</div>
         </div>
         <div className="stat-card">
+          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>⚙️</div>
+          <div className="num">{processing}</div>
+          <div className="lbl">{isAr ? 'قيد المعالجة' : 'Processing'}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>🚚</div>
+          <div className="num">{shipped}</div>
+          <div className="lbl">{isAr ? 'تم الشحن' : 'Shipped'}</div>
+        </div>
+        <div className="stat-card">
           <div className="stat-card-icon" style={{ background: 'rgba(76,217,100,0.1)', color: '#2ea043' }}>✅</div>
           <div className="num">{completed}</div>
           <div className="lbl">{isAr ? 'مكتمل' : 'Completed'}</div>
         </div>
         <div className="stat-card">
+          <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>✕</div>
+          <div className="num">{cancelled}</div>
+          <div className="lbl">{isAr ? 'ملغي' : 'Cancelled'}</div>
+        </div>
+        <div className="stat-card">
           <div className="stat-card-icon" style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed' }}>👥</div>
           <div className="num">{users}</div>
           <div className="lbl">{isAr ? 'المستخدمون' : 'Users'}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(236,72,153,0.1)', color: '#ec4899' }}>🏷️</div>
-          <div className="num">{productCount}</div>
-          <div className="lbl">{isAr ? 'المنتجات' : 'Products'}</div>
         </div>
       </div>
 
@@ -350,6 +415,10 @@ function OrderRow({ o, open, onToggle, change, i18n, cur, isAr }) {
           <td colSpan={7} style={{ background: 'rgba(12,24,48,0.02)' }}>
             <div style={{ padding: '16px 0', display: 'grid', gap: 10, fontSize: '0.9rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div><b>{isAr ? 'الاسم' : 'Name'}:</b> <span style={{ color: 'var(--muted)' }}>{o.customer?.name || '—'}</span></div>
+                <div><b>{isAr ? 'الهاتف' : 'Phone'}:</b> <span style={{ color: 'var(--muted)' }}>{o.customer?.phone || '—'}</span></div>
+                <div><b>{isAr ? 'البريد' : 'Email'}:</b> <span style={{ color: 'var(--muted)' }}>{o.email || '—'}</span></div>
+                <div><b>{isAr ? 'المدينة' : 'City'}:</b> <span style={{ color: 'var(--muted)' }}>{o.customer?.city || '—'}</span></div>
                 <div><b>{isAr ? 'العنوان' : 'Address'}:</b> <span style={{ color: 'var(--muted)' }}>{o.customer?.address || '—'}</span></div>
                 <div><b>UID:</b> <span className="mono" style={{ color: 'var(--muted)' }}>{o.uid}</span></div>
                 <div><b>{isAr ? 'التاريخ' : 'Date'}:</b> <span style={{ color: 'var(--muted)' }}>{o.createdAt ? new Date(o.createdAt).toLocaleString() : '—'}</span></div>
@@ -368,6 +437,12 @@ function OrderRow({ o, open, onToggle, change, i18n, cur, isAr }) {
                   </div>
                 </div>
               )}
+              {o.customer?.notes && (
+                <div style={{ marginTop: 8, padding: 12, background: 'rgba(24,84,232,0.04)', borderRadius: 10 }}>
+                  <b>{isAr ? 'ملاحظات' : 'Notes'}:</b>
+                  <p style={{ color: 'var(--muted)', marginTop: 4 }}>{o.customer.notes}</p>
+                </div>
+              )}
             </div>
           </td>
         </tr>
@@ -377,14 +452,33 @@ function OrderRow({ o, open, onToggle, change, i18n, cur, isAr }) {
 }
 
 function Users({ profiles, isAr }) {
+  const [search, setSearch] = useState('')
+
+  const filtered = useMemo(() => {
+    if (!search) return profiles
+    const q = search.toLowerCase()
+    return profiles.filter((p) =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.email || '').toLowerCase().includes(q)
+    )
+  }, [profiles, search])
+
   return (
     <div className="dash-card">
       <div className="dash-card-header">
-        <h3>{isAr ? 'المستخدمون' : 'Users'} <span style={{ fontSize: '0.9rem', color: 'var(--muted)', fontWeight: 600 }}>({profiles.length})</span></h3>
+        <h3>{isAr ? 'المستخدمون' : 'Users'} <span style={{ fontSize: '0.9rem', color: 'var(--muted)', fontWeight: 600 }}>({filtered.length})</span></h3>
       </div>
-      {profiles.length === 0 ? <div className="empty"><div className="big">👥</div>{isAr ? 'لا مستخدمين بعد.' : 'No users yet.'}</div> : (
+      <div className="admin-search" style={{ marginBottom: 16 }}>
+        <input
+          type="text"
+          placeholder={isAr ? 'بحث بالاسم أو الإيميل…' : 'Search by name or email…'}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+      {filtered.length === 0 ? <div className="empty"><div className="big">👥</div>{isAr ? 'لا مستخدمين بعد.' : 'No users yet.'}</div> : (
         <div className="admin-list">
-          {profiles.map((p) => (
+          {filtered.map((p) => (
             <div key={p.id} className="admin-list-item">
               <div className="admin-list-left">
                 <div className="admin-list-avatar">{(p.name || '?').charAt(0).toUpperCase()}</div>
@@ -423,6 +517,13 @@ function ProductsPanel({ products, toggle, isAr }) {
               <div className="admin-product-body">
                 <h4>{isAr ? p.nameAr : p.nameEn}</h4>
                 <div className="admin-product-price">{p.price} {isAr ? 'ج.م' : 'EGP'}</div>
+                {p.variants && (
+                  <div className="admin-product-variants">
+                    {p.variants.map((v) => (
+                      <span key={v.id} className="admin-variant-chip">{isAr ? v.nameAr : v.nameEn}</span>
+                    ))}
+                  </div>
+                )}
                 <div className="admin-product-actions">
                   <button className={`btn ${p.active === false ? 'btn-primary' : 'btn-ghost'} btn-sm btn-block`} onClick={() => toggle(p.id, p.active !== false ? false : true)}>
                     {p.active === false ? (isAr ? 'تفعيل' : 'Enable') : (isAr ? 'إيقاف' : 'Disable')}
