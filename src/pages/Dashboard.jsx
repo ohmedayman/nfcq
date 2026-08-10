@@ -451,14 +451,38 @@ function SocialField({ icon, lbl, ph, v, onChange, color }) {
 
 function Orders({ orders, loadingOrders, loadOrders, isAr }) {
   const [touched, setTouched] = useState(false)
+  const [expandedOrder, setExpandedOrder] = useState(null)
   const loadT = async () => { await loadOrders(); setTouched(true) }
+
+  const statusMap = {
+    pending: { label: isAr ? 'قيد الانتظار' : 'Pending', color: '#f59e0b', icon: '⏳' },
+    processing: { label: isAr ? 'جاري التجهيز' : 'Processing', color: '#3b82f6', icon: '📦' },
+    shipped: { label: isAr ? 'تم الشحن' : 'Shipped', color: '#8b5cf6', icon: '🚚' },
+    delivered: { label: isAr ? 'تم التوصيل' : 'Delivered', color: '#22c55e', icon: '✓' },
+    done: { label: isAr ? 'مكتمل' : 'Completed', color: '#22c55e', icon: '✓' },
+    cancelled: { label: isAr ? 'ملغي' : 'Cancelled', color: '#ef4444', icon: '✕' },
+  }
+
+  const getSteps = (status) => {
+    const allSteps = ['pending', 'processing', 'shipped', 'done']
+    let currentIdx = allSteps.indexOf(status || 'pending')
+    if (currentIdx === -1 && (status === 'delivered' || status === 'completed')) currentIdx = 3
+    if (currentIdx === -1 && status === 'cancelled') currentIdx = -1
+    return allSteps.map((s, i) => ({
+      ...statusMap[s],
+      key: s,
+      done: currentIdx >= 0 && i <= currentIdx,
+      current: i === currentIdx,
+    }))
+  }
+
   return (
     <>
       {!touched && !loadingOrders && (
         <div className="empty-state">
           <div className="empty-icon">📦</div>
           <h4>{isAr ? 'طلباتي' : 'My orders'}</h4>
-          <p>{isAr ? 'اعرض طلباتك السابقة من المتجر.' : 'View your past purchases.'}</p>
+          <p>{isAr ? 'اعرض طلباتك السابقة وتتبع شحنها.' : 'View your past purchases and track shipping.'}</p>
           <button className="btn btn-primary" onClick={loadT}>{isAr ? 'عرض طلباتي' : 'Load orders'}</button>
         </div>
       )}
@@ -473,16 +497,76 @@ function Orders({ orders, loadingOrders, loadOrders, isAr }) {
       )}
       {touched && !loadingOrders && orders.length > 0 && (
         <div className="orders-list">
-          {orders.map((o) => (
-            <div key={o.id} className="order-item">
-              <div className="order-top">
-                <span className="order-id">#{o.id.slice(0, 8)}</span>
-                <span className={`status ${o.status || 'pending'}`}>{o.status || 'pending'}</span>
+          {orders.map((o) => {
+            const st = statusMap[o.status] || statusMap.pending
+            const steps = getSteps(o.status)
+            const isExpanded = expandedOrder === o.id
+            const hasPhysical = (o.items || []).some((i) => !i.digital)
+
+            return (
+              <div key={o.id} className={`order-item ${isExpanded ? 'expanded' : ''}`}>
+                <div className="order-top" onClick={() => setExpandedOrder(isExpanded ? null : o.id)}>
+                  <div className="order-left">
+                    <span className="order-id">#{o.id.slice(0, 8)}</span>
+                    <span className="order-date">{o.createdAt ? new Date(o.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US') : ''}</span>
+                  </div>
+                  <div className="order-right">
+                    <span className="order-total">{o.total} {isAr ? 'ج.م' : 'EGP'}</span>
+                    <span className={`status ${o.status || 'pending'}`}>{st.icon} {st.label}</span>
+                    <span className="order-expand">{isExpanded ? '▾' : '▸'}</span>
+                  </div>
+                </div>
+
+                <div className="order-items">{(o.items || []).map((i) => `${i.name} ×${i.qty}`).join(', ')}</div>
+
+                {isExpanded && (
+                  <div className="order-details">
+                    {/* Tracking Steps */}
+                    {hasPhysical && (
+                      <div className="order-tracking">
+                        <h4>{isAr ? 'متابعة الشحن' : 'Shipping tracking'}</h4>
+                        <div className="tracking-steps">
+                          {steps.map((s, i) => (
+                            <div key={s.key} className={`tracking-step ${s.done ? 'done' : ''} ${s.current ? 'current' : ''}`}>
+                              <div className="ts-icon">{s.done ? '✓' : (i + 1)}</div>
+                              <div className="ts-label">{s.label}</div>
+                              {i < steps.length - 1 && <div className={`ts-line ${s.done ? 'done' : ''}`} />}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Order Info */}
+                    <div className="order-info-grid">
+                      {o.customer && (
+                        <div className="order-info-block">
+                          <h5>{isAr ? 'بيانات الشحن' : 'Shipping info'}</h5>
+                          {o.customer.name && <p><b>{isAr ? 'الاسم' : 'Name'}:</b> {o.customer.name}</p>}
+                          {o.customer.phone && <p><b>{isAr ? 'الهاتف' : 'Phone'}:</b> {o.customer.phone}</p>}
+                          {o.customer.city && <p><b>{isAr ? 'المدينة' : 'City'}:</b> {o.customer.city}</p>}
+                          {o.customer.address && <p><b>{isAr ? 'العنوان' : 'Address'}:</b> {o.customer.address}</p>}
+                        </div>
+                      )}
+                      <div className="order-info-block">
+                        <h5>{isAr ? 'تفاصيل الطلب' : 'Order details'}</h5>
+                        {(o.items || []).map((item, i) => (
+                          <div key={i} className="order-detail-item">
+                            <span>{item.name} ×{item.qty}</span>
+                            <span>{item.price * item.qty} {isAr ? 'ج.م' : 'EGP'}</span>
+                          </div>
+                        ))}
+                        <div className="order-detail-item order-detail-total">
+                          <span>{isAr ? 'الإجمالي' : 'Total'}</span>
+                          <span>{o.total} {isAr ? 'ج.م' : 'EGP'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="order-items">{(o.items || []).map((i) => `${i.name} ×${i.qty}`).join(', ')}</div>
-              <div className="order-total">{o.total} {isAr ? 'ج.م' : 'EGP'}</div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </>

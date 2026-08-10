@@ -60,16 +60,29 @@ export default function Store() {
     try {
       if (FIREBASE_READY) {
         await createOrder(user?.uid || 'guest', {
-          items: items.map((x) => ({ id: x.product.id, name: isAr ? x.product.nameAr : x.product.nameEn, qty: x.qty, price: x.product.price })),
+          items: items.map((x) => ({
+            id: x.product.id,
+            name: isAr ? x.product.nameAr : x.product.nameEn,
+            qty: x.qty,
+            price: x.product.price,
+            digital: x.product.digital || false,
+          })),
           total: grandTotal,
+          shipping,
           currency: CURRENCY[lang],
           customer: { name: user?.displayName || form.name, email: user?.email || '', ...form },
           email: user?.email || '',
+          status: 'pending',
+          createdAt: Date.now(),
         })
       }
       setCart({})
       toast(isAr ? 'تم استلام طلبك ✓' : 'Order received ✓')
-      nav('/onboarding')
+      if (isDigitalOnly) {
+        nav('/onboarding')
+      } else {
+        nav('/dashboard')
+      }
     } catch {
       toast(isAr ? 'تعذر إتمام الطلب' : 'Could not place order', 'error')
     }

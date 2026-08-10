@@ -127,6 +127,38 @@ export const PRODUCTS = [
       { t: 'دعم VIP', d: 'خط مباشر مع المؤسسين لأي مساعدة' },
     ],
   },
+  {
+    id: 'google-reviews',
+    nameEn: 'Google Reviews Tap Display',
+    nameAr: 'شاشة تقييمات جوجل',
+    materialEn: 'NFC tap stand + review QR display',
+    materialAr: 'حامل NFC + شاشة رمز QR للتقييمات',
+    price: 249,
+    originalPrice: 498,
+    img: 'tap-lifestyle.webp',
+    color: 'linear-gradient(135deg,#4285f4,#34a853)',
+    popular: false,
+    specs: { en: ['NFC tap stand', 'Google review QR code', 'Boosts star rating', 'Works with any phone', 'Desktop display'], ar: ['حامل NFC', 'رمز QR لتقييمات جوجل', 'يرفع التقييم النجومي', 'يعمل مع أي هاتف', 'شاشة عرض للداشبورد'] },
+    gallery: ['tap-lifestyle.webp', 'hero-card.webp'],
+    descEn: 'Revolutionize how you collect customer feedback. This elegant NFC tap display makes it effortless for customers to leave a Google review — just tap and review. Boost your online reputation and attract more customers.',
+    descAr: 'أحدث طريقة لجمع تقييمات عملائك. شاشة NFC أنيقة تجعل ترك تقييم على جوجل سهل للغاية — بلمسة واحدة فقط. حسّن سمعتك الرقمية واجذب المزيد من العملاء.',
+    featuresEn: [
+      { t: 'NFC Tap Technology', d: 'Customers tap their phone to the stand and your Google review page opens instantly' },
+      { t: 'QR Code Fallback', d: 'For older phones without NFC, a QR code is displayed for scanning' },
+      { t: 'Boosts Star Rating', d: 'Makes it 10x easier for happy customers to leave 5-star reviews' },
+      { t: 'Elegant Display', d: 'Professional-looking stand perfect for reception desks and checkout counters' },
+      { t: 'Works Everywhere', d: 'Compatible with all Android and iOS devices — no app needed' },
+      { t: 'Instant Setup', d: 'Just link your Google Business profile and place the stand' },
+    ],
+    featuresAr: [
+      { t: 'تقنية NFC', d: 'العميل يضغط هاتفه على الحامل وتفتح صفحة التقييم فوراً' },
+      { t: 'رمز QR بديل', d: 'للهواتف القديمة بدون NFC، يظهر رمز QR للمسح' },
+      { t: 'يرفع التقييم النجومي', d: 'يجعل ترك تقييم 5 نجوم سهل 10 مرات للعملاء الراضين' },
+      { t: 'عرض أنيق', d: 'حامل احترافي مثالي للكاونتر واستقبال العملاء' },
+      { t: 'يعمل في كل مكان', d: 'متوافق مع جميع أجهزة Android و iOS — بدون تطبيق' },
+      { t: 'إعداد فوري', d: 'اربط حساب Google Business وضع الحامل وجاهز' },
+    ],
+  },
 ]
 
 export const CURRENCY = { ar: 'ج.م', en: 'EGP' }

@@ -908,13 +908,65 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 .sf-check { color: #22c55e; font-weight: 900; font-size: 1.1rem; }
 
 /* Orders list */
-.orders-list { display: grid; gap: 10px; }
-.order-item { padding: 18px; background: rgba(12,24,48,0.02); border: 1px solid var(--line); border-radius: 16px; transition: 0.2s; }
-.order-item:hover { border-color: rgba(24,84,232,0.2); }
+.orders-list { display: grid; gap: 12px; }
+.order-item { padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; transition: 0.2s; cursor: pointer; }
+.order-item:hover { border-color: rgba(24,84,232,0.2); box-shadow: 0 4px 16px rgba(13,27,63,0.06); }
+.order-item.expanded { border-color: var(--cobalt); box-shadow: 0 4px 20px rgba(24,84,232,0.1); }
 .order-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.order-id { font-family: monospace; font-weight: 700; color: var(--cobalt); }
+.order-left { display: flex; align-items: center; gap: 12px; }
+.order-right { display: flex; align-items: center; gap: 12px; }
+.order-id { font-family: monospace; font-weight: 700; color: var(--cobalt); font-size: 0.9rem; }
+.order-date { color: var(--muted); font-size: 0.82rem; }
 .order-items { color: var(--muted); font-size: 0.88rem; margin-bottom: 4px; }
 .order-total { font-weight: 800; font-size: 1.05rem; }
+.order-expand { color: var(--muted); font-size: 0.9rem; transition: 0.2s; }
+
+/* Order status badges */
+.status { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+.status.pending { background: #fef3c7; color: #92400e; }
+.status.processing { background: #dbeafe; color: #1e40af; }
+.status.shipped { background: #ede9fe; color: #5b21b6; }
+.status.delivered, .status.completed, .status.done { background: #d1fae5; color: #065f46; }
+.status.cancelled { background: #fee2e2; color: #991b1b; }
+
+/* Order details */
+.order-details { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Tracking steps */
+.order-tracking { margin-bottom: 20px; }
+.order-tracking h4 { font-size: 0.9rem; font-weight: 800; margin-bottom: 16px; color: var(--text); }
+.tracking-steps { display: flex; align-items: flex-start; justify-content: space-between; position: relative; padding: 0 10px; }
+.tracking-step { display: flex; flex-direction: column; align-items: center; position: relative; flex: 1; }
+.ts-icon {
+  width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 0.8rem; font-weight: 800; background: var(--line); color: var(--muted);
+  border: 2px solid var(--line); transition: 0.3s; z-index: 2; margin-bottom: 8px;
+}
+.tracking-step.done .ts-icon { background: #22c55e; border-color: #22c55e; color: #fff; }
+.tracking-step.current .ts-icon { background: var(--cobalt); border-color: var(--cobalt); color: #fff; animation: pulse-ring 2s infinite; }
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(24,84,232,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(24,84,232,0); }
+}
+.ts-label { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-align: center; }
+.tracking-step.done .ts-label { color: #22c55e; }
+.tracking-step.current .ts-label { color: var(--cobalt); font-weight: 800; }
+.ts-line {
+  position: absolute; top: 18px; left: calc(50% + 18px); right: calc(-50% + 18px);
+  height: 3px; background: var(--line); border-radius: 3px; z-index: 1;
+}
+.ts-line.done { background: #22c55e; }
+
+/* Order info grid */
+.order-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.order-info-block { padding: 14px; background: rgba(12,24,48,0.02); border-radius: 12px; }
+.order-info-block h5 { font-size: 0.85rem; font-weight: 800; margin-bottom: 10px; color: var(--cobalt); }
+.order-info-block p { font-size: 0.85rem; color: var(--text); margin-bottom: 4px; line-height: 1.5; }
+.order-info-block p b { color: var(--muted); font-weight: 600; }
+.order-detail-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.order-detail-item:last-child { border-bottom: none; }
+.order-detail-total { font-weight: 800; color: var(--cobalt); border-top: 2px solid var(--line); padding-top: 10px; margin-top: 6px; }
 
 /* NFC link box */
 .nfc-link-box { display: flex; align-items: center; gap: 14px; padding: 18px; background: rgba(12,24,48,0.02); border: 1px solid var(--line); border-radius: 16px; flex-wrap: wrap; transition: 0.2s; }
