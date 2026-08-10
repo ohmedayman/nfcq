@@ -227,10 +227,11 @@ export default function Store() {
                       </div>
                     </div>
                     <div className="cart-item-qty">
-                      <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty - 1)}><IconMinus /></button>
+                      <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty - 1, i.variant)}><IconMinus /></button>
                       <span className="qty-val">{i.qty}</span>
-                      <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty + 1)}><IconPlus /></button>
+                      <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty + 1, i.variant)}><IconPlus /></button>
                     </div>
+                    <button className="cart-item-remove" onClick={() => setQty(i.product.id, 0, i.variant)} title={isAr ? 'حذف' : 'Remove'}>✕</button>
                   </div>
                 )
               })}
