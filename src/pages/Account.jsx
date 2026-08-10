@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { NfcIcon, IconMail, IconGoogle } from '../components/icons'
+import { authApi } from '../lib/firebase'
+import { toast } from '../components/Toast'
 
 export default function Account() {
   const { text, lang } = useLang()
@@ -15,6 +17,7 @@ export default function Account() {
   const [form, setForm] = useState({ name: '', email: '', pass: '' })
   const [busy, setBusy] = useState(false)
   const [ok, setOk] = useState('')
+  const [resetSent, setResetSent] = useState(false)
 
   useEffect(() => {
     if (user) setForm((f) => ({ ...f, email: user.email || '' }))
@@ -38,6 +41,20 @@ export default function Account() {
     }
     setBusy(false)
     if (success) setOk(isAr ? 'تم التسجيل بنجاح' : 'Done')
+  }
+
+  async function handleForgotPassword() {
+    if (!form.email) {
+      toast(isAr ? 'اكتب إيميلك الأول' : 'Enter your email first', 'error')
+      return
+    }
+    try {
+      await authApi.sendPasswordReset(form.email)
+      setResetSent(true)
+      toast(isAr ? 'تم إرسال رابط إعادة تعيين كلمة المرور ✓' : 'Password reset email sent ✓')
+    } catch (err) {
+      toast(isAr ? 'الإيميل غير مسجل' : 'Email not found', 'error')
+    }
   }
 
   if (loading) {
@@ -89,6 +106,18 @@ export default function Account() {
                   <label>{isAr ? 'كلمة المرور' : 'Password'}</label>
                   <input required type="password" minLength="6" value={form.pass} onChange={(e) => setForm({ ...form, pass: e.target.value })} placeholder="••••••••" />
                 </div>
+
+                {mode === 'login' && (
+                  <div style={{ textAlign: 'left', marginBottom: 16 }}>
+                    {resetSent ? (
+                      <p style={{ color: '#22c55e', fontSize: '0.88rem' }}>{isAr ? 'تم إرسال رابط إعادة التعيين على إيميلك ✓' : 'Reset link sent to your email ✓'}</p>
+                    ) : (
+                      <button type="button" onClick={handleForgotPassword} style={{ background: 'none', border: 'none', color: 'var(--cobalt)', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, padding: 0 }}>
+                        {isAr ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {error && <p className="auth-ok" style={{ color: '#ff5a6e' }}>{error}</p>}
                 {ok && <p className="auth-ok">{ok}</p>}

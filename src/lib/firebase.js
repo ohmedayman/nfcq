@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
 import {
   getAuth as fbGetAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup,
+  signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail,
 } from 'firebase/auth'
 import { getFirestore, doc, setDoc, getDoc, updateDoc, addDoc, collection, getDocs, query, orderBy } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
@@ -58,6 +58,11 @@ export const authApi = {
     if (!FIREBASE_READY) return Promise.resolve()
     ensure()
     return signOut(auth)
+  },
+  sendPasswordReset: (email) => {
+    if (!FIREBASE_READY) return Promise.reject(new Error('FIREBASE_NOT_CONFIGURED'))
+    ensure()
+    return sendPasswordResetEmail(auth, email)
   },
   onState: (cb) => {
     if (!FIREBASE_READY) { cb(null); return () => {} }
