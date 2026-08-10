@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
-import { NfcIcon, IconMail } from '../components/icons'
+import { NfcIcon, IconMail, IconGoogle } from '../components/icons'
 
 export default function Account() {
   const { text, lang } = useLang()
@@ -98,7 +98,7 @@ export default function Account() {
                 </button>
 
                 <button type="button" className="btn btn-ghost btn-block" style={{ marginTop: 12 }} onClick={async () => { const s = await loginWithGoogle(); if (s) setOk(isAr ? 'تم بنجاح' : 'Done'); }}>
-                  <IconMail /> Google
+                  <IconGoogle /> Google
                 </button>
 
                 <p className="auth-switch">
