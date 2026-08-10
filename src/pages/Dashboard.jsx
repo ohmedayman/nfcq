@@ -97,7 +97,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <section className="section">
-        <div className="container" style={{ textAlign: 'center', paddingTop: 120 }}>
+        <div className="container dash-loading">
           <div className="nfc-loader" />
           <p style={{ color: 'var(--muted)', marginTop: 16 }}>{isAr ? 'بيتحمّل يا معلم...' : 'Loading your profile…'}</p>
         </div>
@@ -108,7 +108,7 @@ export default function Dashboard() {
   if (!FIREBASE_READY) {
     return (
       <section className="section">
-        <div className="container" style={{ textAlign: 'center', paddingTop: 120 }}>
+        <div className="container dash-loading">
           <div style={{ fontSize: 48, marginBottom: 16 }}>⚙️</div>
           <h2>{isAr ? 'Firebase لسه مش مربوطة' : 'Firebase not connected'}</h2>
           <p style={{ color: 'var(--muted)', margin: '12px 0 28px' }}>
@@ -309,9 +309,7 @@ export default function Dashboard() {
                     <img
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}&format=svg&color=0c1830`}
                       alt="QR Code"
-                      width={180}
-                      height={180}
-                      style={{ borderRadius: 12 }}
+                      style={{ borderRadius: 12, width: '100%', height: 'auto' }}
                     />
                   </div>
                   <div className="nfc-qr-info">
