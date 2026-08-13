@@ -22,7 +22,13 @@ export default function Navbar() {
   const userMenuRef = useRef(null)
   const nav = useNavigate()
 
-  const close = () => { setMobileOpen(false); setUserMenuOpen(false) }
+  const close = () => { setMobileOpen(false); setUserMenuOpen(false); document.body.style.overflow = '' }
+  const toggleMobile = () => {
+    const next = !mobileOpen
+    setMobileOpen(next)
+    document.body.style.overflow = next ? 'hidden' : ''
+    setUserMenuOpen(false)
+  }
   const go = (p) => { nav(p); close() }
 
   useEffect(() => {
@@ -107,25 +113,33 @@ export default function Navbar() {
             </Link>
           )}
 
-          <button className="topbar-toggle" aria-label="menu" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="topbar-toggle" aria-label="menu" onClick={toggleMobile}>
             {mobileOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
       </div>
 
-      {mobileOpen && (
-        <div className="mobile-menu">
-          {navLinks.map((l) => <button key={l.to} className="mi" onClick={() => go(l.to)}>{l.l}</button>)}
-          <button className="mi" onClick={() => go('/store')}>
-            <IconCreditCard /> {isAr ? 'السلة' : 'Cart'}{cartCount > 0 ? ` (${cartCount})` : ''}
+      <div className={`mobile-overlay ${mobileOpen ? 'open' : ''}`} onClick={close} />
+
+      <div className={`mobile-menu ${mobileOpen ? 'open' : ''}`}>
+        <div className="mobile-menu-header">
+          <span>{isAr ? 'القائمة' : 'Menu'}</span>
+          <button className="mobile-menu-close" onClick={close} aria-label="close">
+            <IconClose />
           </button>
-          {user && isAdmin && <button className="mi" onClick={() => go('/admin')}><IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin'}</button>}
-          <button className="mi" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}><IconGlobe /> {isAr ? 'English' : 'العربية'}</button>
-          {user
-            ? <button className="mi mi-auth" onClick={logout}>{isAr ? 'تسجيل الخروج' : 'Sign out'}</button>
-            : <button className="mi mi-auth" onClick={() => go('/account')}>{isAr ? 'تسجيل الدخول' : 'Sign in'}</button>}
         </div>
-      )}
+        {navLinks.map((l) => <button key={l.to} className="mi" onClick={() => go(l.to)}>{l.l}</button>)}
+        <button className="mi" onClick={() => go('/store')}>
+          <IconCreditCard /> {isAr ? 'السلة' : 'Cart'}{cartCount > 0 ? ` (${cartCount})` : ''}
+        </button>
+        {user && isAdmin && <button className="mi" onClick={() => go('/admin')}><IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin'}</button>}
+        <button className="mi" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}><IconGlobe /> {isAr ? 'English' : 'العربية'}</button>
+        <div style={{ flex: 1 }} />
+        {user
+          ? <button className="mi mi-auth" onClick={logout}>{isAr ? 'تسجيل الخروج' : 'Sign out'}</button>
+          : <button className="mi mi-auth" onClick={() => go('/account')}>{isAr ? 'تسجيل الدخول' : 'Sign in'}</button>}
+        <div className="mobile-menu-footer">Lamsa NFC © 2026</div>
+      </div>
     </header>
   )
 }

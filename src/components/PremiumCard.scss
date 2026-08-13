@@ -1,0 +1,226 @@
+$gold-primary: #d4af37;
+$gold-light: #f3e5ab;
+$gold-dark: #aa7c11;
+$gold-gradient: linear-gradient(135deg, $gold-light 0%, $gold-primary 50%, $gold-dark 100%);
+$bg-dark: #0a0a0c;
+$bg-black: #030304;
+
+.premium-card-container {
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1.586 / 1;
+  perspective: 1200px;
+  cursor: pointer;
+  margin: 0 auto;
+
+  .premium-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform-style: preserve-3d;
+
+    &.flipped {
+      transform: rotateY(180deg);
+    }
+  }
+
+  .premium-card-front,
+  .premium-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    box-shadow: 
+      0 20px 40px rgba(0, 0, 0, 0.6), 
+      inset 0 0 0 1px rgba(212, 175, 55, 0.4);
+    overflow: hidden;
+    background-color: $bg-dark;
+    background-image: 
+      radial-gradient(circle at 80% 120%, rgba(212, 175, 55, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 20% -20%, rgba(212, 175, 55, 0.1) 0%, transparent 40%),
+      linear-gradient(135deg, $bg-dark 0%, $bg-black 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    
+    // Texture
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
+
+  .premium-card-back {
+    transform: rotateY(180deg);
+    justify-content: center;
+    align-items: center;
+  }
+
+  // Elegant gold lines using SVG data uri as background or radial gradients
+  .pc-lines {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: 
+      radial-gradient(circle at 110% 110%, transparent 55%, rgba(212, 175, 55, 0.4) 55.5%, transparent 56%),
+      radial-gradient(circle at 110% 110%, transparent 60%, rgba(212, 175, 55, 0.2) 60.5%, transparent 61%),
+      radial-gradient(circle at 110% 110%, transparent 65%, rgba(212, 175, 55, 0.6) 65.5%, transparent 66%),
+      radial-gradient(circle at -10% -10%, transparent 40%, rgba(212, 175, 55, 0.3) 40.5%, transparent 41%),
+      radial-gradient(circle at -10% -10%, transparent 45%, rgba(212, 175, 55, 0.5) 45.5%, transparent 46%);
+    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.5));
+  }
+
+  // Text that looks like stamped gold
+  @mixin gold-text {
+    background: $gold-gradient;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+
+  .pc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 24px;
+    position: relative;
+    z-index: 2;
+
+    .pc-logo {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      
+      .pc-lamsa-text {
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 1.8rem;
+        letter-spacing: -0.5px;
+        color: #fff;
+      }
+      
+      .pc-nfc-wave {
+        width: 24px;
+        height: 24px;
+        color: $gold-light;
+        margin-top: -12px;
+        margin-left: 2px;
+        filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.8));
+      }
+    }
+
+    .pc-title {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+      @include gold-text;
+    }
+  }
+
+  .pc-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+    padding: 24px;
+    position: relative;
+    z-index: 2;
+
+    .pc-qr-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+
+      .pc-qr-container {
+        padding: 2px;
+        background: $gold-gradient;
+        border-radius: 9px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+
+        .pc-qr {
+          width: 60px;
+          height: 60px;
+          background: white;
+          border-radius: 7px;
+          padding: 6px;
+          color: black;
+        }
+      }
+
+      .pc-link {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        @include gold-text;
+      }
+    }
+  }
+
+  .pc-back-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    margin-top: -20px;
+
+    .pc-lamsa-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      @include gold-text;
+    }
+
+    .pc-nfc-wave {
+      width: 36px;
+      height: 36px;
+      color: $gold-light;
+      margin-top: -24px;
+      filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.6));
+    }
+  }
+
+  .pc-back-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    z-index: 2;
+
+    .pc-back-link {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      @include gold-text;
+    }
+
+    .pc-back-icon {
+      width: 32px;
+      height: 32px;
+      color: $gold-primary;
+      filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.5));
+    }
+  }
+
+  @media (max-width: 400px) {
+    .pc-header, .pc-footer, .pc-back-footer {
+      padding: 16px;
+    }
+    .pc-qr {
+      width: 50px !important;
+      height: 50px !important;
+    }
+  }
+}

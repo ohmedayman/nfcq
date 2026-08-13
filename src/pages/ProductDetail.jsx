@@ -4,7 +4,8 @@ import { useLang } from '../context/LanguageContext'
 import { PRODUCTS, CURRENCY } from '../data/content'
 import Reveal from '../components/Reveal'
 import { NfcIcon, IconShield, IconRefresh, IconCheck, IconPlus, IconMinus } from '../components/icons'
-
+import StandardCard from '../components/StandardCard'
+import PremiumCard from '../components/PremiumCard'
 function getCart() {
   try { return JSON.parse(localStorage.getItem('lamsa_cart') || '{}') } catch { return {} }
 }
@@ -89,7 +90,13 @@ export default function ProductDetail() {
             <div className="pd-gallery">
               {/* Main Image / GIF */}
               <div className="pd-main-img" style={{ background: product.color }}>
-                <img src={`/img/${product.gallery[activeImg]}`} alt={product.nameEn} />
+                {product.id === 'classic' && activeImg === 0 ? (
+                  <StandardCard />
+                ) : product.id === 'premium' && activeImg === 0 ? (
+                  <PremiumCard />
+                ) : (
+                  <img src={`/img/${product.gallery[activeImg]}`} alt={product.nameEn} />
+                )}
                 {product.popular && <span className="pd-badge">{ar ? 'الأكثر مبيعًا' : 'Best Seller'}</span>}
                 {product.originalPrice && <span className="pd-discount-badge">-50%</span>}
               </div>

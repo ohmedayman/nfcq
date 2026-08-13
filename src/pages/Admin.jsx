@@ -1,19 +1,25 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
 import { listOrders, updateOrderStatus, listProfiles, listProducts, setProductActive } from '../lib/firebase'
 import { PRODUCTS } from '../data/content'
 import { toast } from '../components/Toast'
-import {
-  IconZap, IconStore, IconUser, IconCreditCard, IconShield, IconRefresh, IconHome,
-} from '../components/icons'
+import { IconRefresh } from '../components/icons'
 
 const STATUSES = ['pending', 'processing', 'shipped', 'done', 'cancelled']
 const TIME_FILTERS = ['today', 'week', 'month', 'all']
 
+const STATUS_COLORS = {
+  pending: { bg: '#fffbeb', text: '#b45309', dot: '#f59e0b' },
+  processing: { bg: '#eff6ff', text: '#1d4ed8', dot: '#3b82f6' },
+  shipped: { bg: '#f5f3ff', text: '#6d28d9', dot: '#8b5cf6' },
+  done: { bg: '#ecfdf5', text: '#047857', dot: '#10b981' },
+  cancelled: { bg: '#fef2f2', text: '#b91c1c', dot: '#ef4444' },
+}
+
 export default function Admin() {
-  const { user, isAdmin, loading } = useAuth()
+  const { user, isAdmin, loading, logout } = useAuth()
   const { lang } = useLang()
   const isAr = lang === 'ar'
   const nav = useNavigate()
@@ -25,6 +31,7 @@ export default function Admin() {
   const [boot, setBoot] = useState(true)
   const [timeFilter, setTimeFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const cur = isAr ? 'ج.م' : 'EGP'
 
@@ -81,8 +88,8 @@ export default function Admin() {
     toast(isAr ? 'تم تصدير الطلبات ✓' : 'Orders exported ✓')
   }
 
-  if (loading) return <Centered t={isAr ? 'جاري التحميل…' : 'Loading…'} />
-  if (!user || !isAdmin) return <Centered t={isAr ? 'هذه الصفحة للمشرفين فقط' : 'Admin access only'} />
+  if (loading) return <AdminLoading />
+  if (!user || !isAdmin) return <AdminLoading />
 
   const filteredOrders = useMemo(() => {
     const now = Date.now()
@@ -114,10 +121,10 @@ export default function Admin() {
   const productCount = products.filter((p) => p.active !== false).length
 
   const tabs = [
-    { id: 'overview', icon: <IconZap />, label: isAr ? 'نظرة عامة' : 'Overview' },
-    { id: 'orders', icon: <IconStore />, label: isAr ? 'الطلبات' : 'Orders', badge: filteredOrders.length },
-    { id: 'users', icon: <IconUser />, label: isAr ? 'المستخدمون' : 'Users', badge: profiles.length },
-    { id: 'products', icon: <IconCreditCard />, label: isAr ? 'المنتجات' : 'Products' },
+    { id: 'overview', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>, label: isAr ? 'نظرة عامة' : 'Overview' },
+    { id: 'orders', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>, label: isAr ? 'الطلبات' : 'Orders', badge: filteredOrders.length },
+    { id: 'users', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>, label: isAr ? 'المستخدمون' : 'Users', badge: profiles.length },
+    { id: 'products', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>, label: isAr ? 'المنتجات' : 'Products' },
   ]
 
   const i18n = (s) => ({
@@ -129,75 +136,136 @@ export default function Admin() {
   }[s] || s)
 
   return (
-    <section className="section dash-section">
-      <div className="container">
-        <div className="dash-header">
-          <div>
-            <h2 className="dash-title"><IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin Panel'}</h2>
-            <p className="dash-sub">{isAr ? 'إدارة الطلبات والمستخدمين والمنتجات' : 'Manage orders, users, and products'}</p>
+    <div className="adm">
+      <aside className={`adm-sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="adm-sidebar-header">
+          <Link to="/" className="adm-logo">
+            <div className="adm-logo-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <div className="adm-logo-text-wrap">
+              <span className="adm-logo-text">Lamsa</span>
+              <span className="adm-logo-sub">{isAr ? 'لوحة التحكم' : 'Admin Panel'}</span>
+            </div>
+          </Link>
+          <button className="adm-sidebar-close" onClick={() => setSidebarOpen(false)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <nav className="adm-nav">
+          <div className="adm-nav-section">{isAr ? 'القائمة الرئيسية' : 'Main Menu'}</div>
+          {tabs.map((t) => (
+            <button key={t.id} className={`adm-nav-item ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setSidebarOpen(false) }}>
+              <span className="adm-nav-icon">{t.icon}</span>
+              <span className="adm-nav-label">{t.label}</span>
+              {t.badge != null && <span className="adm-nav-badge">{t.badge}</span>}
+            </button>
+          ))}
+          <div className="adm-nav-section" style={{ marginTop: 24 }}>{isAr ? 'روابط سريعة' : 'Quick Links'}</div>
+          <Link to="/dashboard" className="adm-nav-item" onClick={() => setSidebarOpen(false)}>
+            <span className="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            <span className="adm-nav-label">{isAr ? 'لوحة التحكم' : 'Dashboard'}</span>
+          </Link>
+          <Link to="/" className="adm-nav-item" onClick={() => setSidebarOpen(false)}>
+            <span className="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></span>
+            <span className="adm-nav-label">{isAr ? 'الموقع' : 'Website'}</span>
+          </Link>
+        </nav>
+
+        <div className="adm-sidebar-footer">
+          <div className="adm-user-info">
+            <div className="adm-user-avatar">
+              {(user?.email || 'A').charAt(0).toUpperCase()}
+            </div>
+            <div className="adm-user-meta">
+              <div className="adm-user-name">{isAr ? 'المدير' : 'Admin'}</div>
+              <div className="adm-user-email">{user?.email || ''}</div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-ghost btn-sm" onClick={loadAll}>
+          <button className="adm-logout-btn" onClick={() => { logout(); nav('/') }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span>{isAr ? 'تسجيل الخروج' : 'Sign Out'}</span>
+          </button>
+        </div>
+      </aside>
+
+      <main className="adm-main">
+        <header className="adm-topbar">
+          <button className="adm-hamburger" onClick={() => setSidebarOpen(true)}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div className="adm-topbar-left">
+            <h1 className="adm-page-title">{tabs.find(t => t.id === tab)?.label}</h1>
+          </div>
+          <div className="adm-topbar-right">
+            <button className="adm-topbar-btn" onClick={loadAll}>
               <IconRefresh /> {isAr ? 'تحديث' : 'Refresh'}
             </button>
             {tab === 'orders' && (
-              <button className="btn btn-primary btn-sm" onClick={exportOrders}>
-                📥 {isAr ? 'تصدير CSV' : 'Export CSV'}
+              <button className="adm-topbar-btn adm-topbar-btn-primary" onClick={exportOrders}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                {isAr ? 'تصدير CSV' : 'Export CSV'}
               </button>
             )}
           </div>
-        </div>
+        </header>
 
-        {/* Time filter */}
-        <div className="admin-time-filter">
-          {TIME_FILTERS.map((f) => (
-            <button key={f} className={`admin-time-btn ${timeFilter === f ? 'on' : ''}`} onClick={() => setTimeFilter(f)}>
-              {f === 'today' ? (isAr ? 'اليوم' : 'Today') : f === 'week' ? (isAr ? 'هذا الأسبوع' : 'This Week') : f === 'month' ? (isAr ? 'هذا الشهر' : 'This Month') : (isAr ? 'الكل' : 'All Time')}
-            </button>
-          ))}
-        </div>
-
-        {/* Search */}
-        {tab === 'orders' && (
-          <div className="admin-search">
-            <input
-              type="text"
-              placeholder={isAr ? 'بحث بالاسم، الهاتف، الإيميل، أو رقم الطلب…' : 'Search by name, phone, email, or order ID…'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && <button className="admin-search-clear" onClick={() => setSearchQuery('')}>✕</button>}
+        <div className="adm-content">
+          <div className="adm-time-filter">
+            {TIME_FILTERS.map((f) => (
+              <button key={f} className={`adm-time-btn ${timeFilter === f ? 'on' : ''}`} onClick={() => setTimeFilter(f)}>
+                {f === 'today' ? (isAr ? 'اليوم' : 'Today') : f === 'week' ? (isAr ? 'هذا الأسبوع' : 'This Week') : f === 'month' ? (isAr ? 'هذا الشهر' : 'This Month') : (isAr ? 'الكل' : 'All Time')}
+              </button>
+            ))}
           </div>
-        )}
 
-        <div className="dash-tabs">
-          {tabs.map((t) => (
-            <button key={t.id} className={`dash-tab ${tab === t.id ? 'on' : ''}`} onClick={() => setTab(t.id)}>
-              {t.icon} <span>{t.label}</span>
-              {t.badge != null && <span className="tab-badge">{t.badge}</span>}
-            </button>
-          ))}
-        </div>
+          {tab === 'orders' && (
+            <div className="adm-search">
+              <svg className="adm-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                type="text"
+                placeholder={isAr ? 'بحث بالاسم، الهاتف، الإيميل، أو رقم الطلب…' : 'Search by name, phone, email, or order ID…'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && <button className="adm-search-clear" onClick={() => setSearchQuery('')}>✕</button>}
+            </div>
+          )}
 
-        <div className="dash-content" style={{ gridTemplateColumns: '1fr' }}>
-          <div className="dash-main">
-            {boot ? <Centered t={isAr ? 'جاري تحميل البيانات…' : 'Loading data…'} />
-              : tab === 'overview' ? <Overview orders={filteredOrders} total={revenue} pending={pending} processing={processing} shipped={shipped} completed={completed} cancelled={cancelled} users={profiles.length} productCount={productCount} cur={cur} isAr={isAr} />
-              : tab === 'orders' ? <Orders orders={filteredOrders} change={setStatus} i18n={i18n} cur={cur} isAr={isAr} />
-              : tab === 'users' ? <Users profiles={profiles} isAr={isAr} />
-              : <ProductsPanel products={products} toggle={toggleProduct} isAr={isAr} />}
-          </div>
+          {boot ? (
+            <div className="adm-loading">
+              <div className="nfc-loader" />
+              <p>{isAr ? 'جاري تحميل البيانات…' : 'Loading data…'}</p>
+            </div>
+          ) : tab === 'overview' ? (
+            <AdminOverview orders={filteredOrders} total={revenue} pending={pending} processing={processing} shipped={shipped} completed={completed} cancelled={cancelled} users={profiles.length} productCount={productCount} cur={cur} isAr={isAr} />
+          ) : tab === 'orders' ? (
+            <AdminOrders orders={filteredOrders} change={setStatus} i18n={i18n} cur={cur} isAr={isAr} />
+          ) : tab === 'users' ? (
+            <AdminUsers profiles={profiles} isAr={isAr} />
+          ) : (
+            <AdminProducts products={products} toggle={toggleProduct} isAr={isAr} />
+          )}
         </div>
-      </div>
-    </section>
+      </main>
+
+      {sidebarOpen && <div className="adm-overlay" onClick={() => setSidebarOpen(false)} />}
+    </div>
   )
 }
 
-function Centered({ t }) {
-  return <section className="section"><div className="container" style={{ textAlign: 'center', color: 'var(--muted)' }}>{t}</div></section>
+function AdminLoading() {
+  return (
+    <div className="adm">
+      <div className="adm-main" style={{ display: 'grid', placeItems: 'center' }}>
+        <div className="nfc-loader" />
+      </div>
+    </div>
+  )
 }
 
-function Overview({ orders, total, pending, processing, shipped, completed, cancelled, users, productCount, cur, isAr }) {
+function AdminOverview({ orders, total, pending, processing, shipped, completed, cancelled, users, productCount, cur, isAr }) {
   const recent = orders.slice(0, 5)
 
   const barData = useMemo(() => {
@@ -220,94 +288,120 @@ function Overview({ orders, total, pending, processing, shipped, completed, canc
   }, [orders, isAr])
 
   const maxRevenue = Math.max(...barData.map((d) => d.revenue), 1)
+  const hasData = orders.length > 0
 
   return (
-    <div>
-      {/* Stats Grid */}
-      <div className="admin-stats">
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(24,84,232,0.1)', color: 'var(--cobalt)' }}>💰</div>
-          <div className="num">{currency(total)}</div>
-          <div className="lbl">{cur} {isAr ? 'إجمالي الإيرادات' : 'Total Revenue'}</div>
+    <div className="adm-overview">
+      <div className="adm-stats">
+        <div className="adm-stat-card adm-stat-green">
+          <div className="adm-stat-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+          <div className="adm-stat-body">
+            <div className="adm-stat-num">{currency(total)}</div>
+            <div className="adm-stat-label">{isAr ? 'إجمالي الإيرادات' : 'Total Revenue'}</div>
+          </div>
+          <div className="adm-stat-sparkline" />
         </div>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(21,216,242,0.1)', color: 'var(--cyan)' }}>📦</div>
-          <div className="num">{orders.length}</div>
-          <div className="lbl">{isAr ? 'الطلبات' : 'Orders'}</div>
+        <div className="adm-stat-card adm-stat-blue">
+          <div className="adm-stat-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          </div>
+          <div className="adm-stat-body">
+            <div className="adm-stat-num">{orders.length}</div>
+            <div className="adm-stat-label">{isAr ? 'إجمالي الطلبات' : 'Total Orders'}</div>
+          </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(255,209,102,0.12)', color: '#d4a017' }}>⏳</div>
-          <div className="num">{pending}</div>
-          <div className="lbl">{isAr ? 'قيد الانتظار' : 'Pending'}</div>
+        <div className="adm-stat-card adm-stat-amber">
+          <div className="adm-stat-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div className="adm-stat-body">
+            <div className="adm-stat-num">{pending}</div>
+            <div className="adm-stat-label">{isAr ? 'قيد الانتظار' : 'Pending'}</div>
+          </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>⚙️</div>
-          <div className="num">{processing}</div>
-          <div className="lbl">{isAr ? 'قيد المعالجة' : 'Processing'}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>🚚</div>
-          <div className="num">{shipped}</div>
-          <div className="lbl">{isAr ? 'تم الشحن' : 'Shipped'}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(76,217,100,0.1)', color: '#2ea043' }}>✅</div>
-          <div className="num">{completed}</div>
-          <div className="lbl">{isAr ? 'مكتمل' : 'Completed'}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>✕</div>
-          <div className="num">{cancelled}</div>
-          <div className="lbl">{isAr ? 'ملغي' : 'Cancelled'}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed' }}>👥</div>
-          <div className="num">{users}</div>
-          <div className="lbl">{isAr ? 'المستخدمون' : 'Users'}</div>
+        <div className="adm-stat-card adm-stat-purple">
+          <div className="adm-stat-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div className="adm-stat-body">
+            <div className="adm-stat-num">{users}</div>
+            <div className="adm-stat-label">{isAr ? 'المستخدمون' : 'Users'}</div>
+          </div>
         </div>
       </div>
 
-      {/* Revenue chart */}
-      <div className="dash-card">
-        <div className="dash-card-header">
-          <h3>{isAr ? 'الإيرادات هذا الأسبوع' : 'Revenue this week'}</h3>
+      <div className="adm-card adm-chart-card">
+        <div className="adm-card-header">
+          <div>
+            <h3>{isAr ? 'الإيرادات هذا الأسبوع' : 'Revenue This Week'}</h3>
+            <p className="adm-card-subtitle">{isAr ? 'آخر 7 أيام' : 'Last 7 days'}</p>
+          </div>
         </div>
-        <div className="admin-chart">
+        {!hasData ? (
+          <div className="adm-empty-chart">
+            <div className="adm-empty-chart-bars">
+              {[0.3, 0.5, 0.2, 0.6, 0.4, 0.7, 0.35].map((h, i) => (
+                <div key={i} className="adm-empty-bar-col">
+                  <div className="adm-empty-bar-track">
+                    <div className="adm-empty-bar" style={{ height: `${h * 100}%` }} />
+                  </div>
+                  <div className="adm-empty-bar-label">{['سبت', 'أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة'][i]}</div>
+                </div>
+              ))}
+            </div>
+            <div className="adm-empty-overlay">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              <p>{isAr ? 'ستظهر البيانات هنا بعد أول طلب' : 'Data will appear after the first order'}</p>
+            </div>
+          </div>
+        ) : (
+        <div className="adm-chart">
           {barData.map((d, i) => (
-            <div key={i} className="admin-bar-col">
-              <div className="admin-bar-val">{d.revenue > 0 ? currency(d.revenue) : ''}</div>
-              <div className="admin-bar-track">
-                <div className="admin-bar" style={{ height: `${(d.revenue / maxRevenue) * 100}%` }} />
+            <div key={i} className="adm-bar-col">
+              <div className="adm-bar-val">{d.revenue > 0 ? currency(d.revenue) : ''}</div>
+              <div className="adm-bar-track">
+                <div className="adm-bar" style={{ height: `${Math.max((d.revenue / maxRevenue) * 100, d.count > 0 ? 8 : 2)}%` }} />
               </div>
-              <div className="admin-bar-label">{d.label}</div>
-              <div className="admin-bar-count">{d.count} {isAr ? 'طلب' : 'orders'}</div>
+              <div className="adm-bar-label">{d.label}</div>
+              <div className="adm-bar-count">{d.count > 0 ? d.count : ''}</div>
             </div>
           ))}
         </div>
+        )}
       </div>
 
-      {/* Recent orders + Quick stats */}
-      <div className="admin-grid-2">
-        <div className="dash-card">
-          <div className="dash-card-header">
-            <h3>{isAr ? 'أحدث الطلبات' : 'Recent orders'}</h3>
+      <div className="adm-grid-2">
+        <div className="adm-card">
+          <div className="adm-card-header">
+            <h3>{isAr ? 'أحدث الطلبات' : 'Recent Orders'}</h3>
+            <Link to="#" className="adm-card-link" onClick={(e) => { e.preventDefault() }}>{isAr ? 'عرض الكل' : 'View All'}</Link>
           </div>
-          {recent.length === 0 ? (
-            <div className="empty">{isAr ? 'لا طلبات بعد.' : 'No orders yet.'}</div>
+          {!hasData ? (
+            <div className="adm-empty-state">
+              <div className="adm-empty-state-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+              </div>
+              <p className="adm-empty-title">{isAr ? 'لا طلبات بعد' : 'No orders yet'}</p>
+              <p className="adm-empty-desc">{isAr ? 'ستظهر الطلبات هنا automáticamente' : 'Orders will appear here automatically'}</p>
+            </div>
           ) : (
-            <div className="admin-list">
+            <div className="adm-list">
               {recent.map((o) => (
-                <div key={o.id} className="admin-list-item">
-                  <div className="admin-list-left">
-                    <div className="admin-list-avatar">{(o.customer?.name || '?').charAt(0).toUpperCase()}</div>
-                    <div>
-                      <div className="admin-list-name">{o.customer?.name || '—'}</div>
-                      <div className="admin-list-sub">#{o.id.slice(0, 6)}</div>
+                <div key={o.id} className="adm-list-item">
+                  <div className="adm-list-left">
+                    <div className="adm-list-avatar" style={{ background: STATUS_COLORS[o.status]?.bg || '#f3f4f6', color: STATUS_COLORS[o.status]?.text || '#6b7280' }}>
+                      {(o.customer?.name || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="adm-list-info">
+                      <div className="adm-list-name">{o.customer?.name || '—'}</div>
+                      <div className="adm-list-sub">#{o.id.slice(0, 6)}</div>
                     </div>
                   </div>
-                  <div className="admin-list-right">
-                    <div className="admin-list-amount">{currency(o.total)} {cur}</div>
-                    <StatusBadge s={o.status} />
+                  <div className="adm-list-right">
+                    <div className="adm-list-amount">{currency(o.total)} {cur}</div>
+                    <StatusBadge s={o.status} isAr={isAr} />
                   </div>
                 </div>
               ))}
@@ -315,39 +409,87 @@ function Overview({ orders, total, pending, processing, shipped, completed, canc
           )}
         </div>
 
-        <div className="dash-card">
-          <div className="dash-card-header">
-            <h3>{isAr ? 'ملخص سريع' : 'Quick summary'}</h3>
+        <div className="adm-card">
+          <div className="adm-card-header">
+            <h3>{isAr ? 'ملخص سريع' : 'Quick Summary'}</h3>
           </div>
-          <div className="admin-summary">
-            <div className="admin-summary-row">
-              <span>{isAr ? 'معدل الإتمام' : 'Completion rate'}</span>
-              <span className="admin-summary-val">{orders.length > 0 ? Math.round((completed / orders.length) * 100) : 0}%</span>
+          {!hasData ? (
+            <div className="adm-empty-state">
+              <div className="adm-empty-state-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </div>
+              <p className="adm-empty-title">{isAr ? 'لا توجد بيانات' : 'No data yet'}</p>
+              <p className="adm-empty-desc">{isAr ? 'ستظهر الإحصائيات هنا' : 'Stats will show here'}</p>
             </div>
-            <div className="admin-summary-row">
-              <span>{isAr ? 'معدل الإلغاء' : 'Cancellation rate'}</span>
-              <span className="admin-summary-val">{orders.length > 0 ? Math.round((cancelled / orders.length) * 100) : 0}%</span>
+          ) : (
+          <div className="adm-summary">
+            <div className="adm-summary-row">
+              <div className="adm-summary-left">
+                <div className="adm-summary-dot" style={{ background: '#10b981' }} />
+                <span>{isAr ? 'معدل الإتمام' : 'Completion Rate'}</span>
+              </div>
+              <div className="adm-summary-right">
+                <div className="adm-summary-bar">
+                  <div className="adm-summary-fill" style={{ width: `${(completed / orders.length) * 100}%`, background: 'linear-gradient(90deg, #10b981, #34d399)' }} />
+                </div>
+                <span className="adm-summary-val" style={{ color: '#10b981' }}>{Math.round((completed / orders.length) * 100)}%</span>
+              </div>
             </div>
-            <div className="admin-summary-row">
-              <span>{isAr ? 'متوسط الطلب' : 'Average order'}</span>
-              <span className="admin-summary-val">{orders.length > 0 ? currency(total / orders.length) : 0} {cur}</span>
+            <div className="adm-summary-row">
+              <div className="adm-summary-left">
+                <div className="adm-summary-dot" style={{ background: '#ef4444' }} />
+                <span>{isAr ? 'معدل الإلغاء' : 'Cancellation Rate'}</span>
+              </div>
+              <div className="adm-summary-right">
+                <div className="adm-summary-bar">
+                  <div className="adm-summary-fill" style={{ width: `${(cancelled / orders.length) * 100}%`, background: 'linear-gradient(90deg, #ef4444, #f87171)' }} />
+                </div>
+                <span className="adm-summary-val" style={{ color: '#ef4444' }}>{Math.round((cancelled / orders.length) * 100)}%</span>
+              </div>
             </div>
-            <div className="admin-summary-row">
-              <span>{isAr ? 'المنتجات النشطة' : 'Active products'}</span>
-              <span className="admin-summary-val">{productCount}</span>
-            </div>
-            <div className="admin-summary-row">
-              <span>{isAr ? 'إجمالي المستخدمين' : 'Total users'}</span>
-              <span className="admin-summary-val">{users}</span>
+            <div className="adm-summary-divider" />
+            <div className="adm-summary-stats">
+              <div className="adm-summary-stat">
+                <div className="adm-summary-stat-val">{orders.length > 0 ? currency(total / orders.length) : 0}</div>
+                <div className="adm-summary-stat-label">{isAr ? 'متوسط الطلب' : 'Avg Order'}</div>
+              </div>
+              <div className="adm-summary-stat">
+                <div className="adm-summary-stat-val">{productCount}</div>
+                <div className="adm-summary-stat-label">{isAr ? 'منتجات نشطة' : 'Active Products'}</div>
+              </div>
             </div>
           </div>
+          )}
+        </div>
+      </div>
+
+      <div className="adm-card adm-status-overview-card">
+        <div className="adm-card-header">
+          <h3>{isAr ? 'حالة الطلبات' : 'Order Status'}</h3>
+        </div>
+        <div className="adm-status-grid">
+          {[
+            { label: isAr ? 'قيد الانتظار' : 'Pending', count: pending, color: '#f59e0b', bg: '#fffbeb' },
+            { label: isAr ? 'قيد المعالجة' : 'Processing', count: processing, color: '#3b82f6', bg: '#eff6ff' },
+            { label: isAr ? 'تم الشحن' : 'Shipped', count: shipped, color: '#8b5cf6', bg: '#f5f3ff' },
+            { label: isAr ? 'مكتمل' : 'Completed', count: completed, color: '#10b981', bg: '#ecfdf5' },
+            { label: isAr ? 'ملغي' : 'Cancelled', count: cancelled, color: '#ef4444', bg: '#fef2f2' },
+          ].map((s, i) => (
+            <div key={i} className="adm-status-item" style={{ '--accent': s.color }}>
+              <div className="adm-status-dot" style={{ background: s.color }} />
+              <div className="adm-status-info">
+                <div className="adm-status-count">{s.count}</div>
+                <div className="adm-status-label">{s.label}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   )
 }
 
-function Orders({ orders, change, i18n, cur, isAr }) {
+function AdminOrders({ orders, change, i18n, cur, isAr }) {
   const [open, setOpen] = useState(null)
   const [statusFilter, setStatusFilter] = useState('all')
 
@@ -357,30 +499,48 @@ function Orders({ orders, change, i18n, cur, isAr }) {
   }, [orders, statusFilter])
 
   return (
-    <div>
-      <div className="dash-card">
-        <div className="dash-card-header">
-          <h3>{isAr ? 'الطلبات' : 'Orders'} <span style={{ fontSize: '0.9rem', color: 'var(--muted)', fontWeight: 600 }}>({filtered.length})</span></h3>
-          <div className="admin-filter-pills">
-            <button className={`admin-pill ${statusFilter === 'all' ? 'on' : ''}`} onClick={() => setStatusFilter('all')}>{isAr ? 'الكل' : 'All'}</button>
-            {STATUSES.map((s) => (
-              <button key={s} className={`admin-pill ${statusFilter === s ? 'on' : ''}`} onClick={() => setStatusFilter(s)}>{i18n(s)}</button>
-            ))}
-          </div>
+    <div className="adm-card">
+      <div className="adm-card-header">
+        <div>
+          <h3>{isAr ? 'الطلبات' : 'Orders'} <span className="adm-count">({filtered.length})</span></h3>
         </div>
-        {filtered.length === 0 ? <div className="empty">{isAr ? 'لا توجد طلبات.' : 'No orders.'}</div> : (
-          <div className="admin-table">
-            <table>
-              <thead><tr><th>#</th><th>{isAr ? 'العميل' : 'Customer'}</th><th>{isAr ? 'المنتجات' : 'Items'}</th><th>{isAr ? 'الإجمالي' : 'Total'}</th><th>{isAr ? 'التاريخ' : 'Date'}</th><th>{isAr ? 'الحالة' : 'Status'}</th><th></th></tr></thead>
-              <tbody>
-                {filtered.map((o) => (
-                  <OrderRow key={o.id} o={o} open={open === o.id} onToggle={() => setOpen(open === o.id ? null : o.id)} change={change} i18n={i18n} cur={cur} isAr={isAr} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="adm-filter-pills">
+          <button className={`adm-pill ${statusFilter === 'all' ? 'on' : ''}`} onClick={() => setStatusFilter('all')}>{isAr ? 'الكل' : 'All'}</button>
+          {STATUSES.map((s) => (
+            <button key={s} className={`adm-pill ${statusFilter === s ? 'on' : ''}`} onClick={() => setStatusFilter(s)}>{i18n(s)}</button>
+          ))}
+        </div>
       </div>
+      {filtered.length === 0 ? (
+        <div className="adm-empty-state">
+          <div className="adm-empty-state-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          </div>
+          <p className="adm-empty-title">{isAr ? 'لا توجد طلبات' : 'No orders found'}</p>
+          <p className="adm-empty-desc">{isAr ? 'لم يتم العثور على طلبات تطابق البحث' : 'No orders match your search'}</p>
+        </div>
+      ) : (
+        <div className="adm-table-wrap">
+          <table className="adm-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{isAr ? 'العميل' : 'Customer'}</th>
+                <th>{isAr ? 'المنتجات' : 'Items'}</th>
+                <th>{isAr ? 'الإجمالي' : 'Total'}</th>
+                <th>{isAr ? 'التاريخ' : 'Date'}</th>
+                <th>{isAr ? 'الحالة' : 'Status'}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((o) => (
+                <OrderRow key={o.id} o={o} open={open === o.id} onToggle={() => setOpen(open === o.id ? null : o.id)} change={change} i18n={i18n} cur={cur} isAr={isAr} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
@@ -389,58 +549,58 @@ function OrderRow({ o, open, onToggle, change, i18n, cur, isAr }) {
   const date = o.createdAt ? new Date(o.createdAt).toLocaleDateString(isAr ? 'ar' : 'en', { month: 'short', day: 'numeric' }) : '—'
   return (
     <>
-      <tr>
-        <td className="mono">#{o.id.slice(0, 8)}</td>
+      <tr className={open ? 'expanded' : ''}>
+        <td className="adm-mono">#{o.id.slice(0, 8)}</td>
         <td>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div className="admin-list-avatar" style={{ width: 32, height: 32, fontSize: '0.75rem' }}>{(o.customer?.name || '?').charAt(0).toUpperCase()}</div>
+          <div className="adm-order-customer">
+            <div className="adm-list-avatar small" style={{ background: STATUS_COLORS[o.status]?.bg || '#f3f4f6', color: STATUS_COLORS[o.status]?.text || '#6b7280' }}>
+              {(o.customer?.name || '?').charAt(0).toUpperCase()}
+            </div>
             <div>
               <b>{o.customer?.name || '—'}</b>
-              <div className="mono" style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{o.customer?.phone} · {o.email}</div>
+              <div className="adm-order-contact">{o.customer?.phone} · {o.email}</div>
             </div>
           </div>
         </td>
-        <td>{(o.items || []).map((i) => `${i.name} ×${i.qty}`).join(', ') || '—'}</td>
-        <td className="money">{currency(o.total)} {cur}</td>
-        <td style={{ color: 'var(--muted)', fontSize: '0.88rem' }}>{date}</td>
+        <td className="adm-order-items">{(o.items || []).map((i) => `${i.name} ×${i.qty}`).join(', ') || '—'}</td>
+        <td className="adm-money">{currency(o.total)} {cur}</td>
+        <td className="adm-date">{date}</td>
         <td>
-          <select className="status-select" value={o.status || 'pending'} onChange={(e) => change(o.id, e.target.value)}>
+          <select className="adm-status-select" value={o.status || 'pending'} onChange={(e) => change(o.id, e.target.value)}>
             {STATUSES.map((s) => <option key={s} value={s}>{i18n(s)}</option>)}
           </select>
         </td>
-        <td><button className="btn btn-ghost btn-sm" onClick={onToggle}>{open ? (isAr ? 'إغلاق' : 'Close') : (isAr ? 'تفاصيل' : 'Details')}</button></td>
+        <td><button className="adm-expand-btn" onClick={onToggle}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: '0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
+        </button></td>
       </tr>
       {open && (
-        <tr>
-          <td colSpan={7} style={{ background: 'rgba(12,24,48,0.02)' }}>
-            <div style={{ padding: '16px 0', display: 'grid', gap: 10, fontSize: '0.9rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><b>{isAr ? 'الاسم' : 'Name'}:</b> <span style={{ color: 'var(--muted)' }}>{o.customer?.name || '—'}</span></div>
-                <div><b>{isAr ? 'الهاتف' : 'Phone'}:</b> <span style={{ color: 'var(--muted)' }}>{o.customer?.phone || '—'}</span></div>
-                <div><b>{isAr ? 'البريد' : 'Email'}:</b> <span style={{ color: 'var(--muted)' }}>{o.email || '—'}</span></div>
-                <div><b>{isAr ? 'المدينة' : 'City'}:</b> <span style={{ color: 'var(--muted)' }}>{o.customer?.city || '—'}</span></div>
-                <div><b>{isAr ? 'العنوان' : 'Address'}:</b> <span style={{ color: 'var(--muted)' }}>{o.customer?.address || '—'}</span></div>
-                <div><b>UID:</b> <span className="mono" style={{ color: 'var(--muted)' }}>{o.uid}</span></div>
-                <div><b>{isAr ? 'التاريخ' : 'Date'}:</b> <span style={{ color: 'var(--muted)' }}>{o.createdAt ? new Date(o.createdAt).toLocaleString() : '—'}</span></div>
-                <div><b>{isAr ? 'الحالة' : 'Status'}:</b> <StatusBadge s={o.status} /></div>
+        <tr className="adm-detail-row">
+          <td colSpan={7}>
+            <div className="adm-detail">
+              <div className="adm-detail-grid">
+                <div className="adm-detail-field"><span>{isAr ? 'الاسم' : 'Name'}</span><b>{o.customer?.name || '—'}</b></div>
+                <div className="adm-detail-field"><span>{isAr ? 'الهاتف' : 'Phone'}</span><b>{o.customer?.phone || '—'}</b></div>
+                <div className="adm-detail-field"><span>{isAr ? 'البريد' : 'Email'}</span><b>{o.email || '—'}</b></div>
+                <div className="adm-detail-field"><span>{isAr ? 'المدينة' : 'City'}</span><b>{o.customer?.city || '—'}</b></div>
+                <div className="adm-detail-field"><span>{isAr ? 'العنوان' : 'Address'}</span><b>{o.customer?.address || '—'}</b></div>
+                <div className="adm-detail-field"><span>UID</span><b className="adm-mono">{o.uid}</b></div>
               </div>
               {(o.items || []).length > 0 && (
-                <div style={{ marginTop: 8 }}>
-                  <b>{isAr ? 'المنتجات' : 'Items'}:</b>
-                  <div style={{ marginTop: 6, display: 'grid', gap: 4 }}>
-                    {(o.items || []).map((it, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: 12, color: 'var(--muted)', fontSize: '0.88rem' }}>
-                        <span>· {it.name} × {it.qty}</span>
-                        <b className="money">{currency(it.qty * it.price)} {cur}</b>
-                      </div>
-                    ))}
-                  </div>
+                <div className="adm-detail-items">
+                  <span className="adm-detail-items-title">{isAr ? 'المنتجات' : 'Items'}</span>
+                  {(o.items || []).map((it, i) => (
+                    <div key={i} className="adm-detail-item">
+                      <span>· {it.name} × {it.qty}</span>
+                      <b className="adm-money">{currency(it.qty * it.price)} {cur}</b>
+                    </div>
+                  ))}
                 </div>
               )}
               {o.customer?.notes && (
-                <div style={{ marginTop: 8, padding: 12, background: 'rgba(24,84,232,0.04)', borderRadius: 10 }}>
-                  <b>{isAr ? 'ملاحظات' : 'Notes'}:</b>
-                  <p style={{ color: 'var(--muted)', marginTop: 4 }}>{o.customer.notes}</p>
+                <div className="adm-detail-notes">
+                  <span>{isAr ? 'ملاحظات' : 'Notes'}</span>
+                  <p>{o.customer.notes}</p>
                 </div>
               )}
             </div>
@@ -451,7 +611,7 @@ function OrderRow({ o, open, onToggle, change, i18n, cur, isAr }) {
   )
 }
 
-function Users({ profiles, isAr }) {
+function AdminUsers({ profiles, isAr }) {
   const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => {
@@ -464,11 +624,12 @@ function Users({ profiles, isAr }) {
   }, [profiles, search])
 
   return (
-    <div className="dash-card">
-      <div className="dash-card-header">
-        <h3>{isAr ? 'المستخدمون' : 'Users'} <span style={{ fontSize: '0.9rem', color: 'var(--muted)', fontWeight: 600 }}>({filtered.length})</span></h3>
+    <div className="adm-card">
+      <div className="adm-card-header">
+        <h3>{isAr ? 'المستخدمون' : 'Users'} <span className="adm-count">({filtered.length})</span></h3>
       </div>
-      <div className="admin-search" style={{ marginBottom: 16 }}>
+      <div className="adm-search" style={{ marginBottom: 16 }}>
+        <svg className="adm-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input
           type="text"
           placeholder={isAr ? 'بحث بالاسم أو الإيميل…' : 'Search by name or email…'}
@@ -476,20 +637,28 @@ function Users({ profiles, isAr }) {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
-      {filtered.length === 0 ? <div className="empty"><div className="big">👥</div>{isAr ? 'لا مستخدمين بعد.' : 'No users yet.'}</div> : (
-        <div className="admin-list">
+      {filtered.length === 0 ? (
+        <div className="adm-empty-state">
+          <div className="adm-empty-state-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <p className="adm-empty-title">{isAr ? 'لا مستخدمين بعد' : 'No users yet'}</p>
+          <p className="adm-empty-desc">{isAr ? 'سيظهر المستخدمون هنا عند التسجيل' : 'Users will appear here upon registration'}</p>
+        </div>
+      ) : (
+        <div className="adm-list">
           {filtered.map((p) => (
-            <div key={p.id} className="admin-list-item">
-              <div className="admin-list-left">
-                <div className="admin-list-avatar">{(p.name || '?').charAt(0).toUpperCase()}</div>
-                <div>
-                  <div className="admin-list-name">{p.name || '—'}</div>
-                  <div className="admin-list-sub">{p.email || '—'}</div>
+            <div key={p.id} className="adm-list-item">
+              <div className="adm-list-left">
+                <div className="adm-list-avatar">{(p.name || '?').charAt(0).toUpperCase()}</div>
+                <div className="adm-list-info">
+                  <div className="adm-list-name">{p.name || '—'}</div>
+                  <div className="adm-list-sub">{p.email || '—'}</div>
                 </div>
               </div>
-              <div className="admin-list-right">
-                <div className="admin-list-sub">{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}</div>
-                <div className="admin-list-sub mono">{(p.uid || p.id || '').slice(0, 8)}</div>
+              <div className="adm-list-right">
+                <div className="adm-list-sub">{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}</div>
+                <div className="adm-list-sub adm-mono">{(p.uid || p.id || '').slice(0, 8)}</div>
               </div>
             </div>
           ))}
@@ -499,47 +668,50 @@ function Users({ profiles, isAr }) {
   )
 }
 
-function ProductsPanel({ products, toggle, isAr }) {
+function AdminProducts({ products, toggle, isAr }) {
   return (
-    <div>
-      <div className="dash-card">
-        <div className="dash-card-header">
-          <h3>{isAr ? 'المنتجات' : 'Products'}</h3>
-        </div>
-        <div className="admin-product-grid">
-          {products.map((p) => (
-            <div className={`admin-product-card ${p.active === false ? 'disabled' : ''}`} key={p.id}>
-              <div className="admin-product-img" style={{ background: p.color }}>
-                <img src={`/img/${p.img}`} alt={p.nameEn} />
-                {p.popular && <span className="admin-product-badge">{isAr ? 'الأكثر مبيعًا' : 'Popular'}</span>}
-                {p.active === false && <span className="admin-product-disabled">{isAr ? 'متوقف' : 'Disabled'}</span>}
-              </div>
-              <div className="admin-product-body">
-                <h4>{isAr ? p.nameAr : p.nameEn}</h4>
-                <div className="admin-product-price">{p.price} {isAr ? 'ج.م' : 'EGP'}</div>
-                {p.variants && (
-                  <div className="admin-product-variants">
-                    {p.variants.map((v) => (
-                      <span key={v.id} className="admin-variant-chip">{isAr ? v.nameAr : v.nameEn}</span>
-                    ))}
-                  </div>
-                )}
-                <div className="admin-product-actions">
-                  <button className={`btn ${p.active === false ? 'btn-primary' : 'btn-ghost'} btn-sm btn-block`} onClick={() => toggle(p.id, p.active !== false ? false : true)}>
-                    {p.active === false ? (isAr ? 'تفعيل' : 'Enable') : (isAr ? 'إيقاف' : 'Disable')}
-                  </button>
-                </div>
-              </div>
+    <div className="adm-card">
+      <div className="adm-card-header">
+        <h3>{isAr ? 'المنتجات' : 'Products'}</h3>
+      </div>
+      <div className="adm-product-grid">
+        {products.map((p) => (
+          <div className={`adm-product-card ${p.active === false ? 'disabled' : ''}`} key={p.id}>
+            <div className="adm-product-img" style={{ background: p.color }}>
+              <img src={`/img/${p.img}`} alt={p.nameEn} loading="lazy" />
+              {p.popular && <span className="adm-product-badge">{isAr ? 'الأكثر مبيعًا' : 'Popular'}</span>}
+              {p.active === false && <div className="adm-product-overlay">{isAr ? 'متوقف' : 'Disabled'}</div>}
             </div>
-          ))}
-        </div>
+            <div className="adm-product-body">
+              <h4>{isAr ? p.nameAr : p.nameEn}</h4>
+              <div className="adm-product-price">{p.price} {isAr ? 'ج.م' : 'EGP'}</div>
+              {p.variants && (
+                <div className="adm-product-variants">
+                  {p.variants.map((v) => (
+                    <span key={v.id} className="adm-variant-chip">{isAr ? v.nameAr : v.nameEn}</span>
+                  ))}
+                </div>
+              )}
+              <button className={`btn ${p.active === false ? 'btn-primary' : 'btn-ghost'} btn-sm btn-block`} onClick={() => toggle(p.id, p.active !== false ? false : true)}>
+                {p.active === false ? (isAr ? 'تفعيل' : 'Enable') : (isAr ? 'إيقاف' : 'Disable')}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-function StatusBadge({ s }) {
-  return <span className={`status ${s || 'pending'}`}>{s || 'pending'}</span>
+function StatusBadge({ s, isAr }) {
+  const c = STATUS_COLORS[s] || STATUS_COLORS.pending
+  const labels = { pending: isAr ? 'قيد الانتظار' : 'Pending', processing: isAr ? 'قيد المعالجة' : 'Processing', shipped: isAr ? 'تم الشحن' : 'Shipped', done: isAr ? 'مكتمل' : 'Completed', cancelled: isAr ? 'ملغي' : 'Cancelled' }
+  return (
+    <span className="adm-status-badge" style={{ background: c.bg, color: c.text }}>
+      <span className="adm-status-dot" style={{ background: c.dot }} />
+      {labels[s] || s}
+    </span>
+  )
 }
 
 function currency(amount) {

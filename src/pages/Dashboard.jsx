@@ -245,7 +245,7 @@ export default function Dashboard() {
                 </div>
                 {links.length === 0 && (
                   <div className="empty-state">
-                    <div className="empty-icon">🔗</div>
+                    <div className="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
                     <h4>{isAr ? 'لسه مفيش روابط' : 'No links yet'}</h4>
                     <p>{isAr ? 'أضف أول رابط يظهر في صفحة البطاقة بتاعتك.' : 'Add your first link to show on your card page.'}</p>
                     <button className="btn btn-primary" onClick={addLink}><IconPlus /> {isAr ? 'أضف رابط' : 'Add link'}</button>
@@ -435,7 +435,7 @@ function Orders({ orders, loadingOrders, loadOrders, isAr }) {
     <>
       {!touched && !loadingOrders && (
         <div className="empty-state">
-          <div className="empty-icon">📦</div>
+          <div className="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
           <h4>{isAr ? 'طلباتي' : 'My orders'}</h4>
           <p>{isAr ? 'اعرض طلباتك السابقة وتتبع شحنها.' : 'View your past purchases and track shipping.'}</p>
           <button className="btn btn-primary" onClick={loadT}>{isAr ? 'شوف الطلبات' : 'Load orders'}</button>
@@ -444,7 +444,7 @@ function Orders({ orders, loadingOrders, loadOrders, isAr }) {
       {loadingOrders && <div style={{ textAlign: 'center', padding: 30 }}><div className="nfc-loader" /></div>}
       {touched && !loadingOrders && orders.length === 0 && (
         <div className="empty-state">
-          <div className="empty-icon">🛒</div>
+          <div className="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
           <h4>{isAr ? 'لسه مفيش طلبات' : 'No orders yet'}</h4>
           <p>{isAr ? 'ابدأ تتسوق من المتجر.' : 'Start shopping from the store.'}</p>
           <Link to="/store" className="btn btn-primary">{isAr ? 'روح المتجر' : 'Go to store'}</Link>
