@@ -478,16 +478,34 @@ export default function Store() {
               <div className="cart-sidebar-card">
                 <div className="cart-sidebar-title">{isAr ? 'ملخص الطلب' : 'Order summary'}</div>
 
-                {/* Urgency */}
+                {/* Luxury Urgency Card */}
                 {!isDigitalOnly && (
-                  <div className="cart-urgency">
-                    <div className="cart-urgency-icon">🔥</div>
-                    <div className="cart-urgency-text">
-                      <b>{isAr ? 'عرض لفترة محدودة!' : 'Limited time offer!'}</b>
-                      <small>{isAr ? 'خصم إضافي عند الطلب اليوم' : 'Extra discount when you order today'}</small>
+                  <div className="cart-urgency-luxury">
+                    <div className="cul-top">
+                      <span className="cul-badge">🔥 {isAr ? 'خصم 50% مفعل تلقائياً' : '50% Auto Applied'}</span>
+                      <span className="cul-discount">كود: LAMSA</span>
                     </div>
-                    <div className="cart-urgency-timer">
-                      <span>{String(timeLeft.h).padStart(2, '0')}</span>:<span>{String(timeLeft.m).padStart(2, '0')}</span>:<span>{String(timeLeft.s).padStart(2, '0')}</span>
+                    <div className="cul-content">
+                      <div className="cul-info">
+                        <b>{isAr ? 'اغتنم عرض الإطلاق قبل انتهائه' : 'Claim launch deal before expiry'}</b>
+                        <small>{isAr ? 'ينتهي السعر المخفض لطلبك خلال:' : 'Discount expires in:'}</small>
+                      </div>
+                      <div className="cul-timer">
+                        <div className="cul-digit">
+                          <b>{String(timeLeft.h).padStart(2, '0')}</b>
+                          <small>{isAr ? 'ساعة' : 'hr'}</small>
+                        </div>
+                        <span className="cul-sep">:</span>
+                        <div className="cul-digit">
+                          <b>{String(timeLeft.m).padStart(2, '0')}</b>
+                          <small>{isAr ? 'دقيقة' : 'min'}</small>
+                        </div>
+                        <span className="cul-sep">:</span>
+                        <div className="cul-digit">
+                          <b>{String(timeLeft.s).padStart(2, '0')}</b>
+                          <small>{isAr ? 'ثانية' : 'sec'}</small>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
