@@ -3711,6 +3711,17 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   background: #fff;
   color: #1854e8;
 }
+.tab-copy-btn.copied {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6) !important;
+}
+.tab-coupon-code.copied {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6) !important;
+}
 .tab-shop-btn {
   background: #fde047;
   color: #0f172a;

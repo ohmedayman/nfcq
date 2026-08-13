@@ -21,6 +21,7 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(getCartCount)
   const [bannerDismissed, setBannerDismissed] = useState(false)
+  const [copiedCoupon, setCopiedCoupon] = useState(false)
   const userMenuRef = useRef(null)
   const nav = useNavigate()
 
@@ -71,14 +72,40 @@ export default function Navbar() {
 
   const initial = (user?.displayName || user?.email || 'U').charAt(0).toUpperCase()
 
+  function fallbackCopy(text) {
+    try {
+      const el = document.createElement('textarea')
+      el.value = text
+      el.setAttribute('readonly', '')
+      el.style.position = 'absolute'
+      el.style.left = '-9999px'
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    } catch {}
+  }
+
   function copyCoupon() {
-    navigator.clipboard.writeText('LAMSA')
-    toast(isAr ? 'تم نسخ كوبون الخصم 50% (LAMSA) وتطبيقه تلقائياً ✓' : '50% OFF Coupon (LAMSA) copied & auto-applied ✓')
+    try {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText('LAMSA').catch(() => {
+          fallbackCopy('LAMSA')
+        })
+      } else {
+        fallbackCopy('LAMSA')
+      }
+    } catch {
+      fallbackCopy('LAMSA')
+    }
+    setCopiedCoupon(true)
+    toast(isAr ? 'تم نسخ كوبون الخصم (LAMSA) بنجاح! ✓' : 'Coupon code (LAMSA) copied successfully! ✓')
+    setTimeout(() => setCopiedCoupon(false), 2800)
   }
 
   return (
     <>
-      {/* 50% OFF Announcement Banner with Live Countdown Timer */}
+      {/* 50% OFF Announcement Banner with Live Countdown Timer & Instant Visual Copy Feedback */}
       {!bannerDismissed && (
         <div className="top-announcement-bar">
           <div className="container tab-inner">
@@ -86,9 +113,9 @@ export default function Navbar() {
               <span className="tab-pill">🔥 {isAr ? 'عرض الإطلاق الحصري' : 'Launch Offer'}</span>
               <span className="tab-msg">
                 {isAr ? (
-                  <>خصم <b style={{ color: '#fde047' }}>50%</b> تلقائي على جميع البطاقات بكوبون: <code className="tab-coupon-code" onClick={copyCoupon} title="انقر للنسخ">LAMSA</code></>
+                  <>خصم <b style={{ color: '#fde047' }}>50%</b> تلقائي على جميع البطاقات بكوبون: <code className={`tab-coupon-code ${copiedCoupon ? 'copied' : ''}`} onClick={copyCoupon} title={isAr ? 'انقر للنسخ' : 'Click to copy'}>{copiedCoupon ? '✅ LAMSA' : 'LAMSA'}</code></>
                 ) : (
-                  <><b style={{ color: '#fde047' }}>50% OFF</b> auto-applied with code: <code className="tab-coupon-code" onClick={copyCoupon}>LAMSA</code></>
+                  <><b style={{ color: '#fde047' }}>50% OFF</b> auto-applied with code: <code className={`tab-coupon-code ${copiedCoupon ? 'copied' : ''}`} onClick={copyCoupon}>{copiedCoupon ? '✅ LAMSA' : 'LAMSA'}</code></>
                 )}
               </span>
               <div className="tab-timer-box">
@@ -99,8 +126,8 @@ export default function Navbar() {
               </div>
             </div>
             <div className="tab-actions">
-              <button className="tab-copy-btn" onClick={copyCoupon}>
-                📋 {isAr ? 'نسخ الكوبون' : 'Copy Code'}
+              <button className={`tab-copy-btn ${copiedCoupon ? 'copied' : ''}`} onClick={copyCoupon}>
+                {copiedCoupon ? (isAr ? '✅ تم النسخ!' : '✅ Copied!') : (isAr ? '📋 نسخ الكوبون' : '📋 Copy Code')}
               </button>
               <Link to="/store" className="tab-shop-btn">
                 🛒 {isAr ? 'شراء بالخصم' : 'Claim 50%'}
