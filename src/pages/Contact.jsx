@@ -47,8 +47,8 @@ export default function Contact() {
                 </div>
                 <h3>{isAr ? 'واتساب' : 'WhatsApp'}</h3>
                 <p>{isAr ? 'رد سريع على طول' : 'Instant reply'}</p>
-                <a href="https://wa.me/201000000000" target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">
-                  {isAr ? 'ابدأ المحادثة' : 'Start chat'} →
+                <a href="https://wa.me/201028707543" target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">
+                  {isAr ? 'ابدأ المحادثة (01028707543)' : 'Start chat (01028707543)'} →
                 </a>
               </div>
 

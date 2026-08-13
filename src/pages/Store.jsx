@@ -64,6 +64,16 @@ export default function Store() {
     return () => clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const custom = params.get('custom_name') || localStorage.getItem('lamsa_custom_engrave')
+      if (custom) {
+        setForm((f) => ({ ...f, notes: f.notes ? f.notes : `الاسم المحفور بالليزر: ${custom}` }))
+      }
+    } catch {}
+  }, [])
+
   useEffect(() => { saveCart(cart) }, [cart])
 
   const setCart = (fn) => setCartState((prev) => {
