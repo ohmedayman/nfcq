@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import MobileBottomNav from './components/MobileBottomNav'
 
 // Resilient lazy loader that retries once on network / chunk error
 function safeLazy(importFn) {
@@ -125,6 +126,7 @@ export default function App() {
         </Suspense>
       </main>
       {!isNfc && <Footer />}
+      {!isNfc && <MobileBottomNav />}
     </ErrorBoundary>
   )
 }
