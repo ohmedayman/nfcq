@@ -42,20 +42,27 @@ export default function Dashboard() {
         await initProfileIfMissing(user.uid, user.email, user.displayName || '')
         const d = await fetchProfile(user.uid)
         if (!alive) return
-        if (d) {
-          setForm({
-            name: d.name || fallbackName,
-            role: d.role || '',
-            email: d.email || user.email || '',
-            bio: d.bio || '',
-            phone: d.phone || '',
-            avatar: d.avatar || '',
-            theme: d.theme || 'default',
-          })
-          setLinks(Array.isArray(d.links) ? d.links : [])
-          setSocial({ instagram: d.social?.instagram || '', linkedin: d.social?.linkedin || '', twitter: d.social?.twitter || '', whatsapp: d.social?.whatsapp || '' })
-          setActivated(d.activated !== false)
+        const initialForm = {
+          name: d?.name || fallbackName,
+          role: d?.role || '',
+          email: d?.email || user.email || '',
+          bio: d?.bio || '',
+          phone: d?.phone || '',
+          avatar: d?.avatar || '',
+          theme: d?.theme || 'default',
         }
+        setForm(initialForm)
+        setLinks(Array.isArray(d?.links) ? d.links : [])
+        setSocial({
+          instagram: d?.social?.instagram || '',
+          linkedin: d?.social?.linkedin || '',
+          twitter: d?.social?.twitter || '',
+          whatsapp: d?.social?.whatsapp || '',
+        })
+        setActivated(true)
+
+        // Guarantee profile exists in Firestore and local cache
+        saveProfile(user.uid, { ...initialForm, activated: true }).catch(() => {})
       } finally {
         if (alive) setLoading(false)
       }
