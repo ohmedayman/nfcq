@@ -32,9 +32,10 @@ export function AuthProvider({ children }) {
 
   async function register(email, password, name) {
     setError('')
+    const cleanEmail = (email || '').trim().toLowerCase()
     try {
-      const cred = await authApi.register(email, password)
-      await initProfileIfMissing(cred.user.uid, email, name)
+      const cred = await authApi.register(cleanEmail, password)
+      await initProfileIfMissing(cred.user.uid, cleanEmail, name)
       return true
     } catch (e) {
       setError(e.message)
@@ -44,8 +45,9 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     setError('')
+    const cleanEmail = (email || '').trim().toLowerCase()
     try {
-      await authApi.login(email, password)
+      await authApi.login(cleanEmail, password)
       return true
     } catch (e) {
       setError(e.message)
@@ -57,7 +59,8 @@ export function AuthProvider({ children }) {
     setError('')
     try {
       const cred = await authApi.loginWithGoogle()
-      await initProfileIfMissing(cred.user.uid, cred.user.email, cred.user.displayName || '')
+      const cleanEmail = (cred.user.email || '').trim().toLowerCase()
+      await initProfileIfMissing(cred.user.uid, cleanEmail, cred.user.displayName || '')
       return true
     } catch (e) {
       setError(e.message)

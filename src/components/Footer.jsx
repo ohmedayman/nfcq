@@ -9,13 +9,19 @@ export default function Footer() {
   const isAr = lang === 'ar'
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
+  const [lastSubTime, setLastSubTime] = useState(0)
 
   function subscribe(e) {
     e.preventDefault()
     if (!email) return
+    const now = Date.now()
+    if (now - lastSubTime < 10000) {
+      return toast(isAr ? 'يرجى الانتظار بضع ثوانٍ قبل المحاولة مجدداً' : 'Please wait a few seconds before trying again', 'info')
+    }
+    setLastSubTime(now)
     setSubscribed(true)
     setEmail('')
-    toast(isAr ? 'شكراً لاشتراكك! ✓' : 'Thanks for subscribing! ✓')
+    toast(isAr ? 'شكراً لاشتراكك في نشرة لمسة! ✓' : 'Thanks for subscribing to Lamsa newsletter! ✓')
     setTimeout(() => setSubscribed(false), 3000)
   }
 

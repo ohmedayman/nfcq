@@ -38,11 +38,11 @@ function useCountUp(target, duration = 1800) {
   return { ref, val }
 }
 
-function StatCounter({ value, suffix = '', label }) {
+function StatCounter({ value, prefix = '', suffix = '', label }) {
   const { ref, val } = useCountUp(value)
   return (
     <div className="stat" ref={ref}>
-      <b>{val.toLocaleString()}{suffix}</b>
+      <b>{prefix}{val.toLocaleString()}{suffix}</b>
       <span>{label}</span>
     </div>
   )
@@ -380,7 +380,7 @@ export default function Home() {
         <div className="container stats-grid">
           <StatCounter value={15000} suffix="+" label={isAr ? 'بطاقة صادرة' : 'Cards issued'} />
           <StatCounter value={850000} suffix="+" label={isAr ? 'نقرة ولمسة ذكية' : 'NFC taps & clicks'} />
-          <StatCounter value={1} suffix="s" label={isAr ? 'سرعة النقل والفتح' : 'Instant connect'} />
+          <StatCounter value={1} prefix="< " suffix="s" label={isAr ? 'أقل من ثانية لفتح ملفك' : '< 1s Instant Open'} />
           <StatCounter value={100} suffix="%" label={isAr ? 'بدون أي تطبيقات' : 'Zero app required'} />
         </div>
       </section>

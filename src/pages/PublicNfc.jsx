@@ -27,6 +27,25 @@ export default function PublicNfc() {
     setLoading(true)
     setTapped(false)
     setSaved(false)
+    if (uid === 'demo') {
+      setData({
+        name: isAr ? 'د. محمد أيمن' : 'Dr. Mohamed Ayman',
+        role: isAr ? 'استشاري ورائد أعمال' : 'Consultant & Entrepreneur',
+        bio: isAr ? 'مؤسس منصات رقمية واستشاري أعمال. أشارك خبراتي في تطوير المشاريع والتكنولوجيا 🚀' : 'Digital Entrepreneur & Business Consultant.',
+        phone: '01028707543',
+        email: 'mohamed@lamsa.ink',
+        city: isAr ? 'القاهرة، مصر' : 'Cairo, Egypt',
+        links: [
+          { label: isAr ? 'حجز موعد أو استشارة فورية 📅' : 'Book Consultation 📅', url: 'https://lamsa.ink/store' },
+          { label: isAr ? 'كتالوج الأعمال والمشاريع 💼' : 'Portfolio & Catalog 💼', url: 'https://lamsa.ink' },
+        ],
+        social: { whatsapp: '01028707543', instagram: 'lamsa.ink', linkedin: 'mohamed-ayman' },
+        theme: 'midnight-gold',
+      })
+      setLoading(false)
+      return
+    }
+
     fetchPublic(uid).then((d) => {
       if (d) {
         setData(d)
@@ -40,36 +59,36 @@ export default function PublicNfc() {
         if (found) {
           setData(found)
           trackProfileView(found.uid || uid)
-        } else {
-          const fallbackName = (user && user.uid === uid) ? (user.displayName || user.email?.split('@')[0]) : 'Lamsa Member'
+        } else if (user && user.uid === uid) {
           setData({
-            name: fallbackName || 'Lamsa Member',
+            name: user.displayName || user.email?.split('@')[0] || 'Lamsa Member',
             role: '',
             bio: '',
             avatar: '',
-            email: (user && user.uid === uid) ? user.email : '',
+            email: user.email,
             phone: '',
             links: [],
             social: {},
             theme: 'default',
           })
+        } else {
+          setData(null) // Trigger Custom 404 Claim Profile page
         }
       }
       setLoading(false)
     }).catch((err) => {
-      console.warn('[PublicNfc] fetch error, using resilient fallback:', err)
-      const fallbackName = (user && user.uid === uid) ? (user.displayName || user.email?.split('@')[0]) : 'Lamsa Member'
-      setData({
-        name: fallbackName || 'Lamsa Member',
-        role: '',
-        bio: '',
-        avatar: '',
-        email: '',
-        phone: '',
-        links: [],
-        social: {},
-        theme: 'default',
-      })
+      console.warn('[PublicNfc] fetch error:', err)
+      if (user && user.uid === uid) {
+        setData({
+          name: user.displayName || 'Lamsa Member',
+          email: user.email || '',
+          theme: 'default',
+          links: [],
+          social: {},
+        })
+      } else {
+        setData(null)
+      }
       setLoading(false)
     })
   }
@@ -91,6 +110,32 @@ export default function PublicNfc() {
         <div className="nfc-loading">
           <div className="nfc-loader" />
           <p style={{ color: '#fff', opacity: 0.7, marginTop: 12 }}>{isAr ? 'جاري فتح البطاقة الذكية…' : 'Loading NFC Card…'}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!loading && !data) {
+    return (
+      <div className="nfc-page theme-default" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: 20 }}>
+        <div className="dash-card" style={{ maxWidth: 440, width: '100%', textAlign: 'center', padding: '36px 24px', borderRadius: 28 }}>
+          <div style={{ fontSize: 52, marginBottom: 12 }}>🔍</div>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 8, color: 'var(--text)' }}>
+            {isAr ? 'هذا الرابط الذكي غير مسجل بعد' : 'Smart Link Not Registered'}
+          </h2>
+          <p style={{ color: 'var(--muted)', fontSize: '0.88rem', marginBottom: 24, lineHeight: 1.6 }}>
+            {isAr
+              ? `الرابط (${uid}) متاح الآن! احجز اسمك ورابطك الخاص على منصة لمسة الذكية قبل أن يسبقك أحد.`
+              : `The link identifier "${uid}" is currently available! Claim your custom NFC link now on Lamsa.`}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Link to={`/account?mode=register&claim=${uid}`} className="btn btn-primary btn-block">
+              🚀 {isAr ? 'احجز هذا الرابط لنفسك الآن' : 'Claim This Link Now'}
+            </Link>
+            <Link to="/" className="btn btn-ghost btn-block">
+              🏠 {isAr ? 'العودة للصفحة الرئيسية' : 'Back to Home'}
+            </Link>
+          </div>
         </div>
       </div>
     )

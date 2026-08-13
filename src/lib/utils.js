@@ -90,17 +90,22 @@ export function normalizeUrl(url) {
   if (!url || !url.trim()) return '#'
   const v = url.trim()
 
-  // Already has protocol
-  if (/^(https?|mailto|tel|sms|ftp):\/?\/?/i.test(v)) return v
+  // Block dangerous XSS protocols
+  if (/^(javascript|data|vbscript):/i.test(v)) {
+    return '#'
+  }
 
-  // Phone-like (starts with +)
-  if (/^\+\d/.test(v)) return `tel:${v}`
+  // Safe protocols
+  if (/^(https?|mailto|tel|sms|ftp):\/\//i.test(v) || /^(mailto|tel|sms):/i.test(v)) return v
+
+  // Phone-like
+  if (/^\+?\d{8,15}$/.test(v)) return `tel:${v}`
 
   // Email-like
   if (v.includes('@') && !v.includes(' ') && v.includes('.')) return `mailto:${v}`
 
   // Add https://
-  return `https://${v}`
+  return `https://${v.replace(/^https?:\/\//i, '')}`
 }
 
 /**

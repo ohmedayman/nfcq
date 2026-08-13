@@ -155,9 +155,10 @@ export default function Store() {
     }
   }
 
+  const netTotal = Math.max(0, total - couponDiscount)
   const isDigitalOnly = items.length > 0 && items.every((i) => i.product.digital === true)
-  const shipping = isDigitalOnly || total >= 500 ? 0 : 50
-  const grandTotal = Math.max(0, total - couponDiscount) + shipping
+  const shipping = isDigitalOnly || netTotal >= 500 ? 0 : 50
+  const grandTotal = netTotal + shipping
 
   const setQty = (cartKey, qty) => setCart((c) => {
     const n = { ...c, [cartKey]: Math.max(0, qty) }
