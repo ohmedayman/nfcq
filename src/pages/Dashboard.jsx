@@ -5,7 +5,7 @@ import { useLang } from '../context/LanguageContext'
 import { toast } from '../components/Toast'
 import { FIREBASE_READY } from '../firebase.config'
 import { initProfileIfMissing, fetchProfile, saveProfile, uploadAvatar, listUserOrders } from '../lib/firebase'
-import { normalizeUrl, normalizeSocialUrl } from '../lib/utils'
+import { normalizeUrl, normalizeSocialUrl, CARD_THEMES } from '../lib/utils'
 import {
   IconUser, IconLink, IconCreditCard, IconCheck, IconPlus, IconRefresh, IconHome,
   IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconShield, IconZap, NfcIcon,
@@ -25,7 +25,7 @@ export default function Dashboard() {
   const [loadingOrders, setLoadingOrders] = useState(false)
 
   const fallbackName = user?.displayName || (user?.email || '').split('@')[0]
-  const [form, setForm] = useState({ name: fallbackName, role: '', email: user?.email || '', bio: '', phone: '', avatar: '' })
+  const [form, setForm] = useState({ name: fallbackName, role: '', email: user?.email || '', bio: '', phone: '', avatar: '', theme: 'default' })
   const [links, setLinks] = useState([])
   const [social, setSocial] = useState({ instagram: '', linkedin: '', twitter: '', whatsapp: '' })
   const [activated, setActivated] = useState(true)
@@ -43,7 +43,15 @@ export default function Dashboard() {
         const d = await fetchProfile(user.uid)
         if (!alive) return
         if (d) {
-          setForm({ name: d.name || fallbackName, role: d.role || '', email: d.email || user.email || '', bio: d.bio || '', phone: d.phone || '', avatar: d.avatar || '' })
+          setForm({
+            name: d.name || fallbackName,
+            role: d.role || '',
+            email: d.email || user.email || '',
+            bio: d.bio || '',
+            phone: d.phone || '',
+            avatar: d.avatar || '',
+            theme: d.theme || 'default',
+          })
           setLinks(Array.isArray(d.links) ? d.links : [])
           setSocial({ instagram: d.social?.instagram || '', linkedin: d.social?.linkedin || '', twitter: d.social?.twitter || '', whatsapp: d.social?.whatsapp || '' })
           setActivated(d.activated !== false)
@@ -170,6 +178,7 @@ export default function Dashboard() {
 
   const tabs = [
     { id: 'profile', icon: <IconUser />, label: isAr ? 'البروفايل' : 'Profile' },
+    { id: 'themes', icon: <span style={{ fontSize: '1.1rem' }}>🎨</span>, label: isAr ? 'الثيمات' : 'Themes' },
     { id: 'social', icon: <IconLink />, label: isAr ? 'سوشيال' : 'Social', badge: socialCount || null },
     { id: 'links', icon: <IconZap />, label: isAr ? 'الروابط' : 'Links', badge: linkCount || null },
     { id: 'orders', icon: <IconCreditCard />, label: isAr ? 'طلباتي' : 'Orders' },
@@ -375,12 +384,49 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
+
+            {tab === 'themes' && (
+              <div className="dash-card">
+                <div className="dash-card-header">
+                  <h3>{isAr ? 'اختر ثيم بطاقتك 🎨' : 'Choose Card Theme 🎨'}</h3>
+                  <p>{isAr ? 'اختر النمط اللوني والتصميم الذي يناسب شخصيتك وعلامتك التجارية.' : 'Select the color palette and visual design for your card.'}</p>
+                </div>
+                <div className="theme-grid">
+                  {CARD_THEMES.map((t) => {
+                    const isSelected = (form.theme || 'default') === t.id
+                    return (
+                      <div
+                        key={t.id}
+                        className={`theme-card ${isSelected ? 'active' : ''}`}
+                        onClick={async () => {
+                          setForm((f) => ({ ...f, theme: t.id }))
+                          try {
+                            await saveProfile(user.uid, { theme: t.id })
+                            toast(isAr ? `تم تفعيل ثيم: ${t.nameAr} ✓` : `${t.nameEn} theme active ✓`)
+                          } catch (err) {
+                            console.error(err)
+                          }
+                        }}
+                      >
+                        <div className="theme-preview" style={{ background: t.previewGrad }}>
+                          <span className="theme-preview-badge">{isAr ? t.nameAr : t.nameEn}</span>
+                        </div>
+                        <div className="theme-card-info">
+                          <span className="theme-card-title">{isAr ? t.nameAr : t.nameEn}</span>
+                          <div className="theme-card-radio" />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Live Preview */}
           <div className="dash-preview">
             <div className="preview-label"><NfcIcon /> {isAr ? 'شكل مباشر' : 'Live preview'}</div>
-            <div className="preview-phone">
+            <div className={`preview-phone theme-${form.theme || 'default'}`}>
               <div className="preview-notch" />
               <div className="preview-screen">
                 <div className="preview-cover" />
@@ -437,9 +483,9 @@ function AvatarUpload({ avatar, name, uploading, onUpload, isAr }) {
       <div className="avatar-info">
         <b>{isAr ? 'صورة البروفايل' : 'Profile photo'}</b>
         <p>{isAr ? 'صورة مربعة 400×400 على الأقل.' : 'Square image, 400×400px minimum.'}</p>
-        <label className="btn btn-ghost btn-sm">
-          {uploading ? '…' : (isAr ? 'ارفع صورة' : 'Upload photo')}
-          <input type="file" accept="image/*" onChange={onUpload} style={{ display: 'none' }} />
+        <label className="btn btn-ghost btn-sm" style={{ pointerEvents: uploading ? 'none' : 'auto' }}>
+          {uploading ? (isAr ? 'جاري الرفع…' : 'Uploading…') : (isAr ? 'ارفع صورة' : 'Upload photo')}
+          <input type="file" accept="image/*" onChange={onUpload} style={{ display: 'none' }} disabled={uploading} />
         </label>
       </div>
     </div>

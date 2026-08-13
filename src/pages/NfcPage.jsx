@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { CUSTOMER } from '../data/content'
+import { CARD_THEMES } from '../lib/utils'
 import Brand from '../components/Brand'
 import {
   NfcIcon, IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp,
@@ -10,6 +12,7 @@ import {
 export default function NfcPage() {
   const { lang } = useLang()
   const isAr = lang === 'ar'
+  const [activeTheme, setActiveTheme] = useState('default')
   const name = isAr ? CUSTOMER.name : CUSTOMER.nameEn
   const role = isAr ? CUSTOMER.role : CUSTOMER.roleEn
   const bio = isAr ? CUSTOMER.bio : CUSTOMER.bioEn
@@ -21,7 +24,7 @@ export default function NfcPage() {
   ]
 
   return (
-    <div className="nfc-page">
+    <div className={`nfc-page theme-${activeTheme}`}>
       <div className="aurora" />
       <div className="container nfc-wrap">
         <div className="nfc-topbar">
@@ -87,7 +90,36 @@ export default function NfcPage() {
           </div>
         </div>
 
-        <p className="nfc-footer-text">
+        {/* Live Theme Switcher */}
+        <div style={{ marginTop: 24, textAlign: 'center' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>
+            {isAr ? '🎨 جرب الثيمات الحصرية بضغطة زر:' : '🎨 Try exclusive themes live:'}
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {CARD_THEMES.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTheme(t.id)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 99,
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  border: activeTheme === t.id ? '2px solid var(--cobalt)' : '1px solid var(--line)',
+                  background: activeTheme === t.id ? 'var(--card)' : 'rgba(255,255,255,0.6)',
+                  color: 'var(--text)',
+                  cursor: 'pointer',
+                  boxShadow: activeTheme === t.id ? '0 4px 14px rgba(24,84,232,0.25)' : 'none',
+                  transition: '0.2s',
+                }}
+              >
+                {isAr ? t.nameAr : t.nameEn}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="nfc-footer-text" style={{ marginTop: 16 }}>
           {isAr ? 'هذا مثال على شكل صفحتك بعد إعدادها' : 'This is how your page looks after setup'}
         </p>
       </div>

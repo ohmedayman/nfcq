@@ -56,15 +56,36 @@ export async function saveProfile(uid, data) {
 }
 
 export async function uploadAvatar(uid, file) {
-  const { ref: storageRef, uploadBytes, getDownloadURL } = await import('firebase/storage')
   const { updateDoc } = await import('firebase/firestore')
-  const s = await getStorageInstance()
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-  const r = storageRef(s, `avatars/${uid}.${ext}`)
-  await uploadBytes(r, file)
-  const url = await getDownloadURL(r)
-  await updateDoc(await getUserProfileRef(uid), { avatar: url })
-  return url
+  const { compressImage } = await import('./utils')
+  
+  // 1. Compress image to a fast, high-quality 350x350 Data URL
+  const dataUrl = await compressImage(file, 350, 350, 0.85)
+
+  // 2. Attempt Firebase Storage with a 3.5s timeout, falling back seamlessly
+  let finalUrl = dataUrl
+  try {
+    const { ref: storageRef, uploadBytes, getDownloadURL } = await import('firebase/storage')
+    const s = await getStorageInstance()
+    const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase()
+    const r = storageRef(s, `avatars/${uid}.${ext}`)
+    
+    const res = await fetch(dataUrl)
+    const blob = await res.blob()
+    
+    const uploadPromise = uploadBytes(r, blob).then(() => getDownloadURL(r))
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Storage timeout')), 3500))
+    
+    finalUrl = await Promise.race([uploadPromise, timeoutPromise])
+  } catch (err) {
+    console.warn('[uploadAvatar] Falling back to compressed Data URL:', err?.message)
+    finalUrl = dataUrl
+  }
+
+  // 3. Save avatar URL in Firestore profile
+  const profileRef = await getUserProfileRef(uid)
+  await updateDoc(profileRef, { avatar: finalUrl })
+  return finalUrl
 }
 
 export async function createOrder(uid, payload) {

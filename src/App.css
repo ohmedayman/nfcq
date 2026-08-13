@@ -2027,3 +2027,151 @@ html[dir=\rtl\] .dash-alert-banner { text-align: right; }
 .dash-stat.inactive { opacity: 0.6; }
 .dash-stat.inactive .ds-icon { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
+
+/* ========================================================
+   THEME DEFINITIONS FOR NFC CARDS
+   ======================================================== */
+
+/* 1. Midnight Gold */
+.theme-midnight-gold.nfc-page { background: #07070a; }
+.theme-midnight-gold .nfc-card { background: #12121a; border-color: rgba(212, 175, 55, 0.3); box-shadow: 0 24px 70px rgba(0,0,0,0.6), 0 0 30px rgba(212, 175, 55, 0.08); }
+.theme-midnight-gold .nfc-cover { background: linear-gradient(135deg, #12121a 0%, #aa771c 50%, #d4af37 100%); }
+.theme-midnight-gold .nfc-avatar { border-color: #12121a; background: linear-gradient(135deg, #aa771c, #d4af37); box-shadow: 0 12px 32px rgba(212, 175, 55, 0.35); }
+.theme-midnight-gold .nfc-avatar-ring { border-color: rgba(212, 175, 55, 0.35); }
+.theme-midnight-gold .nfc-name { color: #ffffff; }
+.theme-midnight-gold .nfc-role { color: #d4af37; background: rgba(212, 175, 55, 0.12); border-color: rgba(212, 175, 55, 0.3); }
+.theme-midnight-gold .nfc-bio { color: #a1a1aa; }
+.theme-midnight-gold .nfc-social-btn { background: #1a1a26; border-color: rgba(212, 175, 55, 0.2); color: #d4af37; }
+.theme-midnight-gold .nfc-link { background: #181824; border-color: rgba(212, 175, 55, 0.18); color: #f4f4f5; }
+.theme-midnight-gold .nfc-link:hover { background: #222234; border-color: #d4af37; box-shadow: 0 10px 25px rgba(212, 175, 55, 0.2); }
+.theme-midnight-gold .nfc-contact { border-color: rgba(212, 175, 55, 0.15); }
+.theme-midnight-gold .nfc-contact-item { background: #181824; color: #d4af37; border-color: rgba(212, 175, 55, 0.15); }
+.theme-midnight-gold .nfc-contact-info { background: #181824; border-color: rgba(212, 175, 55, 0.2); }
+.theme-midnight-gold .nfc-contact-row { color: #e4e4e7; }
+.theme-midnight-gold .nfc-contact-row svg { color: #d4af37; }
+.theme-midnight-gold .nfc-scan { background: #181824; border-color: rgba(212, 175, 55, 0.35); color: #d4af37; }
+.theme-midnight-gold .nfc-scan svg { color: #d4af37; }
+.theme-midnight-gold .nfc-action-primary { background: linear-gradient(135deg, #aa771c, #d4af37); color: #000; font-weight: 900; box-shadow: 0 4px 16px rgba(212, 175, 55, 0.35); }
+.theme-midnight-gold .nfc-action-secondary { background: #181824; color: #f4f4f5; border-color: rgba(212, 175, 55, 0.2); }
+
+/* 2. Cyber Neon */
+.theme-cyber-neon.nfc-page { background: #030712; }
+.theme-cyber-neon .nfc-card { background: #0b1126; border-color: rgba(6, 182, 212, 0.35); box-shadow: 0 24px 70px rgba(0,0,0,0.6), 0 0 30px rgba(6, 182, 212, 0.15); }
+.theme-cyber-neon .nfc-cover { background: linear-gradient(135deg, #0b1126 0%, #06b6d4 50%, #a855f7 100%); }
+.theme-cyber-neon .nfc-avatar { border-color: #0b1126; background: linear-gradient(135deg, #06b6d4, #a855f7); box-shadow: 0 12px 32px rgba(6, 182, 212, 0.35); }
+.theme-cyber-neon .nfc-avatar-ring { border-color: rgba(6, 182, 212, 0.4); }
+.theme-cyber-neon .nfc-name { color: #ffffff; }
+.theme-cyber-neon .nfc-role { color: #06b6d4; background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.35); }
+.theme-cyber-neon .nfc-bio { color: #94a3b8; }
+.theme-cyber-neon .nfc-social-btn { background: #0f1738; border-color: rgba(6, 182, 212, 0.25); color: #06b6d4; }
+.theme-cyber-neon .nfc-link { background: #0f1738; border-color: rgba(6, 182, 212, 0.2); color: #f8fafc; }
+.theme-cyber-neon .nfc-link:hover { background: #16204d; border-color: #06b6d4; box-shadow: 0 10px 25px rgba(6, 182, 212, 0.25); }
+.theme-cyber-neon .nfc-contact { border-color: rgba(6, 182, 212, 0.2); }
+.theme-cyber-neon .nfc-contact-item { background: #0f1738; color: #06b6d4; border-color: rgba(6, 182, 212, 0.2); }
+.theme-cyber-neon .nfc-contact-info { background: #0f1738; border-color: rgba(6, 182, 212, 0.2); }
+.theme-cyber-neon .nfc-contact-row { color: #e2e8f0; }
+.theme-cyber-neon .nfc-contact-row svg { color: #06b6d4; }
+.theme-cyber-neon .nfc-scan { background: #0f1738; border-color: rgba(6, 182, 212, 0.4); color: #06b6d4; }
+.theme-cyber-neon .nfc-scan svg { color: #06b6d4; }
+.theme-cyber-neon .nfc-action-primary { background: linear-gradient(135deg, #06b6d4, #a855f7); color: #fff; font-weight: 800; box-shadow: 0 4px 16px rgba(6, 182, 212, 0.4); }
+.theme-cyber-neon .nfc-action-secondary { background: #0f1738; color: #f8fafc; border-color: rgba(6, 182, 212, 0.25); }
+
+/* 3. Rose Gold */
+.theme-rose-gold.nfc-page { background: #fff1f2; }
+.theme-rose-gold .nfc-card { background: #ffffff; border-color: rgba(244, 63, 94, 0.18); box-shadow: 0 24px 70px rgba(244, 63, 94, 0.1); }
+.theme-rose-gold .nfc-cover { background: linear-gradient(135deg, #fb7185 0%, #f43f5e 50%, #fbbf24 100%); }
+.theme-rose-gold .nfc-avatar { border-color: #ffffff; background: linear-gradient(135deg, #f43f5e, #fb7185); box-shadow: 0 12px 32px rgba(244, 63, 94, 0.25); }
+.theme-rose-gold .nfc-avatar-ring { border-color: rgba(244, 63, 94, 0.25); }
+.theme-rose-gold .nfc-name { color: #881337; }
+.theme-rose-gold .nfc-role { color: #e11d48; background: rgba(244, 63, 94, 0.08); border-color: rgba(244, 63, 94, 0.2); }
+.theme-rose-gold .nfc-social-btn { background: #fff5f5; border-color: rgba(244, 63, 94, 0.12); color: #e11d48; }
+.theme-rose-gold .nfc-link { background: #fff5f5; border-color: rgba(244, 63, 94, 0.12); color: #4c0519; }
+.theme-rose-gold .nfc-link:hover { background: #ffffff; border-color: #f43f5e; box-shadow: 0 10px 25px rgba(244, 63, 94, 0.15); }
+.theme-rose-gold .nfc-action-primary { background: linear-gradient(135deg, #f43f5e, #fb7185); color: #fff; box-shadow: 0 4px 16px rgba(244, 63, 94, 0.3); }
+
+/* 4. Emerald VIP */
+.theme-emerald-vip.nfc-page { background: #022c22; }
+.theme-emerald-vip .nfc-card { background: #064e3b; border-color: rgba(16, 185, 129, 0.3); box-shadow: 0 24px 70px rgba(0,0,0,0.6); }
+.theme-emerald-vip .nfc-cover { background: linear-gradient(135deg, #064e3b 0%, #059669 50%, #10b981 100%); }
+.theme-emerald-vip .nfc-avatar { border-color: #064e3b; background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 12px 32px rgba(16, 185, 129, 0.3); }
+.theme-emerald-vip .nfc-avatar-ring { border-color: rgba(16, 185, 129, 0.3); }
+.theme-emerald-vip .nfc-name { color: #ecfdf5; }
+.theme-emerald-vip .nfc-role { color: #34d399; background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.3); }
+.theme-emerald-vip .nfc-bio { color: #a7f3d0; }
+.theme-emerald-vip .nfc-social-btn { background: #065f46; border-color: rgba(52, 211, 153, 0.2); color: #34d399; }
+.theme-emerald-vip .nfc-link { background: #065f46; border-color: rgba(52, 211, 153, 0.2); color: #ecfdf5; }
+.theme-emerald-vip .nfc-link:hover { background: #047857; border-color: #34d399; box-shadow: 0 10px 25px rgba(52, 211, 153, 0.25); }
+.theme-emerald-vip .nfc-contact { border-color: rgba(52, 211, 153, 0.2); }
+.theme-emerald-vip .nfc-contact-item { background: #065f46; color: #34d399; border-color: rgba(52, 211, 153, 0.2); }
+.theme-emerald-vip .nfc-contact-info { background: #065f46; border-color: rgba(52, 211, 153, 0.2); }
+.theme-emerald-vip .nfc-contact-row { color: #ecfdf5; }
+.theme-emerald-vip .nfc-contact-row svg { color: #34d399; }
+.theme-emerald-vip .nfc-scan { background: #065f46; border-color: rgba(52, 211, 153, 0.4); color: #34d399; }
+.theme-emerald-vip .nfc-scan svg { color: #34d399; }
+.theme-emerald-vip .nfc-action-primary { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4); }
+.theme-emerald-vip .nfc-action-secondary { background: #065f46; color: #ecfdf5; border-color: rgba(52, 211, 153, 0.25); }
+
+/* 5. Sunset Aura */
+.theme-sunset-aura.nfc-page { background: #fff7ed; }
+.theme-sunset-aura .nfc-card { background: #ffffff; border-color: rgba(234, 88, 12, 0.18); box-shadow: 0 24px 70px rgba(234, 88, 12, 0.1); }
+.theme-sunset-aura .nfc-cover { background: linear-gradient(135deg, #ea580c 0%, #f43f5e 50%, #8b5cf6 100%); }
+.theme-sunset-aura .nfc-avatar { border-color: #ffffff; background: linear-gradient(135deg, #ea580c, #f43f5e); box-shadow: 0 12px 32px rgba(234, 88, 12, 0.25); }
+.theme-sunset-aura .nfc-avatar-ring { border-color: rgba(234, 88, 12, 0.25); }
+.theme-sunset-aura .nfc-name { color: #431407; }
+.theme-sunset-aura .nfc-role { color: #ea580c; background: rgba(234, 88, 12, 0.08); border-color: rgba(234, 88, 12, 0.2); }
+.theme-sunset-aura .nfc-social-btn { background: #fff7ed; border-color: rgba(234, 88, 12, 0.12); color: #ea580c; }
+.theme-sunset-aura .nfc-link { background: #fff7ed; border-color: rgba(234, 88, 12, 0.12); color: #431407; }
+.theme-sunset-aura .nfc-link:hover { background: #ffffff; border-color: #ea580c; box-shadow: 0 10px 25px rgba(234, 88, 12, 0.15); }
+.theme-sunset-aura .nfc-action-primary { background: linear-gradient(135deg, #ea580c, #f43f5e); color: #fff; box-shadow: 0 4px 16px rgba(234, 88, 12, 0.3); }
+
+/* 6. Matte Stealth */
+.theme-matte-dark.nfc-page { background: #09090b; }
+.theme-matte-dark .nfc-card { background: #18181b; border-color: rgba(255, 255, 255, 0.12); box-shadow: 0 24px 70px rgba(0,0,0,0.6); }
+.theme-matte-dark .nfc-cover { background: linear-gradient(135deg, #18181b 0%, #27272a 100%); }
+.theme-matte-dark .nfc-avatar { border-color: #18181b; background: linear-gradient(135deg, #27272a, #3f3f46); box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
+.theme-matte-dark .nfc-avatar-ring { border-color: rgba(255, 255, 255, 0.15); }
+.theme-matte-dark .nfc-name { color: #fafafa; }
+.theme-matte-dark .nfc-role { color: #fafafa; background: #27272a; border-color: rgba(255, 255, 255, 0.15); }
+.theme-matte-dark .nfc-bio { color: #a1a1aa; }
+.theme-matte-dark .nfc-social-btn { background: #27272a; border-color: rgba(255, 255, 255, 0.1); color: #fafafa; }
+.theme-matte-dark .nfc-link { background: #27272a; border-color: rgba(255, 255, 255, 0.1); color: #fafafa; }
+.theme-matte-dark .nfc-link:hover { background: #3f3f46; border-color: #ffffff; box-shadow: 0 10px 25px rgba(255, 255, 255, 0.1); }
+.theme-matte-dark .nfc-contact { border-color: rgba(255, 255, 255, 0.1); }
+.theme-matte-dark .nfc-contact-item { background: #27272a; color: #fafafa; border-color: rgba(255, 255, 255, 0.1); }
+.theme-matte-dark .nfc-contact-info { background: #27272a; border-color: rgba(255, 255, 255, 0.1); }
+.theme-matte-dark .nfc-contact-row { color: #fafafa; }
+.theme-matte-dark .nfc-contact-row svg { color: #ffffff; }
+.theme-matte-dark .nfc-scan { background: #27272a; border-color: rgba(255, 255, 255, 0.2); color: #ffffff; }
+.theme-matte-dark .nfc-scan svg { color: #ffffff; }
+.theme-matte-dark .nfc-action-primary { background: #ffffff; color: #09090b; font-weight: 900; }
+.theme-matte-dark .nfc-action-secondary { background: #27272a; color: #fafafa; border-color: rgba(255, 255, 255, 0.15); }
+
+/* 7. Ice Frost */
+.theme-ice-frost.nfc-page { background: #f0f9ff; }
+.theme-ice-frost .nfc-card { background: #ffffff; border-color: rgba(56, 189, 248, 0.25); box-shadow: 0 24px 70px rgba(56, 189, 248, 0.1); }
+.theme-ice-frost .nfc-cover { background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%); }
+.theme-ice-frost .nfc-avatar { border-color: #ffffff; background: linear-gradient(135deg, #38bdf8, #818cf8); box-shadow: 0 12px 32px rgba(56, 189, 248, 0.25); }
+.theme-ice-frost .nfc-avatar-ring { border-color: rgba(56, 189, 248, 0.25); }
+.theme-ice-frost .nfc-name { color: #0c4a6e; }
+.theme-ice-frost .nfc-role { color: #0284c7; background: rgba(2, 132, 199, 0.08); border-color: rgba(2, 132, 199, 0.2); }
+.theme-ice-frost .nfc-social-btn { background: #f0f9ff; border-color: rgba(56, 189, 248, 0.15); color: #0284c7; }
+.theme-ice-frost .nfc-link { background: #f0f9ff; border-color: rgba(56, 189, 248, 0.15); color: #0c4a6e; }
+.theme-ice-frost .nfc-link:hover { background: #ffffff; border-color: #38bdf8; box-shadow: 0 10px 25px rgba(56, 189, 248, 0.15); }
+.theme-ice-frost .nfc-action-primary { background: linear-gradient(135deg, #0284c7, #38bdf8); color: #fff; box-shadow: 0 4px 16px rgba(2, 132, 199, 0.3); }
+
+/* Theme Selector Grid in Dashboard */
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+.theme-card {
+  border: 2px solid var(--line); border-radius: 18px; padding: 16px; background: var(--card);
+  cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; gap: 12px;
+}
+.theme-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(12, 24, 48, 0.08); border-color: var(--cobalt); }
+.theme-card.active { border-color: var(--cobalt); background: rgba(24, 84, 232, 0.04); box-shadow: 0 0 0 3px rgba(24, 84, 232, 0.15); }
+.theme-preview { height: 75px; border-radius: 12px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.theme-preview-badge { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); color: #fff; padding: 4px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 800; }
+.theme-card-info { display: flex; align-items: center; justify-content: space-between; }
+.theme-card-title { font-weight: 800; font-size: 0.95rem; color: var(--text); }
+.theme-card-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; }
+.theme-card.active .theme-card-radio { border-color: var(--cobalt); background: var(--cobalt); }
+.theme-card.active .theme-card-radio::after { content: " \; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+

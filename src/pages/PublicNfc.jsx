@@ -152,6 +152,7 @@ export default function PublicNfc() {
     phone: data.phone || '',
     links: (Array.isArray(data.links) ? data.links : []).filter((l) => l && (l.label || l.url)),
     social: data.social || {},
+    theme: data.theme || 'default',
   }
 
   const hasSocial = profile.social?.instagram || profile.social?.linkedin || profile.social?.twitter || profile.social?.whatsapp
@@ -196,7 +197,7 @@ export default function PublicNfc() {
   }
 
   return (
-    <div className="nfc-page">
+    <div className={`nfc-page theme-${profile.theme || 'default'}`}>
       <div className="aurora" />
       <div className="container nfc-wrap">
         {/* Brand */}

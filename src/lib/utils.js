@@ -95,3 +95,111 @@ export function validateFile(file, opts = {}) {
 
   return { valid: true }
 }
+
+/**
+ * Compress an image file in the browser using HTML5 Canvas.
+ * Returns a clean, high-quality Data URL (base64).
+ * @param {File} file
+ * @param {number} maxWidth
+ * @param {number} maxHeight
+ * @param {number} quality
+ * @returns {Promise<string>}
+ */
+export async function compressImage(file, maxWidth = 400, maxHeight = 400, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = (event) => {
+      const img = new Image()
+      img.src = event.target.result
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let width = img.width
+        let height = img.height
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width)
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height)
+            height = maxHeight
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        const dataUrl = canvas.toDataURL('image/jpeg', quality)
+        resolve(dataUrl)
+      }
+      img.onerror = (err) => reject(err)
+    }
+    reader.onerror = (err) => reject(err)
+  })
+}
+
+/**
+ * Available Card Themes
+ */
+export const CARD_THEMES = [
+  {
+    id: 'default',
+    nameAr: 'أزرق ملكي كلاسيكي',
+    nameEn: 'Classic Cobalt',
+    previewGrad: 'linear-gradient(135deg, #1854e8, #0aa5c8)',
+    accent: '#1854e8',
+  },
+  {
+    id: 'midnight-gold',
+    nameAr: 'أسود وذهب ملكي',
+    nameEn: 'Midnight Gold',
+    previewGrad: 'linear-gradient(135deg, #1a1a24, #d4af37)',
+    accent: '#d4af37',
+  },
+  {
+    id: 'cyber-neon',
+    nameAr: 'سايبر نيون',
+    nameEn: 'Cyber Neon',
+    previewGrad: 'linear-gradient(135deg, #0f172a, #06b6d4, #a855f7)',
+    accent: '#06b6d4',
+  },
+  {
+    id: 'rose-gold',
+    nameAr: 'روز جولد أنثوي',
+    nameEn: 'Rose Gold',
+    previewGrad: 'linear-gradient(135deg, #f43f5e, #fb7185, #fde047)',
+    accent: '#f43f5e',
+  },
+  {
+    id: 'emerald-vip',
+    nameAr: 'الزمرد الفاخر',
+    nameEn: 'Emerald VIP',
+    previewGrad: 'linear-gradient(135deg, #064e3b, #10b981, #34d399)',
+    accent: '#10b981',
+  },
+  {
+    id: 'sunset-aura',
+    nameAr: 'شفق الغروب',
+    nameEn: 'Sunset Aura',
+    previewGrad: 'linear-gradient(135deg, #ea580c, #f43f5e, #8b5cf6)',
+    accent: '#ea580c',
+  },
+  {
+    id: 'matte-dark',
+    nameAr: 'أسود مطفي حديث',
+    nameEn: 'Matte Stealth',
+    previewGrad: 'linear-gradient(135deg, #09090b, #27272a)',
+    accent: '#ffffff',
+  },
+  {
+    id: 'ice-frost',
+    nameAr: 'أبيض جليدي نقي',
+    nameEn: 'Ice Frost',
+    previewGrad: 'linear-gradient(135deg, #e0f2fe, #38bdf8, #818cf8)',
+    accent: '#0284c7',
+  },
+]
