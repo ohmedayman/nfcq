@@ -5,10 +5,12 @@ import { useLang } from '../context/LanguageContext'
 import { toast } from '../components/Toast'
 import { FIREBASE_READY } from '../firebase.config'
 import { initProfileIfMissing, fetchProfile, saveProfile, uploadAvatar, listUserOrders } from '../lib/firebase'
-import { normalizeUrl, normalizeSocialUrl, CARD_THEMES } from '../lib/utils'
+import { normalizeUrl, normalizeSocialUrl, detectPlatformInfo, CARD_THEMES } from '../lib/utils'
 import {
   IconUser, IconLink, IconCreditCard, IconCheck, IconPlus, IconRefresh, IconHome,
   IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconShield, IconZap, NfcIcon,
+  IconYouTube, IconFacebook, IconTikTok, IconTelegram, IconSnapchat, IconSpotify, IconDiscord,
+  PlatformIcon, IconVerified, IconShare, IconDots,
 } from '../components/icons'
 
 export default function Dashboard() {
@@ -27,7 +29,18 @@ export default function Dashboard() {
   const fallbackName = user?.displayName || (user?.email || '').split('@')[0]
   const [form, setForm] = useState({ name: fallbackName, role: '', email: user?.email || '', bio: '', phone: '', avatar: '', theme: 'default' })
   const [links, setLinks] = useState([])
-  const [social, setSocial] = useState({ instagram: '', linkedin: '', twitter: '', whatsapp: '' })
+  const [social, setSocial] = useState({
+    instagram: '',
+    whatsapp: '',
+    facebook: '',
+    youtube: '',
+    tiktok: '',
+    telegram: '',
+    twitter: '',
+    linkedin: '',
+    snapchat: '',
+    spotify: '',
+  })
   const [activated, setActivated] = useState(true)
 
   const setV = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -55,9 +68,15 @@ export default function Dashboard() {
         setLinks(Array.isArray(d?.links) ? d.links : [])
         setSocial({
           instagram: d?.social?.instagram || '',
-          linkedin: d?.social?.linkedin || '',
-          twitter: d?.social?.twitter || '',
           whatsapp: d?.social?.whatsapp || '',
+          facebook: d?.social?.facebook || '',
+          youtube: d?.social?.youtube || '',
+          tiktok: d?.social?.tiktok || '',
+          telegram: d?.social?.telegram || '',
+          twitter: d?.social?.twitter || '',
+          linkedin: d?.social?.linkedin || '',
+          snapchat: d?.social?.snapchat || '',
+          spotify: d?.social?.spotify || '',
         })
         const isAct = d?.activated === true
         setActivated(isAct)
@@ -74,20 +93,16 @@ export default function Dashboard() {
   async function save() {
     setSaving(true)
     try {
-      // Normalize social URLs before saving
-      const normalizedSocial = {
-        instagram: normalizeSocialUrl('instagram', social.instagram),
-        linkedin: normalizeSocialUrl('linkedin', social.linkedin),
-        twitter: normalizeSocialUrl('twitter', social.twitter),
-        whatsapp: normalizeSocialUrl('whatsapp', social.whatsapp),
+      const normalizedSocial = {}
+      for (const [k, v] of Object.entries(social)) {
+        normalizedSocial[k] = normalizeSocialUrl(k, v)
       }
-      // Normalize custom link URLs
       const normalizedLinks = links.map((l) => ({
-        ...l,
+        label: l.label || '',
         url: normalizeUrl(l.url),
+        subtitle: l.subtitle || '',
       }))
       await saveProfile(user.uid, { ...form, links: normalizedLinks, social: normalizedSocial })
-      // Update local state with normalized values
       setSocial(normalizedSocial)
       setLinks(normalizedLinks)
       toast(isAr ? 'تم حفظ التغييرات ✓' : 'Changes saved ✓')
@@ -102,7 +117,6 @@ export default function Dashboard() {
     const file = e.target.files && e.target.files[0]
     if (!file) return
 
-    // Validate file before attempting upload
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     if (!allowedTypes.includes(file.type)) {
       toast(isAr ? 'نوع الملف غير مدعوم — استخدم JPG أو PNG أو WebP' : 'Unsupported file type — use JPG, PNG, or WebP', 'error')
@@ -153,7 +167,7 @@ export default function Dashboard() {
   }, [tab])
 
   function addLink() {
-    setLinks((l) => [...l, { label: '', url: '' }])
+    setLinks((l) => [...l, { label: '', url: '', subtitle: '' }])
   }
 
   function updateLink(idx, key, val) {
@@ -245,7 +259,10 @@ export default function Dashboard() {
                 : <span>{(form.name || 'U').charAt(0).toUpperCase()}</span>}
             </div>
             <div>
-              <h2 className="dash-title">{form.name || user?.email}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <h2 className="dash-title" style={{ margin: 0 }}>{form.name || user?.email}</h2>
+                <IconVerified size="1.2em" />
+              </div>
               <p className="dash-sub">{form.role || (isAr ? 'لسه مضافتش مهنة' : 'No role added yet')}</p>
             </div>
           </div>
@@ -307,7 +324,7 @@ export default function Dashboard() {
                 <AvatarUpload avatar={form.avatar} name={form.name || 'L'} uploading={uploading} onUpload={onUpload} isAr={isAr} />
                 <div className="form-row">
                   <div className="field"><label>{isAr ? 'الاسم الكامل' : 'Full name'}</label><input value={form.name} onChange={setV('name')} placeholder={isAr ? 'محمد أحمد' : 'John Doe'} /></div>
-                  <div className="field"><label>{isAr ? 'المهنة / الدور' : 'Role / Title'}</label><input value={form.role} onChange={setV('role')} placeholder={isAr ? 'مصمم UX · القاهرة' : 'UX Designer · Cairo'} /></div>
+                  <div className="field"><label>{isAr ? 'المهنة / الدور' : 'Role / Title'}</label><input value={form.role} onChange={setV('role')} placeholder={isAr ? 'مبرمج مواقع · القاهرة' : 'Web Developer · Cairo'} /></div>
                 </div>
                 <div className="form-row">
                   <div className="field"><label>Email</label><input value={form.email} disabled /></div>
@@ -315,7 +332,7 @@ export default function Dashboard() {
                 </div>
                 <div className="field">
                   <label>{isAr ? 'عن نفسك' : 'Bio'}</label>
-                  <textarea value={form.bio} onChange={setV('bio')} rows={3} placeholder={isAr ? '几句 عن نفسك…' : 'A short bio about you…'} />
+                  <textarea value={form.bio} onChange={setV('bio')} rows={3} placeholder={isAr ? 'نبذة عن نفسك…' : 'A short bio about you…'} />
                   <span className="field-hint">{form.bio.length}/160</span>
                 </div>
                 <button className="btn btn-primary" onClick={save} disabled={saving}>
@@ -327,16 +344,24 @@ export default function Dashboard() {
             {tab === 'social' && (
               <div className="dash-card">
                 <div className="dash-card-header">
-                  <h3>{isAr ? 'السوشيال ميديا' : 'Social media'}</h3>
-                  <p>{isAr ? 'روابط السوشيال بتاعتك بتظهر كأيقونات في صفحة البطاقة.' : 'Your links appear as icons on your card page.'}</p>
+                  <h3>{isAr ? 'منصات التواصل الاجتماعي 🌐' : 'Social Media Channels 🌐'}</h3>
+                  <p>{isAr ? 'أضف حساباتك لتظهر كأيقونات رسمية ملونة في أعلى صفحتك مثل كبار المشاهير.' : 'Add your social handles to display as verified colored brand icons.'}</p>
                 </div>
-                <SocialField icon={<IconInstagram />} lbl="Instagram" ph="https://instagram.com/you" v={social.instagram} onChange={setS('instagram')} color="#E4405F" />
-                <SocialField icon={<IconLinkedin />} lbl="LinkedIn" ph="https://linkedin.com/in/you" v={social.linkedin} onChange={setS('linkedin')} color="#0A66C2" />
-                <SocialField icon={<IconTwitter />} lbl="X / Twitter" ph="https://x.com/you" v={social.twitter} onChange={setS('twitter')} color="#000" />
-                <SocialField icon={<IconWhatsApp />} lbl="WhatsApp" ph="https://wa.me/201000000000" v={social.whatsapp} onChange={setS('whatsapp')} color="#25D366" />
-                <div style={{ height: 14 }} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+                  <SocialField icon={<IconYouTube />} lbl="YouTube" ph="https://youtube.com/@channel" v={social.youtube} onChange={setS('youtube')} color="#FF0000" />
+                  <SocialField icon={<IconFacebook />} lbl="Facebook" ph="https://facebook.com/page" v={social.facebook} onChange={setS('facebook')} color="#1877F2" />
+                  <SocialField icon={<IconTikTok />} lbl="TikTok" ph="https://tiktok.com/@user" v={social.tiktok} onChange={setS('tiktok')} color="#000000" />
+                  <SocialField icon={<IconTelegram />} lbl="Telegram" ph="https://t.me/username" v={social.telegram} onChange={setS('telegram')} color="#229ED9" />
+                  <SocialField icon={<IconWhatsApp />} lbl="WhatsApp" ph="https://wa.me/201000000000" v={social.whatsapp} onChange={setS('whatsapp')} color="#25D366" />
+                  <SocialField icon={<IconInstagram />} lbl="Instagram" ph="https://instagram.com/you" v={social.instagram} onChange={setS('instagram')} color="#E4405F" />
+                  <SocialField icon={<IconLinkedin />} lbl="LinkedIn" ph="https://linkedin.com/in/you" v={social.linkedin} onChange={setS('linkedin')} color="#0A66C2" />
+                  <SocialField icon={<IconTwitter />} lbl="X / Twitter" ph="https://x.com/you" v={social.twitter} onChange={setS('twitter')} color="#000000" />
+                  <SocialField icon={<IconSnapchat />} lbl="Snapchat" ph="https://snapchat.com/add/you" v={social.snapchat} onChange={setS('snapchat')} color="#eab308" />
+                  <SocialField icon={<IconSpotify />} lbl="Spotify" ph="https://open.spotify.com/..." v={social.spotify} onChange={setS('spotify')} color="#1DB954" />
+                </div>
+                <div style={{ height: 16 }} />
                 <button className="btn btn-primary" onClick={save} disabled={saving}>
-                  <IconCheck /> {saving ? '…' : (isAr ? 'سيڤ' : 'Save')}
+                  <IconCheck /> {saving ? '…' : (isAr ? 'سيڤ التغييرات' : 'Save changes')}
                 </button>
               </div>
             )}
@@ -344,37 +369,54 @@ export default function Dashboard() {
             {tab === 'links' && (
               <div className="dash-card">
                 <div className="dash-card-header">
-                  <h3>{isAr ? 'الروابط بتاعتك' : 'Custom links'}</h3>
-                  <p>{isAr ? 'الروابط بتاعتك بتظهر كأزرار في صفحة البطاقة. رتّبها زي ما تحب.' : 'Links appear as buttons on your card page. Arrange them in order.'}</p>
+                  <h3>{isAr ? 'الروابط الذكية المخصصة ⚡' : 'Smart Rich Links ⚡'}</h3>
+                  <p>{isAr ? 'أضف روابطك (قنواتك، كتبك، متجرك، خدماتك). يتم التعرف على الأيقونة تلقائياً ويمكنك إضافة وصف فرعي لكل رابط!' : 'Add your links with auto-detected platform icons and subtitles!'}</p>
                 </div>
                 {links.length === 0 && (
                   <div className="empty-state">
-                    <div className="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+                    <div className="empty-icon"><IconZap /></div>
                     <h4>{isAr ? 'لسه مفيش روابط' : 'No links yet'}</h4>
-                    <p>{isAr ? 'أضف أول رابط يظهر في صفحة البطاقة بتاعتك.' : 'Add your first link to show on your card page.'}</p>
-                    <button className="btn btn-primary" onClick={addLink}><IconPlus /> {isAr ? 'أضف رابط' : 'Add link'}</button>
+                    <p>{isAr ? 'أضف أول رابط ليظهر في صفحتك بأسلوب Linktree الاحترافي.' : 'Add your first link to display on your digital card.'}</p>
+                    <button className="btn btn-primary" onClick={addLink}><IconPlus /> {isAr ? 'أضف رابط جديد' : 'Add Link'}</button>
                   </div>
                 )}
                 {links.length > 0 && (
                   <>
-                    {links.map((l, i) => (
-                      <div className="link-card-editor" key={i}>
-                        <div className="link-card-num">{String(i + 1).padStart(2, '0')}</div>
-                        <div className="link-card-fields">
-                          <div className="field"><label>{isAr ? 'العنوان' : 'Label'}</label><input value={l.label} onChange={(e) => setLink(i, 'label', e.target.value)} placeholder={isAr ? 'أعمالي' : 'Portfolio'} /></div>
-                          <div className="field"><label>URL</label><input value={l.url} onChange={(e) => setLink(i, 'url', e.target.value)} placeholder="https://" dir="ltr" style={{ textAlign: 'left' }} /></div>
+                    {links.map((l, i) => {
+                      const detected = detectPlatformInfo(l.url, l.label)
+                      return (
+                        <div className="link-card-editor" key={i} style={{ borderInlineStart: `4px solid ${detected.color || '#6366f1'}` }}>
+                          <div className="link-card-num" style={{ background: detected.color || 'var(--card)', color: '#fff' }} title={detected.label}>
+                            <PlatformIcon name={detected.icon} />
+                          </div>
+                          <div className="link-card-fields" style={{ flex: 1 }}>
+                            <div className="form-row" style={{ gap: 10, marginBottom: 8 }}>
+                              <div className="field" style={{ flex: 1 }}>
+                                <label>{isAr ? 'عنوان الرابط (الرئيسي)' : 'Main Title'}</label>
+                                <input value={l.label} onChange={(e) => updateLink(i, 'label', e.target.value)} placeholder={isAr ? 'مثال: منصة دكتور محمد أيمن' : 'e.g. My Online Academy'} />
+                              </div>
+                              <div className="field" style={{ flex: 1 }}>
+                                <label>{isAr ? 'وصف فرعي (اختياري)' : 'Subtitle (Optional)'}</label>
+                                <input value={l.subtitle || ''} onChange={(e) => updateLink(i, 'subtitle', e.target.value)} placeholder={isAr ? 'مثال: 2.2M Subscribers / متاح الشحن' : 'e.g. 2.2M Subscribers / Fast delivery'} />
+                              </div>
+                            </div>
+                            <div className="field">
+                              <label>URL</label>
+                              <input value={l.url} onChange={(e) => updateLink(i, 'url', e.target.value)} placeholder="https://youtube.com/... أو https://wa.me/..." dir="ltr" style={{ textAlign: 'left' }} />
+                            </div>
+                          </div>
+                          <div className="link-card-actions">
+                            <button className="link-move-btn" onClick={() => moveLink(i, -1)} disabled={i === 0} title={isAr ? 'تحريك لأعلى' : 'Move up'}>↑</button>
+                            <button className="link-move-btn" onClick={() => moveLink(i, 1)} disabled={i === links.length - 1} title={isAr ? 'تحريك لأسفل' : 'Move down'}>↓</button>
+                            <button className="link-del-btn" onClick={() => delLink(i)} title={isAr ? 'حذف' : 'Delete'}>✕</button>
+                          </div>
                         </div>
-                        <div className="link-card-actions">
-                          <button className="link-move-btn" onClick={() => moveLink(i, -1)} disabled={i === 0} title={isAr ? 'تحريك لأعلى' : 'Move up'}>↑</button>
-                          <button className="link-move-btn" onClick={() => moveLink(i, 1)} disabled={i === links.length - 1} title={isAr ? 'تحريك لأسفل' : 'Move down'}>↓</button>
-                          <button className="link-del-btn" onClick={() => delLink(i)} title={isAr ? 'حذف' : 'Delete'}>✕</button>
-                        </div>
-                      </div>
-                    ))}
-                    <button className="add-link" onClick={addLink}><IconPlus /> {isAr ? 'أضف رابط' : 'Add link'}</button>
+                      )
+                    })}
+                    <button className="add-link" onClick={addLink}><IconPlus /> {isAr ? 'أضف رابط جديد' : 'Add link'}</button>
                     <div style={{ height: 14 }} />
                     <button className="btn btn-primary" onClick={save} disabled={saving}>
-                      <IconCheck /> {saving ? '…' : (isAr ? 'سيڤ' : 'Save')}
+                      <IconCheck /> {saving ? '…' : (isAr ? 'سيڤ التغييرات' : 'Save changes')}
                     </button>
                   </>
                 )}
@@ -496,25 +538,65 @@ export default function Dashboard() {
                 <div className="preview-avatar">
                   {form.avatar ? <img src={form.avatar} alt="" /> : (form.name || 'U').charAt(0).toUpperCase()}
                 </div>
-                <div className="preview-name">{form.name || (isAr ? 'اسمك' : 'Your Name')}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '8px 0 2px' }}>
+                  <div className="preview-name" style={{ margin: 0 }}>{form.name || (isAr ? 'اسمك' : 'Your Name')}</div>
+                  <IconVerified size="1.05em" />
+                </div>
                 {form.role && <div className="preview-role">{form.role}</div>}
                 {form.bio && <div className="preview-bio">{form.bio}</div>}
 
-                <div className="preview-socials">
-                  {social.instagram && <span className="ps-icon" style={{ background: '#E4405F' }}><IconInstagram /></span>}
-                  {social.linkedin && <span className="ps-icon" style={{ background: '#0A66C2' }}><IconLinkedin /></span>}
-                  {social.twitter && <span className="ps-icon" style={{ background: '#000' }}><IconTwitter /></span>}
-                  {social.whatsapp && <span className="ps-icon" style={{ background: '#25D366' }}><IconWhatsApp /></span>}
+                <div className="preview-socials" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', margin: '10px 0' }}>
+                  {social.youtube && <span className="ps-icon" style={{ background: '#FF0000', color: '#fff' }}><IconYouTube /></span>}
+                  {social.facebook && <span className="ps-icon" style={{ background: '#1877F2', color: '#fff' }}><IconFacebook /></span>}
+                  {social.tiktok && <span className="ps-icon" style={{ background: '#000000', color: '#fff' }}><IconTikTok /></span>}
+                  {social.telegram && <span className="ps-icon" style={{ background: '#229ED9', color: '#fff' }}><IconTelegram /></span>}
+                  {social.whatsapp && <span className="ps-icon" style={{ background: '#25D366', color: '#fff' }}><IconWhatsApp /></span>}
+                  {social.instagram && <span className="ps-icon" style={{ background: '#E4405F', color: '#fff' }}><IconInstagram /></span>}
+                  {social.linkedin && <span className="ps-icon" style={{ background: '#0A66C2', color: '#fff' }}><IconLinkedin /></span>}
+                  {social.twitter && <span className="ps-icon" style={{ background: '#000000', color: '#fff' }}><IconTwitter /></span>}
+                  {social.snapchat && <span className="ps-icon" style={{ background: '#eab308', color: '#000' }}><IconSnapchat /></span>}
+                  {social.spotify && <span className="ps-icon" style={{ background: '#1DB954', color: '#fff' }}><IconSpotify /></span>}
                 </div>
 
                 {links.filter(l => l.label || l.url).length > 0 && (
-                  <div className="preview-links">
-                    {links.filter(l => l.label || l.url).slice(0, 5).map((l, i) => {
-                      const colors = ['#667eea','#f5576c','#4facfe','#43e97b','#fa709a','#a18cd1']
+                  <div className="preview-links" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                    {links.filter(l => l.label || l.url).slice(0, 6).map((l, i) => {
+                      const detected = detectPlatformInfo(l.url, l.label)
                       return (
-                        <div key={i} className="preview-link" style={{ '--plc': colors[i % colors.length] }}>
-                          <span className="pl-dot" style={{ background: colors[i % colors.length] }} />
-                          {l.label || l.url}
+                        <div key={i} className="preview-link" style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '7px 10px',
+                          borderRadius: 12,
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          textAlign: isAr ? 'right' : 'left',
+                        }}>
+                          <div style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: 7,
+                            background: detected.color || '#6366f1',
+                            color: '#fff',
+                            display: 'grid',
+                            placeItems: 'center',
+                            fontSize: '0.8rem',
+                            flexShrink: 0,
+                          }}>
+                            <PlatformIcon name={detected.icon} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.78rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: '#fff' }}>
+                              {l.label || l.url}
+                            </div>
+                            {l.subtitle && (
+                              <div style={{ fontSize: '0.68rem', opacity: 0.7, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: '#cbd5e1' }}>
+                                {l.subtitle}
+                              </div>
+                            )}
+                          </div>
+                          <span style={{ opacity: 0.5, fontSize: '0.75rem' }}>{isAr ? '←' : '→'}</span>
                         </div>
                       )
                     })}
@@ -522,7 +604,7 @@ export default function Dashboard() {
                 )}
 
                 {(form.phone || form.email) && (
-                  <div className="preview-contact">
+                  <div className="preview-contact" style={{ marginTop: 12 }}>
                     {form.phone && <span>📱 {form.phone}</span>}
                     {form.email && <span>✉️ {form.email}</span>}
                   </div>

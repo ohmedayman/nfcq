@@ -4,10 +4,12 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
 import { fetchPublic } from '../lib/firebase'
 import { CUSTOMER } from '../data/content'
-import { normalizeUrl, normalizeSocialUrl } from '../lib/utils'
+import { normalizeUrl, normalizeSocialUrl, detectPlatformInfo } from '../lib/utils'
 import Logo from '../components/Logo'
 import {
-  NfcIcon, IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconMail, IconPhone, IconLink,
+  NfcIcon, IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconMail, IconPhone, IconPin,
+  IconYouTube, IconFacebook, IconTikTok, IconTelegram, IconSnapchat, IconSpotify, IconDiscord,
+  PlatformIcon, IconVerified, IconShare, IconCheck, IconDots,
 } from '../components/icons'
 
 const LINK_COLORS = [
@@ -61,7 +63,6 @@ export default function PublicNfc() {
       if (d) {
         setData(d)
       } else {
-        // Fallback: localStorage or authenticated user
         let found = null
         try {
           const cached = localStorage.getItem(`lamsa_profile_${uid}`)
@@ -138,7 +139,8 @@ export default function PublicNfc() {
     theme: data.theme || 'default',
   }
 
-  const hasSocial = profile.social?.instagram || profile.social?.linkedin || profile.social?.twitter || profile.social?.whatsapp
+  const socialKeys = ['youtube', 'facebook', 'tiktok', 'telegram', 'whatsapp', 'instagram', 'linkedin', 'twitter', 'snapchat', 'spotify']
+  const hasSocial = socialKeys.some((k) => !!profile.social?.[k])
 
   function downloadVCard() {
     const parts = [
@@ -163,19 +165,19 @@ export default function PublicNfc() {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setTimeout(() => setSaved(false), 2500)
   }
 
   async function shareCard() {
     const url = window.location.href
-    const text = `${profile.name} — ${profile.role || ''}`
+    const text = `${profile.name} — ${profile.role || 'Digital Card'}`
     if (navigator.share) {
       try {
         await navigator.share({ title: profile.name, text, url })
       } catch { /* cancelled */ }
     } else if (navigator.clipboard) {
       await navigator.clipboard.writeText(url)
-      alert(isAr ? 'تم نسخ الرابط' : 'Link copied!')
+      alert(isAr ? 'تم نسخ الرابط بنجاح ✓' : 'Link copied successfully ✓')
     }
   }
 
@@ -183,9 +185,17 @@ export default function PublicNfc() {
     <div className={`nfc-page theme-${profile.theme || 'default'}`}>
       <div className="aurora" />
       <div className="container nfc-wrap">
-        {/* Brand */}
-        <div className={`nfc-brand ${tapped ? 'show' : ''}`}>
-          <Link to="/" aria-label="home"><Logo markSize={32} light={false} /></Link>
+        {/* Brand & Top Bar */}
+        <div className={`nfc-topbar-flex ${tapped ? 'show' : ''}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, width: '100%', maxWidth: 440 }}>
+          <Link to="/" aria-label="home"><Logo markSize={30} light={false} /></Link>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={downloadVCard} className="btn-chip" title={isAr ? 'حفظ جهة الاتصال' : 'Save Contact'}>
+              {saved ? <IconCheck /> : '💾'} {isAr ? (saved ? 'تم الحفظ' : 'حفظ') : (saved ? 'Saved' : 'Save')}
+            </button>
+            <button onClick={shareCard} className="btn-chip" title={isAr ? 'مشاركة' : 'Share'}>
+              <IconShare /> {isAr ? 'مشاركة' : 'Share'}
+            </button>
+          </div>
         </div>
 
         {data && !data.activated && (
@@ -202,16 +212,18 @@ export default function PublicNfc() {
             fontSize: '0.8rem',
             border: '1px solid rgba(255,255,255,0.15)',
             gap: 12,
+            width: '100%',
+            maxWidth: 440,
           }}>
-            <span>{isAr ? '✨ وضع المعاينة — لم يتم طلب البطاقة بعد' : '✨ Preview Mode — Card not ordered yet'}</span>
+            <span>{isAr ? '✨ وضع المعاينة — اطلب بطاقتك الذكية' : '✨ Preview Mode — Order your NFC card'}</span>
             <Link to="/store" style={{ color: '#38bdf8', fontWeight: 800, textDecoration: 'underline' }}>
-              {isAr ? 'اطلب بطاقتك' : 'Get Card'}
+              {isAr ? 'اطلب الآن' : 'Order now'}
             </Link>
           </div>
         )}
 
         <div className={`nfc-card nfc-glass ${tapped ? 'show' : ''}`}>
-          {/* Cover gradient */}
+          {/* Cover gradient / Hero header */}
           <div className="nfc-cover">
             <div className="nfc-cover-shimmer" />
             <div className="nfc-cover-pattern" />
@@ -222,20 +234,48 @@ export default function PublicNfc() {
             <div className="nfc-avatar">
               {profile.avatar
                 ? <img src={profile.avatar} alt={profile.name} />
-                : <span>{profile.name.charAt(0)}</span>}
+                : <span>{profile.name.charAt(0).toUpperCase()}</span>}
             </div>
             <div className="nfc-avatar-ring" />
           </div>
 
           {/* Info */}
           <div className="nfc-body">
-            <h1 className="nfc-name">{profile.name}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <h1 className="nfc-name" style={{ margin: 0 }}>{profile.name}</h1>
+              <IconVerified size="1.25em" />
+            </div>
             {profile.role && <div className="nfc-role">{profile.role}</div>}
             {profile.bio && <p className="nfc-bio">{profile.bio}</p>}
 
-            {/* Social icons */}
+            {/* Social icons row */}
             {hasSocial && (
               <div className="nfc-socials">
+                {profile.social.youtube && (
+                  <a href={normalizeSocialUrl('youtube', profile.social.youtube)} target="_blank" rel="noreferrer" aria-label="YouTube" className="nfc-social-btn" style={{ '--sc': '#FF0000' }}>
+                    <IconYouTube />
+                  </a>
+                )}
+                {profile.social.facebook && (
+                  <a href={normalizeSocialUrl('facebook', profile.social.facebook)} target="_blank" rel="noreferrer" aria-label="Facebook" className="nfc-social-btn" style={{ '--sc': '#1877F2' }}>
+                    <IconFacebook />
+                  </a>
+                )}
+                {profile.social.tiktok && (
+                  <a href={normalizeSocialUrl('tiktok', profile.social.tiktok)} target="_blank" rel="noreferrer" aria-label="TikTok" className="nfc-social-btn" style={{ '--sc': '#000000' }}>
+                    <IconTikTok />
+                  </a>
+                )}
+                {profile.social.telegram && (
+                  <a href={normalizeSocialUrl('telegram', profile.social.telegram)} target="_blank" rel="noreferrer" aria-label="Telegram" className="nfc-social-btn" style={{ '--sc': '#229ED9' }}>
+                    <IconTelegram />
+                  </a>
+                )}
+                {profile.social.whatsapp && (
+                  <a href={normalizeSocialUrl('whatsapp', profile.social.whatsapp)} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="nfc-social-btn" style={{ '--sc': '#25D366' }}>
+                    <IconWhatsApp />
+                  </a>
+                )}
                 {profile.social.instagram && (
                   <a href={normalizeSocialUrl('instagram', profile.social.instagram)} target="_blank" rel="noreferrer" aria-label="Instagram" className="nfc-social-btn" style={{ '--sc': '#E4405F' }}>
                     <IconInstagram />
@@ -247,74 +287,89 @@ export default function PublicNfc() {
                   </a>
                 )}
                 {profile.social.twitter && (
-                  <a href={normalizeSocialUrl('twitter', profile.social.twitter)} target="_blank" rel="noreferrer" aria-label="X" className="nfc-social-btn" style={{ '--sc': '#000' }}>
+                  <a href={normalizeSocialUrl('twitter', profile.social.twitter)} target="_blank" rel="noreferrer" aria-label="X" className="nfc-social-btn" style={{ '--sc': '#000000' }}>
                     <IconTwitter />
                   </a>
                 )}
-                {profile.social.whatsapp && (
-                  <a href={normalizeSocialUrl('whatsapp', profile.social.whatsapp)} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="nfc-social-btn" style={{ '--sc': '#25D366' }}>
-                    <IconWhatsApp />
+                {profile.social.snapchat && (
+                  <a href={normalizeSocialUrl('snapchat', profile.social.snapchat)} target="_blank" rel="noreferrer" aria-label="Snapchat" className="nfc-social-btn" style={{ '--sc': '#eab308' }}>
+                    <IconSnapchat />
+                  </a>
+                )}
+                {profile.social.spotify && (
+                  <a href={normalizeSocialUrl('spotify', profile.social.spotify)} target="_blank" rel="noreferrer" aria-label="Spotify" className="nfc-social-btn" style={{ '--sc': '#1DB954' }}>
+                    <IconSpotify />
                   </a>
                 )}
               </div>
             )}
 
-            {/* Links */}
+            {/* Smart Rich Links (Linktree Pro / Bento Style) */}
             {profile.links.length > 0 && (
               <div className="nfc-links">
-                {profile.links.map((l, i) => (
-                  <a
-                    key={i}
-                    href={normalizeUrl(l.url)}
-                    className="nfc-link"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ animationDelay: `${i * 100}ms`, '--lc': LINK_COLORS[i % LINK_COLORS.length] }}
-                  >
-                    <span className="nfc-link-icon" style={{ background: LINK_COLORS[i % LINK_COLORS.length] }}>
-                      {getLinkIcon(l.url)}
-                    </span>
-                    <span className="nfc-link-label">{l.label || l.url}</span>
-                    <span className="nfc-link-arrow">{isAr ? '←' : '→'}</span>
-                  </a>
-                ))}
+                {profile.links.map((l, i) => {
+                  const detected = detectPlatformInfo(l.url, l.label)
+                  return (
+                    <a
+                      key={i}
+                      href={normalizeUrl(l.url)}
+                      className="nfc-rich-link"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ animationDelay: `${i * 80}ms` }}
+                    >
+                      <div className="nfc-rich-icon" style={{ background: detected.color || 'var(--cobalt)' }}>
+                        <PlatformIcon name={detected.icon} />
+                      </div>
+                      <div className="nfc-rich-text">
+                        <span className="nfc-rich-title">{l.label || l.url}</span>
+                        {l.subtitle && <span className="nfc-rich-sub">{l.subtitle}</span>}
+                      </div>
+                      <span className="nfc-link-arrow">{isAr ? '←' : '→'}</span>
+                    </a>
+                  )
+                })}
               </div>
             )}
 
-            {/* Contact info */}
+            <div className="nfc-divider" />
+
+            {/* Contact Details */}
             {(profile.phone || profile.email) && (
-              <div className="nfc-contact">
+              <div className="nfc-contact-info">
                 {profile.phone && (
-                  <a href={`tel:${profile.phone}`} className="nfc-contact-item">
-                    <IconPhone /> {profile.phone}
+                  <a href={`tel:${profile.phone}`} className="nfc-contact-row">
+                    <IconPhone size="1.1em" />
+                    <span>{profile.phone}</span>
                   </a>
                 )}
                 {profile.email && (
-                  <a href={`mailto:${profile.email}`} className="nfc-contact-item">
-                    <IconMail /> {profile.email}
+                  <a href={`mailto:${profile.email}`} className="nfc-contact-row">
+                    <IconMail size="1.1em" />
+                    <span>{profile.email}</span>
                   </a>
                 )}
               </div>
             )}
 
-            {/* Action buttons */}
-            <div className="nfc-actions">
-              <button className="nfc-action-btn nfc-action-primary" onClick={downloadVCard}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-                {saved ? (isAr ? '✓ تم الحفظ' : '✓ Saved') : (isAr ? 'حفظ جهات الاتصال' : 'Save to Contacts')}
-              </button>
-              <button className="nfc-action-btn nfc-action-secondary" onClick={shareCard}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                {isAr ? 'مشاركة' : 'Share'}
-              </button>
+            {/* Main Action Button */}
+            <button className="nfc-action-primary" onClick={downloadVCard} style={{ width: '100%', marginTop: 8 }}>
+              {saved ? (isAr ? 'تم حفظ جهة الاتصال ✓' : 'Contact Saved ✓') : (isAr ? '💾 حفظ جهة الاتصال في الهاتف' : '💾 Save Contact to Phone')}
+            </button>
+
+            {/* Scan Prompt */}
+            <div className="nfc-scan">
+              <div className="nfc-scan-pulse" />
+              <NfcIcon size="1.3em" />
+              <span>{isAr ? 'انقر على البطاقة لمشاركة بياناتك فورياً' : 'Tap card to share profile instantly'}</span>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className={`nfc-footer ${tapped ? 'show' : ''}`}>
+        <div className={`nfc-footer ${tapped ? 'show' : ''}`} style={{ marginTop: 24, textAlign: 'center' }}>
           <div className="nfc-powered">
-            <NfcIcon /> {isAr ? 'مدعومة بـ' : 'Powered by'} <b>Lamsa</b>
+            <NfcIcon /> {isAr ? 'مدعوم بواسطة' : 'Powered by'} <b>Lamsa NFC</b>
           </div>
         </div>
       </div>

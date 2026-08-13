@@ -25,6 +25,13 @@ export function normalizeSocialUrl(platform, value) {
     linkedin: 'https://linkedin.com/in/',
     twitter: 'https://x.com/',
     whatsapp: 'https://wa.me/',
+    youtube: 'https://youtube.com/@',
+    facebook: 'https://facebook.com/',
+    tiktok: 'https://tiktok.com/@',
+    telegram: 'https://t.me/',
+    snapchat: 'https://snapchat.com/add/',
+    spotify: 'https://open.spotify.com/user/',
+    discord: 'https://discord.gg/',
   }
 
   // WhatsApp: accept phone numbers
@@ -48,6 +55,29 @@ export function normalizeSocialUrl(platform, value) {
   }
 
   return `https://${v}`
+}
+
+export function detectPlatformInfo(url, fallbackLabel = '') {
+  if (!url) return { id: 'website', icon: 'globe', color: '#6366f1', label: fallbackLabel || 'Website' }
+  const u = url.toLowerCase()
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return { id: 'youtube', icon: 'youtube', color: '#FF0000', label: 'YouTube' }
+  if (u.includes('facebook.com') || u.includes('fb.com') || u.includes('fb.watch')) return { id: 'facebook', icon: 'facebook', color: '#1877F2', label: 'Facebook' }
+  if (u.includes('tiktok.com')) return { id: 'tiktok', icon: 'tiktok', color: '#000000', label: 'TikTok' }
+  if (u.includes('t.me') || u.includes('telegram.me') || u.includes('telegram')) return { id: 'telegram', icon: 'telegram', color: '#229ED9', label: 'Telegram' }
+  if (u.includes('wa.me') || u.includes('whatsapp.com')) return { id: 'whatsapp', icon: 'whatsapp', color: '#25D366', label: 'WhatsApp' }
+  if (u.includes('instagram.com')) return { id: 'instagram', icon: 'instagram', color: '#E4405F', label: 'Instagram' }
+  if (u.includes('linkedin.com')) return { id: 'linkedin', icon: 'linkedin', color: '#0A66C2', label: 'LinkedIn' }
+  if (u.includes('twitter.com') || u.includes('x.com')) return { id: 'twitter', icon: 'twitter', color: '#000000', label: 'X' }
+  if (u.includes('snapchat.com')) return { id: 'snapchat', icon: 'snapchat', color: '#FFFC00', label: 'Snapchat' }
+  if (u.includes('spotify.com')) return { id: 'spotify', icon: 'spotify', color: '#1DB954', label: 'Spotify' }
+  if (u.includes('discord.gg') || u.includes('discord.com')) return { id: 'discord', icon: 'discord', color: '#5865F2', label: 'Discord' }
+  if (u.includes('github.com')) return { id: 'github', icon: 'github', color: '#181717', label: 'GitHub' }
+  if (u.includes('book') || u.includes('kitab')) return { id: 'book', icon: 'book', color: '#d97706', label: 'Book' }
+  if (u.includes('store') || u.includes('shop') || u.includes('buy') || u.includes('souq') || u.includes('noon') || u.includes('amazon')) return { id: 'store', icon: 'store', color: '#f59e0b', label: 'Store' }
+  if (u.includes('tel:') || u.includes('phone')) return { id: 'phone', icon: 'phone', color: '#10b981', label: 'Phone' }
+  if (u.includes('mailto:') || u.includes('email')) return { id: 'email', icon: 'email', color: '#3b82f6', label: 'Email' }
+  if (u.includes('maps') || u.includes('location')) return { id: 'location', icon: 'location', color: '#ef4444', label: 'Location' }
+  return { id: 'website', icon: 'globe', color: '#6366f1', label: fallbackLabel || 'Website' }
 }
 
 /**

@@ -2175,3 +2175,121 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
 .theme-card.active .theme-card-radio { border-color: var(--cobalt); background: var(--cobalt); }
 .theme-card.active .theme-card-radio::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
 
+/* Rich Link Cards (Linktree Pro & Bento Style) */
+.nfc-rich-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  text-decoration: none;
+  color: var(--text);
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 4px 16px rgba(12, 24, 48, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+.nfc-rich-link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+.nfc-rich-link:hover::before {
+  transform: translateX(100%);
+}
+.nfc-rich-link:hover {
+  transform: translateY(-2px);
+  border-color: var(--cobalt);
+  box-shadow: 0 12px 30px rgba(24, 84, 232, 0.12);
+}
+.nfc-rich-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease;
+}
+.nfc-rich-link:hover .nfc-rich-icon {
+  transform: scale(1.08);
+}
+.nfc-rich-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+}
+.nfc-rich-title {
+  font-weight: 800;
+  font-size: 0.98rem;
+  color: var(--text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.nfc-rich-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+/* Quick Action Chips */
+.btn-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-chip:hover {
+  background: var(--cobalt);
+  color: #fff;
+  border-color: var(--cobalt);
+  transform: translateY(-1px);
+}
+.theme-midnight-gold .btn-chip,
+.theme-cyber-neon .btn-chip,
+.theme-emerald-vip .btn-chip,
+.theme-matte-dark .btn-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+}
+.theme-midnight-gold .nfc-rich-link,
+.theme-cyber-neon .nfc-rich-link,
+.theme-emerald-vip .nfc-rich-link,
+.theme-matte-dark .nfc-rich-link {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+.theme-midnight-gold .nfc-rich-title,
+.theme-cyber-neon .nfc-rich-title,
+.theme-emerald-vip .nfc-rich-title,
+.theme-matte-dark .nfc-rich-title {
+  color: #ffffff;
+}
+
+
