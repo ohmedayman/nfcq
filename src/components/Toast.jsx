@@ -10,7 +10,7 @@ export function ToastProvider({ children }) {
   const push = useCallback((message, type = 'success') => {
     const id = ++idCounter
     setToasts((t) => [...t, { id, message, type }])
-    setTimeout(() => dismiss(id), 3600)
+    setTimeout(() => dismiss(id), 3800)
   }, [dismiss])
 
   useEffect(() => { pushRef = push; return () => { pushRef = null } }, [push])
@@ -20,10 +20,16 @@ export function ToastProvider({ children }) {
       {children}
       <div className="toast-wrap">
         {toasts.map((t) => (
-          <div key={t.id} className={`toast ${t.type}`}>
-            <span className="toast-dot" />
-            {t.message}
-            <button className="toast-x" onClick={() => dismiss(t.id)}>✕</button>
+          <div key={t.id} className={`toast-card toast-${t.type}`}>
+            <div className="toast-icon-badge">
+              {t.type === 'error' ? '✕' : t.type === 'info' ? 'ℹ' : '✓'}
+            </div>
+            <div className="toast-content">
+              <span className="toast-msg">{t.message}</span>
+            </div>
+            <button className="toast-close-btn" onClick={() => dismiss(t.id)} aria-label="Close">
+              ✕
+            </button>
           </div>
         ))}
       </div>
