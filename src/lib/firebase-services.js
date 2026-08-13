@@ -40,7 +40,7 @@ export async function initProfileIfMissing(uid, email, name) {
   const ref = await getUserProfileRef(uid)
   const snap = await getDoc(ref)
   if (!snap.exists()) {
-    const initialData = { uid, email, name, role: '', bio: '', links: [], activated: true, createdAt: Date.now() }
+    const initialData = { uid, email, name, role: '', bio: '', links: [], activated: false, createdAt: Date.now() }
     await setDoc(ref, initialData)
     try { localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(initialData)) } catch {}
   }

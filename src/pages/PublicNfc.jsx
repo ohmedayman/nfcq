@@ -188,6 +188,28 @@ export default function PublicNfc() {
           <Link to="/" aria-label="home"><Logo markSize={32} light={false} /></Link>
         </div>
 
+        {data && !data.activated && (
+          <div style={{
+            background: 'rgba(15, 23, 42, 0.88)',
+            backdropFilter: 'blur(8px)',
+            color: '#f8fafc',
+            padding: '8px 16px',
+            borderRadius: '99px',
+            marginBottom: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '0.8rem',
+            border: '1px solid rgba(255,255,255,0.15)',
+            gap: 12,
+          }}>
+            <span>{isAr ? '✨ وضع المعاينة — لم يتم طلب البطاقة بعد' : '✨ Preview Mode — Card not ordered yet'}</span>
+            <Link to="/store" style={{ color: '#38bdf8', fontWeight: 800, textDecoration: 'underline' }}>
+              {isAr ? 'اطلب بطاقتك' : 'Get Card'}
+            </Link>
+          </div>
+        )}
+
         <div className={`nfc-card nfc-glass ${tapped ? 'show' : ''}`}>
           {/* Cover gradient */}
           <div className="nfc-cover">

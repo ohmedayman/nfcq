@@ -59,10 +59,11 @@ export default function Dashboard() {
           twitter: d?.social?.twitter || '',
           whatsapp: d?.social?.whatsapp || '',
         })
-        setActivated(true)
+        const isAct = d?.activated === true
+        setActivated(isAct)
 
-        // Guarantee profile exists in Firestore and local cache
-        saveProfile(user.uid, { ...initialForm, activated: true }).catch(() => {})
+        // Save local cache with exact activation status
+        saveProfile(user.uid, { ...initialForm, activated: isAct }).catch(() => {})
       } finally {
         if (alive) setLoading(false)
       }
@@ -138,19 +139,41 @@ export default function Dashboard() {
 
   async function loadOrders() {
     setLoadingOrders(true)
-    try { setOrders(await listUserOrders(user.uid)) } finally { setLoadingOrders(false) }
+    try {
+      const ords = await listUserOrders(user.uid)
+      setOrders(ords || [])
+    } catch {
+      setOrders([])
+    }
+    setLoadingOrders(false)
   }
 
-  const setLink = (i, k, v) => setLinks((L) => L.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)))
-  const addLink = () => setLinks((L) => [...L, { label: '', url: '', icon: '' }])
-  const delLink = (i) => setLinks((L) => L.filter((_, idx) => idx !== i))
-  const moveLink = (i, dir) => setLinks((L) => {
-    const n = [...L]
-    const j = i + dir
-    if (j < 0 || j >= n.length) return n
-    ;[n[i], n[j]] = [n[j], n[i]]
-    return n
-  })
+  useEffect(() => {
+    if (tab === 'orders') loadOrders()
+  }, [tab])
+
+  function addLink() {
+    setLinks((l) => [...l, { label: '', url: '' }])
+  }
+
+  function updateLink(idx, key, val) {
+    setLinks((l) => l.map((item, i) => (i === idx ? { ...item, [key]: val } : item)))
+  }
+
+  function delLink(idx) {
+    setLinks((l) => l.filter((_, i) => i !== idx))
+  }
+
+  function moveLink(idx, dir) {
+    const target = idx + dir
+    if (target < 0 || target >= links.length) return
+    setLinks((l) => {
+      const arr = [...l]
+      const [item] = arr.splice(idx, 1)
+      arr.splice(target, 0, item)
+      return arr
+    })
+  }
 
   if (loading) {
     return (
@@ -194,6 +217,26 @@ export default function Dashboard() {
   return (
     <section className="section dash-section">
       <div className="container">
+        {/* Activation Banner */}
+        {!activated && (
+          <div className="dash-alert-banner" style={{ marginBottom: 24, borderLeft: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.08)' }}>
+            <div className="dash-alert-icon" style={{ fontSize: '2rem' }}>💳</div>
+            <div className="dash-alert-body" style={{ flex: 1 }}>
+              <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)' }}>
+                {isAr ? 'حسابك في وضع المعاينة — البطاقة الذكية غير مفعلة' : 'Preview Mode — NFC Card Not Activated'}
+              </h4>
+              <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--muted)' }}>
+                {isAr 
+                  ? 'صفحتك الرقمية جاهزة للمعاينة. اشترِ بطاقتك الذكية (NFC Card) الآن من المتجر لتفعيل حسابك بشكل رسمي وشحن البطاقة إليك.' 
+                  : 'Your profile is ready in preview mode. Purchase your smart NFC card to officially activate your account and have it shipped.'}
+              </p>
+            </div>
+            <Link to="/store" className="btn btn-primary btn-sm">
+              {isAr ? '🛒 شراء البطاقة وتفعيل الحساب' : '🛒 Buy Card & Activate'}
+            </Link>
+          </div>
+        )}
+
         <div className="dash-header">
           <div className="dash-header-left">
             <div className="dash-avatar-lg">
@@ -233,9 +276,12 @@ export default function Dashboard() {
             <div className="ds-icon"><IconZap /></div>
             <div><b>{linkCount}</b><span>{isAr ? 'رابط خاص' : 'Custom links'}</span></div>
           </div>
-          <div className="dash-stat active">
+          <div className={`dash-stat ${activated ? 'active' : 'inactive'}`}>
             <div className="ds-icon"><NfcIcon /></div>
-            <div><b>{isAr ? 'نشط ✓' : 'Active ✓'}</b><span>{isAr ? 'بطاقة NFC' : 'NFC Card'}</span></div>
+            <div>
+              <b>{activated ? (isAr ? 'مفعلة ✓' : 'Active ✓') : (isAr ? 'قيد الانتظار' : 'Pending')}</b>
+              <span>{isAr ? 'حالة البطاقة' : 'Card status'}</span>
+            </div>
           </div>
         </div>
 
@@ -351,6 +397,29 @@ export default function Dashboard() {
                   <h3>{isAr ? 'صفحة البطاقة بتاعتك' : 'NFC Card page'}</h3>
                   <p>{isAr ? 'الرابط اللي البطاقة بتوجّه إليه لما حد يلمسها.' : 'The link your card points to when tapped.'}</p>
                 </div>
+
+                {!activated ? (
+                  <div style={{ padding: '16px 20px', background: 'rgba(245, 158, 11, 0.08)', border: '1.5px solid rgba(245, 158, 11, 0.25)', borderRadius: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
+                      <div>
+                        <b style={{ color: '#d97706', fontSize: '0.98rem' }}>{isAr ? '⚠️ بطاقتك الذكية غير مفعلة (وضع المعاينة)' : '⚠️ NFC Card Inactive (Preview Mode)'}</b>
+                        <p style={{ margin: '4px 0 0', fontSize: '0.86rem', color: 'var(--muted)' }}>
+                          {isAr ? 'صفحتك الرقمية جاهزة وتعمل في وضع المعاينة. اطلب بطاقتك المطبوعة الآن لتفعيل الربط والشحن المباشر.' : 'Your profile is live in preview mode. Order your physical card from the store to activate shipping & hardware link.'}
+                        </p>
+                      </div>
+                      <Link to="/store" className="btn btn-primary btn-sm">{isAr ? '🛒 اطلب بطاقتك الآن' : '🛒 Order Card'}</Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '14px 18px', background: 'rgba(16, 185, 129, 0.08)', border: '1.5px solid rgba(16, 185, 129, 0.25)', borderRadius: 16, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: '1.4rem' }}>✅</span>
+                    <div>
+                      <b style={{ color: '#059669', fontSize: '0.95rem' }}>{isAr ? 'بطاقتك الذكية مفعلة رسمياً' : 'Your Smart Card is Officially Active'}</b>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.84rem', color: 'var(--muted)' }}>{isAr ? 'تم ربط بطاقتك بنجاح بملفك الشخصي.' : 'Your card is connected to your profile.'}</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="nfc-link-box">
                   <div className="nfc-link-icon"><IconRefresh /></div>
                   <div className="nfc-link-info">
