@@ -246,11 +246,19 @@ export async function createOrder(uid, payload) {
 
   const savedOrder = { id: firestoreId, ...orderData }
 
-  // Sync to local orders store for seamless Admin view
+  // Sync to local orders store for seamless User & Admin view
   try {
     const existing = JSON.parse(localStorage.getItem('lamsa_all_orders') || '[]')
     const updated = [savedOrder, ...existing.filter((o) => o.id !== firestoreId)]
     localStorage.setItem('lamsa_all_orders', JSON.stringify(updated))
+
+    if (uid && uid !== 'guest') {
+      const userKey = `lamsa_user_orders_${uid}`
+      const userExisting = JSON.parse(localStorage.getItem(userKey) || '[]')
+      localStorage.setItem(userKey, JSON.stringify([savedOrder, ...userExisting.filter((o) => o.id !== firestoreId)]))
+    }
+
+    localStorage.setItem('lamsa_last_order', JSON.stringify(savedOrder))
     window.dispatchEvent(new CustomEvent('lamsa_order_created', { detail: savedOrder }))
   } catch {}
 
@@ -503,9 +511,34 @@ export async function getProfileAnalytics(uid) {
 }
 
 
-export async function listUserOrders(uid) {
-  const all = await listOrders()
-  return all.filter((o) => o.uid === uid)
+export async function listUserOrders(uid, email = '') {
+  let all = []
+  try {
+    all = await listOrders()
+  } catch {}
+
+  const cleanEmail = (email || '').trim().toLowerCase()
+
+  // Also read local direct cache
+  try {
+    const local = JSON.parse(localStorage.getItem('lamsa_all_orders') || '[]')
+    const userLocal = uid ? JSON.parse(localStorage.getItem(`lamsa_user_orders_${uid}`) || '[]') : []
+    const map = new Map()
+    all.forEach((o) => map.set(o.id, o))
+    local.forEach((o) => map.set(o.id, o))
+    userLocal.forEach((o) => map.set(o.id, o))
+    all = Array.from(map.values())
+  } catch {}
+
+  const filtered = all.filter((o) => {
+    if (!o) return false
+    if (uid && (o.uid === uid || o.userId === uid)) return true
+    if (cleanEmail && o.customer?.email && o.customer.email.toLowerCase() === cleanEmail) return true
+    if (!uid || uid === 'guest' || !o.uid) return true
+    return false
+  })
+
+  return filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
 }
 
 export async function subscribeNewsletter(email, source = 'web') {

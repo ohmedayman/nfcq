@@ -194,9 +194,10 @@ export default function Dashboard() {
   }
 
   async function loadOrders() {
+    if (!user) return
     setLoadingOrders(true)
     try {
-      const o = await listUserOrders(user.uid)
+      const o = await listUserOrders(user.uid, user.email)
       setOrders(o)
     } catch {}
     setLoadingOrders(false)
@@ -922,12 +923,15 @@ function LeadsTab({ leads, isAr, onRefresh }) {
 }
 
 function Orders({ orders, loadingOrders, loadOrders, isAr }) {
-  const [touched, setTouched] = useState(false)
   const [expandedOrder, setExpandedOrder] = useState(null)
-  const loadT = async () => { await loadOrders(); setTouched(true) }
+
+  useEffect(() => {
+    loadOrders()
+  }, [])
 
   const statusMap = {
     pending: { label: isAr ? 'قيد الانتظار' : 'Pending', color: '#f59e0b', icon: '⏳' },
+    confirmed: { label: isAr ? 'تم التأكيد' : 'Confirmed', color: '#22c55e', icon: '✓' },
     processing: { label: isAr ? 'جاري التجهيز' : 'Processing', color: '#3b82f6', icon: '📦' },
     shipped: { label: isAr ? 'تم الشحن' : 'Shipped', color: '#8b5cf6', icon: '🚚' },
     delivered: { label: isAr ? 'تم التوصيل' : 'Delivered', color: '#22c55e', icon: '✓' },
@@ -938,7 +942,7 @@ function Orders({ orders, loadingOrders, loadOrders, isAr }) {
   const getSteps = (status) => {
     const allSteps = ['pending', 'processing', 'shipped', 'done']
     let currentIdx = allSteps.indexOf(status || 'pending')
-    if (currentIdx === -1 && (status === 'delivered' || status === 'completed')) currentIdx = 3
+    if (currentIdx === -1 && (status === 'delivered' || status === 'completed' || status === 'confirmed')) currentIdx = 3
     if (currentIdx === -1 && status === 'cancelled') currentIdx = -1
     return allSteps.map((s, i) => ({
       ...statusMap[s],
@@ -950,16 +954,8 @@ function Orders({ orders, loadingOrders, loadOrders, isAr }) {
 
   return (
     <>
-      {!touched && !loadingOrders && (
-        <div className="empty-state">
-          <div className="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
-          <h4>{isAr ? 'طلباتي' : 'My orders'}</h4>
-          <p>{isAr ? 'اعرض طلباتك السابقة وتتبع شحنها.' : 'View your past purchases and track shipping.'}</p>
-          <button className="btn btn-primary" onClick={loadT}>{isAr ? 'شوف الطلبات' : 'Load orders'}</button>
-        </div>
-      )}
       {loadingOrders && <div style={{ textAlign: 'center', padding: 30 }}><div className="nfc-loader" /></div>}
-      {touched && !loadingOrders && orders.length === 0 && (
+      {!loadingOrders && orders.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
           <h4>{isAr ? 'لسه مفيش طلبات' : 'No orders yet'}</h4>
@@ -967,7 +963,7 @@ function Orders({ orders, loadingOrders, loadOrders, isAr }) {
           <Link to="/store" className="btn btn-primary">{isAr ? 'روح المتجر' : 'Go to store'}</Link>
         </div>
       )}
-      {touched && !loadingOrders && orders.length > 0 && (
+      {!loadingOrders && orders.length > 0 && (
         <div className="orders-list">
           {orders.map((o) => {
             const st = statusMap[o.status] || statusMap.pending

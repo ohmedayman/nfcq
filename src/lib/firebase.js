@@ -138,7 +138,7 @@ export async function grantAdmin(uid) { return (await loadServices()).grantAdmin
 export async function listProducts() { return (await loadServices()).listProducts() }
 export async function setProductActive(id, on) { return (await loadServices()).setProductActive(id, on) }
 export async function upsertProduct(id, data) { return (await loadServices()).upsertProduct(id, data) }
-export async function listUserOrders(uid) { return (await loadServices()).listUserOrders(uid) }
+export async function listUserOrders(uid, email) { return (await loadServices()).listUserOrders(uid, email) }
 export async function trackProfileView(uid) { return (await loadServices()).trackProfileView(uid) }
 export async function trackLinkClick(uid, url, label) { return (await loadServices()).trackLinkClick(uid, url, label) }
 export async function saveLead(profileUid, data) { return (await loadServices()).saveLead(profileUid, data) }

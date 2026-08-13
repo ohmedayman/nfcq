@@ -6,6 +6,8 @@ import Logo from './Logo'
 import { toast } from './Toast'
 import { IconGlobe, IconUser, IconShield, IconMenu, IconClose, IconHome, IconCreditCard } from './icons'
 
+import { CopyButton, CouponCodeBadge } from './CopyButton'
+
 function getCartCount() {
   try {
     const cart = JSON.parse(localStorage.getItem('lamsa_cart') || '{}')
@@ -113,9 +115,9 @@ export default function Navbar() {
               <span className="tab-pill">🔥 {isAr ? 'عرض الإطلاق الحصري' : 'Launch Offer'}</span>
               <span className="tab-msg">
                 {isAr ? (
-                  <>خصم <b style={{ color: '#fde047' }}>50%</b> تلقائي على جميع البطاقات بكوبون: <code className={`tab-coupon-code ${copiedCoupon ? 'copied' : ''}`} onClick={copyCoupon} title={isAr ? 'انقر للنسخ' : 'Click to copy'}>{copiedCoupon ? '✅ LAMSA' : 'LAMSA'}</code></>
+                  <>خصم <b style={{ color: '#fde047' }}>50%</b> تلقائي على جميع البطاقات بكوبون: <CouponCodeBadge code="LAMSA" toastMessage="تم نسخ كود الخصم (LAMSA) وتطبيقه تلقائياً! ✓" /></>
                 ) : (
-                  <><b style={{ color: '#fde047' }}>50% OFF</b> auto-applied with code: <code className={`tab-coupon-code ${copiedCoupon ? 'copied' : ''}`} onClick={copyCoupon}>{copiedCoupon ? '✅ LAMSA' : 'LAMSA'}</code></>
+                  <><b style={{ color: '#fde047' }}>50% OFF</b> auto-applied with code: <CouponCodeBadge code="LAMSA" toastMessage="50% OFF Code (LAMSA) copied successfully! ✓" /></>
                 )}
               </span>
               <div className="tab-timer-box">
@@ -126,9 +128,13 @@ export default function Navbar() {
               </div>
             </div>
             <div className="tab-actions">
-              <button className={`tab-copy-btn ${copiedCoupon ? 'copied' : ''}`} onClick={copyCoupon}>
-                {copiedCoupon ? (isAr ? '✅ تم النسخ!' : '✅ Copied!') : (isAr ? '📋 نسخ الكوبون' : '📋 Copy Code')}
-              </button>
+              <CopyButton
+                textToCopy="LAMSA"
+                label={isAr ? '📋 نسخ الكوبون' : '📋 Copy Code'}
+                copiedLabel={isAr ? '✅ تم النسخ!' : '✅ Copied!'}
+                toastMessage={isAr ? 'تم نسخ كوبون الخصم (LAMSA) بنجاح! ✓' : 'Coupon code (LAMSA) copied successfully! ✓'}
+                className="tab-copy-btn"
+              />
               <Link to="/store" className="tab-shop-btn">
                 🛒 {isAr ? 'شراء بالخصم' : 'Claim 50%'}
               </Link>
