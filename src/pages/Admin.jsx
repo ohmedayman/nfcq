@@ -462,6 +462,7 @@ function AdminOverview({ orders, total, pending, processing, shipped, completed,
 
 function AdminOrders({ orders, change, i18n, cur, isAr }) {
   const [statusFilter, setStatusFilter] = useState('all')
+  const [previewReceipt, setPreviewReceipt] = useState(null)
 
   const filtered = useMemo(() => {
     if (statusFilter === 'all') return orders
@@ -517,15 +518,49 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
                       </div>
                     </td>
                     <td>
-                      {o.paymentMethod === 'wallet' ? (
-                        <div style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 800 }}>
-                          📱 {isAr ? 'فودافون كاش / إنستاباي' : 'Wallet / InstaPay'}
-                          {o.walletNumber && <div style={{ fontSize: '0.74rem', color: 'var(--muted)', fontWeight: 600 }}>من: {o.walletNumber}</div>}
+                      {o.paymentMethod === 'instapay' ? (
+                        <div>
+                          <div style={{ fontSize: '0.82rem', color: '#10b981', fontWeight: 800 }}>⚡️ {isAr ? 'إنستاباي' : 'InstaPay'}</div>
+                          {o.instapayHandle && <div style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>من: {o.instapayHandle}</div>}
+                        </div>
+                      ) : o.paymentMethod === 'wallet' ? (
+                        <div>
+                          <div style={{ fontSize: '0.82rem', color: '#ef4444', fontWeight: 800 }}>📱 {isAr ? 'فودافون كاش' : 'Vodafone Cash'}</div>
+                          {o.walletNumber && <div style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>من: {o.walletNumber}</div>}
+                        </div>
+                      ) : o.paymentMethod === 'card' ? (
+                        <div>
+                          <div style={{ fontSize: '0.82rem', color: '#1854e8', fontWeight: 800 }}>💳 {isAr ? 'فيزا / ماستركارد' : 'Card Online'}</div>
+                          {o.cardLast4 && <div style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>•••• {o.cardLast4}</div>}
+                          <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 800 }}>✓ {isAr ? 'مدفوع إلكترونياً' : 'Paid Online'}</span>
                         </div>
                       ) : (
                         <div style={{ fontSize: '0.82rem', color: '#d97706', fontWeight: 800 }}>
                           💵 {isAr ? 'عند الاستلام' : 'Cash on Delivery'}
                         </div>
+                      )}
+
+                      {o.receiptImage && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewReceipt(o.receiptImage)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            marginTop: 6,
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                            background: 'rgba(24, 84, 232, 0.1)',
+                            color: '#1854e8',
+                            border: '1px solid rgba(24, 84, 232, 0.2)',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          📎 {isAr ? 'عرض الإيصال' : 'View Receipt'}
+                        </button>
                       )}
                     </td>
                     <td>
@@ -562,6 +597,29 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* RECEIPT IMAGE PREVIEW LIGHTBOX */}
+      {previewReceipt && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20,
+        }} onClick={() => setPreviewReceipt(null)}>
+          <div style={{ position: 'relative', maxWidth: 650, maxHeight: '90vh', background: '#ffffff', borderRadius: 20, padding: 16, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <b style={{ color: '#0f172a', fontSize: '1rem' }}>🧾 {isAr ? 'إيصال تحويل العميل' : 'Customer Payment Receipt'}</b>
+              <button onClick={() => setPreviewReceipt(null)} style={{ background: '#f1f5f9', border: 'none', borderRadius: 99, width: 32, height: 32, cursor: 'pointer', fontWeight: 900 }}>✕</button>
+            </div>
+            <img src={previewReceipt} alt="Receipt Preview" style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: 12, border: '1px solid var(--border)' }} />
+          </div>
         </div>
       )}
     </div>

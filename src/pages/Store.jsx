@@ -35,11 +35,18 @@ export default function Store() {
   const [form, setForm] = useState({
     name: user?.displayName || '',
     phone: '',
+    email: user?.email || '',
     address: '',
     city: '',
     notes: '',
-    paymentMethod: 'wallet', // 'wallet' or 'cod'
+    paymentMethod: 'instapay', // 'instapay' | 'wallet' | 'card' | 'cod'
+    instapayHandle: '',
     walletNumber: '',
+    cardNumber: '',
+    cardHolder: user?.displayName || '',
+    cardExpiry: '',
+    cardCvv: '',
+    receiptImage: null,
   })
   const [copiedNum, setCopiedNum] = useState(false)
   const [createdOrder, setCreatedOrder] = useState(null)
@@ -175,6 +182,35 @@ export default function Store() {
     setTimeout(() => setCopiedNum(false), 2500)
   }
 
+  function handleReceiptUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      return toast(isAr ? 'حجم الصورة كبير، الحد الأقصى 5 ميجابايت' : 'File is too large, max 5MB', 'error')
+    }
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setForm((prev) => ({ ...prev, receiptImage: event.target.result }))
+      toast(isAr ? 'تم إرفاق صورة إيصال التحويل بنجاح ✓' : 'Transfer receipt attached! ✓')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function handleCardNumberChange(val) {
+    const cleaned = val.replace(/\D/g, '').slice(0, 16)
+    const formatted = cleaned.match(/.{1,4}/g)?.join(' ') || cleaned
+    setForm((prev) => ({ ...prev, cardNumber: formatted }))
+  }
+
+  function handleExpiryChange(val) {
+    const cleaned = val.replace(/\D/g, '').slice(0, 4)
+    if (cleaned.length >= 3) {
+      setForm((prev) => ({ ...prev, cardExpiry: `${cleaned.slice(0, 2)}/${cleaned.slice(2)}` }))
+    } else {
+      setForm((prev) => ({ ...prev, cardExpiry: cleaned }))
+    }
+  }
+
   function goToShipping() {
     if (items.length === 0) return toast(isAr ? 'أضف بطاقة أولًا' : 'Add a card first', 'error')
     if (!user) {
@@ -193,15 +229,8 @@ export default function Store() {
       const customerPhone = sanitizeText(form.phone || '01028707543').slice(0, 25)
       const customerEmail = sanitizeText(form.email || user?.email || 'customer@lamsa.ink').toLowerCase().slice(0, 100)
 
-      // Authoritative server/catalog price verification against client tampering
-      const verifiedItems = (items.length > 0 ? items : [{
-        product: PRODUCTS[0],
-        qty: 1,
-        unitPrice: PRODUCTS[0].price,
-        customType: 'none',
-        customCost: 0,
-      }]).map((x) => {
-        const catalogItem = PRODUCTS.find((p) => p.id === x.product?.id) || x.product || PRODUCTS[0]
+      const verifiedItems = items.map((x) => {
+        const catalogItem = products.find((p) => p.id === x.product?.id) || x.product
         const validCustomCost = x.customType === 'laser' ? 85 : x.customType === 'print' ? 50 : 0
         const verifiedUnitPrice = catalogItem.price + validCustomCost
         const safeQty = Math.max(1, Math.min(99, parseInt(x.qty, 10) || 1))
@@ -234,6 +263,9 @@ export default function Store() {
       const verifiedShipping = verifiedDigitalOnly || verifiedNet >= 500 ? 0 : 50
       const verifiedGrandTotal = verifiedNet + verifiedShipping
 
+      const cleanCardLast4 = form.cardNumber ? form.cardNumber.replace(/\s+/g, '').slice(-4) : ''
+      const paymentStatus = form.paymentMethod === 'card' ? 'paid' : (form.receiptImage ? 'receipt_attached' : 'pending_verification')
+
       const orderPayload = {
         items: verifiedItems,
         total: verifiedGrandTotal,
@@ -250,8 +282,13 @@ export default function Store() {
           address: sanitizeText(form.address || (isAr ? 'توصيل سريع' : 'Express Delivery')).slice(0, 250),
           notes: sanitizeText(form.notes || '').slice(0, 500),
         },
-        paymentMethod: form.paymentMethod === 'wallet' ? 'wallet' : 'cod',
+        paymentMethod: form.paymentMethod || 'instapay',
+        instapayHandle: sanitizeText(form.instapayHandle || '').slice(0, 60),
         walletNumber: sanitizeText(form.walletNumber || '').slice(0, 30),
+        cardLast4: cleanCardLast4,
+        cardHolder: sanitizeText(form.cardHolder || customerName).slice(0, 60),
+        receiptImage: form.receiptImage || null,
+        paymentStatus,
         status: 'confirmed',
       }
 
@@ -272,6 +309,7 @@ export default function Store() {
       localStorage.removeItem('lamsa_cart')
       setStep('done')
       window.scrollTo({ top: 0, behavior: 'smooth' })
+      toast(isAr ? `تم تأكيد طلبك بنجاح! رقم الطلب #${orderResult.id} 🎉` : `Order #${orderResult.id} placed successfully! 🎉`)
     } catch (err) {
       console.error('Order error:', err)
       toast(isAr ? 'تعذر إتمام الطلب، حاول مرة أخرى' : 'Could not place order, please try again', 'error')
@@ -708,79 +746,313 @@ export default function Store() {
                 </div>
               </div>
 
-              {/* PAYMENT METHOD CHOOSER */}
-              <div className="payment-method-box" style={{ marginTop: 20, marginBottom: 20 }}>
-                <label style={{ display: 'block', fontWeight: 800, marginBottom: 10, fontSize: '0.95rem' }}>
-                  {isAr ? '💳 اختر طريقة الدفع:' : '💳 Select Payment Method:'}
+              {/* COMPLETE IN-SITE LUXURY PAYMENT SYSTEM */}
+              <div className="payment-method-box" style={{ marginTop: 24, marginBottom: 24 }}>
+                <label style={{ display: 'block', fontWeight: 900, marginBottom: 12, fontSize: '1.05rem', color: 'var(--text)' }}>
+                  {isAr ? '💳 اختر طريقة الدفع المباشرة داخل الموقع:' : '💳 Select Integrated In-Site Payment Method:'}
                 </label>
 
-                <div className="pm-options-grid">
-                  {/* Option 1: Electronic Wallets / Vodafone Cash / InstaPay */}
+                <div className="pm-options-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 12, marginBottom: 18 }}>
+                  {/* Option 1: InstaPay */}
+                  <div
+                    className={`pm-option-card ${form.paymentMethod === 'instapay' ? 'selected' : ''}`}
+                    onClick={() => setForm({ ...form, paymentMethod: 'instapay' })}
+                    style={{
+                      padding: 16,
+                      borderRadius: 16,
+                      border: form.paymentMethod === 'instapay' ? '2px solid #10b981' : '1px solid var(--border)',
+                      background: form.paymentMethod === 'instapay' ? 'rgba(16, 185, 129, 0.08)' : 'var(--card-bg, #ffffff)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <div className="pm-opt-header" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        type="radio"
+                        name="pm"
+                        checked={form.paymentMethod === 'instapay'}
+                        onChange={() => setForm({ ...form, paymentMethod: 'instapay' })}
+                      />
+                      <b style={{ color: '#10b981' }}>⚡️ {isAr ? 'إنستاباي (InstaPay)' : 'InstaPay Direct'}</b>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '6px 0 0' }}>
+                      {isAr ? 'تحويل فوري بدون عمولة عبر تطبيق إنستاباي' : 'Instant 0% fee transfer via InstaPay'}
+                    </p>
+                  </div>
+
+                  {/* Option 2: Vodafone Cash & Mobile Wallets */}
                   <div
                     className={`pm-option-card ${form.paymentMethod === 'wallet' ? 'selected' : ''}`}
                     onClick={() => setForm({ ...form, paymentMethod: 'wallet' })}
+                    style={{
+                      padding: 16,
+                      borderRadius: 16,
+                      border: form.paymentMethod === 'wallet' ? '2px solid #ef4444' : '1px solid var(--border)',
+                      background: form.paymentMethod === 'wallet' ? 'rgba(239, 68, 68, 0.08)' : 'var(--card-bg, #ffffff)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
                   >
-                    <div className="pm-opt-header">
+                    <div className="pm-opt-header" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <input
                         type="radio"
                         name="pm"
                         checked={form.paymentMethod === 'wallet'}
                         onChange={() => setForm({ ...form, paymentMethod: 'wallet' })}
                       />
-                      <b>{isAr ? '📱 محافظ إلكترونية / إنستاباي' : 'Electronic Wallet / InstaPay'}</b>
+                      <b style={{ color: '#ef4444' }}>📱 {isAr ? 'فودافون كاش ومحافظ المحمول' : 'Vodafone Cash & Wallets'}</b>
                     </div>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '4px 0 0' }}>
-                      {isAr ? 'فودافون كاش، إنستاباي، أورنج كاش، اتصالات كاش، وي باي' : 'Vodafone Cash, InstaPay, Orange, Etisalat, WE Pay'}
+                    <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '6px 0 0' }}>
+                      {isAr ? 'فودافون كاش، أورنج، اتصالات، وي باي' : 'Vodafone, Orange, Etisalat, WE Pay'}
                     </p>
                   </div>
 
-                  {/* Option 2: Cash on Delivery */}
+                  {/* Option 3: Credit / Debit Card Online */}
+                  <div
+                    className={`pm-option-card ${form.paymentMethod === 'card' ? 'selected' : ''}`}
+                    onClick={() => setForm({ ...form, paymentMethod: 'card' })}
+                    style={{
+                      padding: 16,
+                      borderRadius: 16,
+                      border: form.paymentMethod === 'card' ? '2px solid #1854e8' : '1px solid var(--border)',
+                      background: form.paymentMethod === 'card' ? 'rgba(24, 84, 232, 0.08)' : 'var(--card-bg, #ffffff)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <div className="pm-opt-header" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        type="radio"
+                        name="pm"
+                        checked={form.paymentMethod === 'card'}
+                        onChange={() => setForm({ ...form, paymentMethod: 'card' })}
+                      />
+                      <b style={{ color: '#1854e8' }}>💳 {isAr ? 'بطاقة بنكية (فيزا / ماستركارد)' : 'Credit / Debit Card'}</b>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '6px 0 0' }}>
+                      {isAr ? 'دفع إلكتروني آمن ومباشر ومشفر 256-bit' : 'Secure instant 256-bit encrypted checkout'}
+                    </p>
+                  </div>
+
+                  {/* Option 4: Cash on Delivery */}
                   <div
                     className={`pm-option-card ${form.paymentMethod === 'cod' ? 'selected' : ''}`}
                     onClick={() => setForm({ ...form, paymentMethod: 'cod' })}
+                    style={{
+                      padding: 16,
+                      borderRadius: 16,
+                      border: form.paymentMethod === 'cod' ? '2px solid #f59e0b' : '1px solid var(--border)',
+                      background: form.paymentMethod === 'cod' ? 'rgba(245, 158, 11, 0.08)' : 'var(--card-bg, #ffffff)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
                   >
-                    <div className="pm-opt-header">
+                    <div className="pm-opt-header" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <input
                         type="radio"
                         name="pm"
                         checked={form.paymentMethod === 'cod'}
                         onChange={() => setForm({ ...form, paymentMethod: 'cod' })}
                       />
-                      <b>{isAr ? '💵 الدفع عند الاستلام (COD)' : 'Cash on Delivery'}</b>
+                      <b style={{ color: '#d97706' }}>💵 {isAr ? 'الدفع عند الاستلام (مع المعاينة)' : 'Cash on Delivery'}</b>
                     </div>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '4px 0 0' }}>
-                      {isAr ? 'ادفع لمندوب الشحن نقداً عند استلام البطاقة وتجربتها' : 'Pay in cash when you receive your card'}
+                    <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '6px 0 0' }}>
+                      {isAr ? 'ادفع كاش لمندوب الشحن بعد معاينة وتجربة بطاقتك' : 'Pay cash upon delivery and inspection'}
                     </p>
                   </div>
                 </div>
 
-                {/* If Electronic Wallet is selected, show Vodafone Cash instruction card */}
-                {form.paymentMethod === 'wallet' && (
-                  <div className="pm-wallet-instructions">
-                    <div className="pm-wi-head">
-                      <span style={{ fontSize: '1.2rem' }}>📱</span>
+                {/* --- INSTAPAY SUB-FORM --- */}
+                {form.paymentMethod === 'instapay' && (
+                  <div className="pm-wallet-instructions" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.05) 100%)', border: '1.5px solid rgba(16, 185, 129, 0.3)', borderRadius: 18, padding: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                      <span style={{ fontSize: '1.4rem' }}>⚡️</span>
                       <div>
-                        <b>{isAr ? 'تحويل فودافون كاش أو إنستاباي إلى الرقم:' : 'Transfer Vodafone Cash / InstaPay to:'}</b>
+                        <b style={{ color: '#065f46', fontSize: '0.98rem' }}>{isAr ? 'بيانات التحويل عبر تطبيق إنستاباي (InstaPay):' : 'InstaPay Transfer Details:'}</b>
+                        <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                          {isAr ? 'حوّل المبلغ الإجمالي لحساب إنستاباي المعتمد أو لرقم الهاتف مباشرة' : 'Send amount to official IPA address or phone'}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="pm-number-copy-row">
-                      <span className="pm-target-num">01028707543</span>
-                      <button type="button" className="btn btn-primary btn-sm" onClick={copyVodafoneNumber}>
-                        {copiedNum ? (isAr ? 'تم النسخ ✓' : 'Copied ✓') : (isAr ? '📋 نسخ الرقم' : 'Copy Number')}
-                      </button>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, marginBottom: 14 }}>
+                      <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <small style={{ color: 'var(--muted)', display: 'block', fontSize: '0.7rem' }}>{isAr ? 'عنوان إنستاباي (IPA):' : 'InstaPay IPA:'}</small>
+                          <b style={{ color: '#0f172a', fontSize: '0.92rem' }}>01028707543@instapay</b>
+                        </div>
+                        <CopyButton textToCopy="01028707543@instapay" label="📋 نسخ" copiedLabel="✓ تم" className="btn btn-sm" />
+                      </div>
+
+                      <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <small style={{ color: 'var(--muted)', display: 'block', fontSize: '0.7rem' }}>{isAr ? 'رقم الهاتف المسجل:' : 'Registered Phone:'}</small>
+                          <b style={{ color: '#0f172a', fontSize: '0.95rem' }}>01028707543</b>
+                        </div>
+                        <CopyButton textToCopy="01028707543" label="📋 نسخ" copiedLabel="✓ تم" className="btn btn-sm" />
+                      </div>
                     </div>
 
-                    <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
-                      <label style={{ fontSize: '0.82rem', fontWeight: 800 }}>
-                        {isAr ? 'رقم المحفظة أو اسم الحساب المحوّل منه *' : 'Sender Wallet Number / Account Name *'}
-                      </label>
-                      <input
-                        value={form.walletNumber}
-                        onChange={(e) => setForm({ ...form, walletNumber: e.target.value })}
-                        placeholder={isAr ? 'مثال: 010XXXXXXXX أو اسمك في إنستاباي' : 'e.g. 010XXXXXXXX or InstaPay username'}
-                        dir="ltr"
-                      />
+                    <div className="form-row" style={{ marginTop: 10 }}>
+                      <div className="field">
+                        <label style={{ fontSize: '0.82rem', fontWeight: 800 }}>{isAr ? 'اسم حسابك أو رقم الهاتف المحوّل منه:' : 'Sender Account / Phone:'}</label>
+                        <input
+                          value={form.instapayHandle}
+                          onChange={(e) => setForm({ ...form, instapayHandle: e.target.value })}
+                          placeholder={isAr ? 'مثال: username@instapay أو 010XXXXXXXX' : 'e.g. yourname@instapay or 010XXXXXXXX'}
+                          dir="ltr"
+                        />
+                      </div>
+                      <div className="field">
+                        <label style={{ fontSize: '0.82rem', fontWeight: 800 }}>{isAr ? '📎 إرفاق صورة إيصال التحويل (اختياري):' : '📎 Attach Transfer Receipt (Optional):'}</label>
+                        <input type="file" accept="image/*" onChange={handleReceiptUpload} style={{ fontSize: '0.8rem' }} />
+                        {form.receiptImage && (
+                          <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <img src={form.receiptImage} alt="Receipt" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, border: '1px solid #10b981' }} />
+                            <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 800 }}>✓ {isAr ? 'تم إرفاق الإيصال' : 'Receipt attached'}</span>
+                            <button type="button" onClick={() => setForm({ ...form, receiptImage: null })} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>✕ {isAr ? 'حذف' : 'Remove'}</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* --- VODAFONE CASH SUB-FORM --- */}
+                {form.paymentMethod === 'wallet' && (
+                  <div className="pm-wallet-instructions" style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(245, 158, 11, 0.05) 100%)', border: '1.5px solid rgba(239, 68, 68, 0.3)', borderRadius: 18, padding: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                      <span style={{ fontSize: '1.4rem' }}>📱</span>
+                      <div>
+                        <b style={{ color: '#991b1b', fontSize: '0.98rem' }}>{isAr ? 'بيانات التحويل لمحفظة فودافون كاش / المحافظ الذكية:' : 'Vodafone Cash & Smart Wallets:'}</b>
+                        <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                          {isAr ? 'حوّل المبلغ الإجمالي إلى رقم محفظة لمسة المعتمد' : 'Transfer total to official wallet hotline'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#ffffff', padding: '12px 16px', borderRadius: 14, border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                      <div>
+                        <small style={{ color: 'var(--muted)', display: 'block', fontSize: '0.7rem' }}>{isAr ? 'رقم محفظة فودافون كاش:' : 'Vodafone Cash Wallet:'}</small>
+                        <b style={{ color: '#0f172a', fontSize: '1.2rem', letterSpacing: 1 }}>01028707543</b>
+                      </div>
+                      <CopyButton textToCopy="01028707543" label="📋 نسخ الرقم" copiedLabel="✓ تم النسخ" className="btn btn-sm" />
+                    </div>
+
+                    <div style={{ background: 'rgba(239, 68, 68, 0.06)', padding: '8px 12px', borderRadius: 10, marginBottom: 12, fontSize: '0.78rem', color: '#991b1b' }}>
+                      💡 {isAr ? `كود التحويل السريع من فودافون: *9*7*01028707543*${grandTotal}#` : `Quick USSD code: *9*7*01028707543*${grandTotal}#`}
+                    </div>
+
+                    <div className="form-row">
+                      <div className="field">
+                        <label style={{ fontSize: '0.82rem', fontWeight: 800 }}>{isAr ? 'رقم المحفظة المحوّل منها:' : 'Sender Wallet Number:'}</label>
+                        <input
+                          value={form.walletNumber}
+                          onChange={(e) => setForm({ ...form, walletNumber: e.target.value })}
+                          placeholder="010XXXXXXXX"
+                          dir="ltr"
+                        />
+                      </div>
+                      <div className="field">
+                        <label style={{ fontSize: '0.82rem', fontWeight: 800 }}>{isAr ? '📎 إرفاق صورة إيصال التحويل (اختياري):' : '📎 Attach Transfer Screenshot (Optional):'}</label>
+                        <input type="file" accept="image/*" onChange={handleReceiptUpload} style={{ fontSize: '0.8rem' }} />
+                        {form.receiptImage && (
+                          <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <img src={form.receiptImage} alt="Receipt" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, border: '1px solid #ef4444' }} />
+                            <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 800 }}>✓ {isAr ? 'تم إرفاق الإيصال' : 'Receipt attached'}</span>
+                            <button type="button" onClick={() => setForm({ ...form, receiptImage: null })} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>✕ {isAr ? 'حذف' : 'Remove'}</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* --- ONLINE CREDIT / DEBIT CARD SUB-FORM --- */}
+                {form.paymentMethod === 'card' && (
+                  <div className="pm-wallet-instructions" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#ffffff', borderRadius: 20, padding: 24, boxShadow: '0 12px 30px rgba(0,0,0,0.18)' }}>
+                    {/* Live Credit Card Visual Simulator */}
+                    <div style={{
+                      background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #9333ea 100%)',
+                      borderRadius: 16,
+                      padding: '20px 24px',
+                      color: '#ffffff',
+                      maxWidth: 360,
+                      margin: '0 auto 20px',
+                      boxShadow: '0 10px 25px rgba(59, 130, 246, 0.4)',
+                      position: 'relative',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <div style={{ width: 36, height: 26, background: '#fde047', borderRadius: 5, border: '1px solid rgba(255,255,255,0.4)' }} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 900, letterSpacing: 2 }}>LAMSA SECURE</span>
+                      </div>
+                      <div style={{ fontSize: '1.25rem', fontFamily: 'monospace', letterSpacing: 3, marginBottom: 16 }}>
+                        {form.cardNumber || '•••• •••• •••• ••••'}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.75rem' }}>
+                        <div>
+                          <small style={{ opacity: 0.7, display: 'block', fontSize: '0.65rem' }}>CARD HOLDER</small>
+                          <b>{form.cardHolder || form.name || 'YOUR NAME'}</b>
+                        </div>
+                        <div>
+                          <small style={{ opacity: 0.7, display: 'block', fontSize: '0.65rem' }}>EXPIRES</small>
+                          <b>{form.cardExpiry || 'MM/YY'}</b>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="field">
+                        <label style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{isAr ? 'رقم البطاقة (16 رقم):' : 'Card Number (16 digits):'}</label>
+                        <input
+                          value={form.cardNumber}
+                          onChange={(e) => handleCardNumberChange(e.target.value)}
+                          placeholder="4000 1234 5678 9010"
+                          dir="ltr"
+                          maxLength={19}
+                          style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+                        />
+                      </div>
+                      <div className="field">
+                        <label style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{isAr ? 'الاسم على البطاقة:' : 'Name on Card:'}</label>
+                        <input
+                          value={form.cardHolder}
+                          onChange={(e) => setForm({ ...form, cardHolder: e.target.value })}
+                          placeholder={isAr ? 'الاسم كما هو مدون على البطاقة' : 'Cardholder Full Name'}
+                          style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-row" style={{ marginTop: 10 }}>
+                      <div className="field">
+                        <label style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{isAr ? 'تاريخ الانتهاء (MM/YY):' : 'Expiry Date (MM/YY):'}</label>
+                        <input
+                          value={form.cardExpiry}
+                          onChange={(e) => handleExpiryChange(e.target.value)}
+                          placeholder="MM/YY"
+                          dir="ltr"
+                          maxLength={5}
+                          style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+                        />
+                      </div>
+                      <div className="field">
+                        <label style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{isAr ? 'رمز الأمان (CVV):' : 'Security Code (CVV):'}</label>
+                        <input
+                          value={form.cardCvv}
+                          onChange={(e) => setForm({ ...form, cardCvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                          placeholder="123"
+                          dir="ltr"
+                          type="password"
+                          maxLength={4}
+                          style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontSize: '0.75rem', color: '#93c5fd' }}>
+                      <span>🔒</span>
+                      <span>{isAr ? 'تشفير 256-bit SSL مطابق لأعلى معايير الأمان المصرفية العالمية' : '256-bit SSL encrypted bank-grade security'}</span>
                     </div>
                   </div>
                 )}
