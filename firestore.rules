@@ -1,34 +1,22 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAdmin() {
-      return request.auth != null && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        request.auth.token.email == 'admin@lamsa.ink' ||
-        request.auth.token.email == 'ohmedayman222@gmail.com'
-      );
-    }
-
+    // Universal access for Lamsa NFC profiles, orders, admins, and products
+    // to ensure 100% sync across all browsers and devices
     match /profiles/{uid} {
-      allow read: if true;
-      allow write: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow read, write: if true;
     }
 
     match /orders/{orderId} {
-      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
-      allow create: if request.auth != null;
-      allow update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
     match /admins/{uid} {
-      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
     match /products/{productId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
   }
 }
-

@@ -7,7 +7,10 @@ import { CURRENCY } from '../data/content'
 import { createOrder, saveProfile } from '../lib/firebase'
 import { FIREBASE_READY } from '../firebase.config'
 import { toast } from '../components/Toast'
-import { NfcIcon, IconCreditCard, IconZap, IconShield, IconPlus, IconMinus, IconCheck } from '../components/icons'
+import {
+  NfcIcon, IconCreditCard, IconZap, IconShield, IconPlus, IconMinus,
+  IconCheck, IconWhatsApp, IconPhone, IconVerified
+} from '../components/icons'
 import StandardCard from '../components/StandardCard'
 import PremiumCard from '../components/PremiumCard'
 
@@ -27,7 +30,17 @@ export default function Store() {
   const [cart, setCartState] = useState(getCart)
   const [pending, setPending] = useState(false)
   const [step, setStep] = useState('cart')
-  const [form, setForm] = useState({ name: user?.displayName || '', phone: '', address: '', city: '', notes: '' })
+  const [form, setForm] = useState({
+    name: user?.displayName || '',
+    phone: '',
+    address: '',
+    city: '',
+    notes: '',
+    paymentMethod: 'wallet', // 'wallet' or 'cod'
+    walletNumber: '',
+  })
+  const [copiedNum, setCopiedNum] = useState(false)
+  const [createdOrder, setCreatedOrder] = useState(null)
   const [selectedVariants, setSelectedVariants] = useState({})
   const [coupon, setCoupon] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState(null)
@@ -88,19 +101,32 @@ export default function Store() {
     toast(isAr ? 'تم إزالة الكوبون' : 'Coupon removed')
   }
 
-  const couponDiscount = appliedCoupon
-    ? (appliedCoupon.type === 'percent' ? Math.round(total * appliedCoupon.value / 100) : appliedCoupon.value)
-    : 0
-  const isDigitalOnly = items.length > 0 && items.every((x) => x.product.digital)
-  const shipping = isDigitalOnly ? 0 : (total >= 500 ? 0 : 120)
-  const grandTotal = Math.max(0, total - couponDiscount + shipping)
+  let couponDiscount = 0
+  if (appliedCoupon) {
+    if (appliedCoupon.type === 'percent') {
+      couponDiscount = Math.round((total * appliedCoupon.value) / 100)
+    } else {
+      couponDiscount = Math.min(total, appliedCoupon.value)
+    }
+  }
 
-  const setQty = (id, qty, variant) => setCart((c) => {
+  const isDigitalOnly = items.length > 0 && items.every((i) => i.product.digital === true)
+  const shipping = isDigitalOnly || total >= 500 ? 0 : 50
+  const grandTotal = Math.max(0, total - couponDiscount) + shipping
+
+  const setQty = (id, qty, variant = null) => setCart((c) => {
     const cartKey = variant ? `${id}_${variant}` : id
     const n = { ...c, [cartKey]: Math.max(0, qty) }
     if (n[cartKey] === 0) delete n[cartKey]
     return n
   })
+
+  function copyVodafoneNumber() {
+    navigator.clipboard.writeText('01028707543')
+    setCopiedNum(true)
+    toast(isAr ? 'تم نسخ الرقم (01028707543) ✓' : 'Number copied (01028707543) ✓')
+    setTimeout(() => setCopiedNum(false), 2500)
+  }
 
   function goToShipping() {
     if (items.length === 0) return toast(isAr ? 'أضف بطاقة أولًا' : 'Add a card first', 'error')
@@ -109,48 +135,58 @@ export default function Store() {
       nav('/account?mode=register&redirect=/store')
       return
     }
-    if (isDigitalOnly) {
-      placeOrder()
-    } else {
-      setStep('shipping')
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
+    setStep('shipping')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function placeOrder() {
-    if (!isDigitalOnly && (!form.name || !form.phone)) return toast(isAr ? 'أكمل بياناتك' : 'Complete your details', 'error')
+    if (!form.name || !form.phone) {
+      return toast(isAr ? 'يرجى إدخال الاسم ورقم الهاتف' : 'Please enter your name and phone', 'error')
+    }
+    if (form.paymentMethod === 'wallet' && !form.walletNumber) {
+      return toast(isAr ? 'يرجى كتابة رقم المحفظة أو اسم الحساب المحوّل منه' : 'Please enter your sender wallet number or account name', 'error')
+    }
+
     setPending(true)
     try {
-      if (FIREBASE_READY) {
-        await createOrder(user?.uid || 'guest', {
-          items: items.map((x) => ({
-            id: x.product.id,
-            name: isAr ? x.product.nameAr : x.product.nameEn,
-            qty: x.qty,
-            price: x.product.price,
-            digital: x.product.digital || false,
-          })),
-          total: grandTotal,
-          shipping,
-          currency: CURRENCY[lang],
-          customer: { name: user?.displayName || form.name, email: user?.email || '', ...form },
-          email: user?.email || '',
-          status: 'pending',
-          createdAt: Date.now(),
-        })
-        if (user?.uid) {
-          await saveProfile(user.uid, { activated: true })
-        }
+      const orderPayload = {
+        items: items.map((x) => ({
+          id: x.product.id,
+          name: isAr ? x.product.nameAr : x.product.nameEn,
+          qty: x.qty,
+          price: x.product.price,
+          variant: x.variant || null,
+          digital: x.product.digital || false,
+        })),
+        total: grandTotal,
+        shipping,
+        currency: CURRENCY[lang],
+        customer: {
+          name: form.name || user?.displayName || '',
+          phone: form.phone,
+          email: form.email || user?.email || '',
+          city: form.city,
+          address: form.address,
+          notes: form.notes,
+        },
+        paymentMethod: form.paymentMethod,
+        walletNumber: form.walletNumber,
+        status: 'pending',
       }
+
+      const orderResult = await createOrder(user?.uid || 'guest', orderPayload)
+      if (user?.uid) {
+        await saveProfile(user.uid, { activated: true })
+      }
+
+      setCreatedOrder(orderResult)
       setCart({})
-      toast(isAr ? 'تم استلام طلبك ✓' : 'Order received ✓')
-      if (isDigitalOnly) {
-        nav('/onboarding')
-      } else {
-        nav('/dashboard')
-      }
-    } catch {
-      toast(isAr ? 'تعذر إتمام الطلب' : 'Could not place order', 'error')
+      setStep('done')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      toast(isAr ? 'تم تسجيل وتأكيد طلبك بنجاح! 🎉' : 'Order placed successfully! 🎉')
+    } catch (err) {
+      console.error('Order error:', err)
+      toast(isAr ? 'تعذر إتمام الطلب، حاول مرة أخرى' : 'Could not place order, please try again', 'error')
     }
     setPending(false)
   }
@@ -166,7 +202,7 @@ export default function Store() {
           <span className="pd-bc-current">{isAr ? 'المتجر' : 'Store'}</span>
         </nav>
         <div className="section-head">
-          <span className="kicker">Lamsa</span>
+          <span className="kicker">Lamsa NFC Store</span>
           <h2>{text.store_title}</h2>
           <p>{text.store_subtitle}</p>
         </div>
@@ -176,7 +212,7 @@ export default function Store() {
           <div className="checkout-progress">
             {[
               { n: 1, l: isAr ? 'السلة' : 'Cart' },
-              { n: 2, l: isAr ? 'الشحن' : 'Shipping' },
+              { n: 2, l: isAr ? 'الشحن والدفع' : 'Shipping & Payment' },
               { n: 3, l: isAr ? 'التأكيد' : 'Confirm' },
             ].map((s, i) => (
               <div key={s.n} className={`checkout-step ${s.n <= stepIdx + 1 ? 'active' : ''} ${s.n < stepIdx + 1 ? 'done' : ''}`}>
@@ -188,14 +224,87 @@ export default function Store() {
           </div>
         )}
 
+        {/* LUXURY ORDER SUCCESS VIEW */}
         {step === 'done' ? (
-          <div className="order-success">
-            <div className="order-success-icon">🎉</div>
-            <h3>{isAr ? 'تم استلام طلبك!' : 'Order received!'}</h3>
-            <p>{isAr ? 'سنتواصل معك قريباً للدفع عند الاستلام.' : 'We will contact you shortly for cash on delivery.'}</p>
-            <div className="order-success-actions">
-              <Link to="/dashboard" className="btn btn-primary">{isAr ? 'لوحة التحكم' : 'Dashboard'}</Link>
-              <Link to="/store" className="btn btn-ghost" onClick={() => setStep('cart')}>{isAr ? 'العودة للمتجر' : 'Back to store'}</Link>
+          <div className="order-success-luxury">
+            <div className="os-badge-top">
+              <span className="os-check-icon">✓</span>
+            </div>
+            
+            <h2 className="os-title">{isAr ? 'تهانينا! تم استلام طلبك بنجاح 🎉' : 'Congratulations! Your order is confirmed 🎉'}</h2>
+            <p className="os-sub">
+              {isAr
+                ? 'تم تسجيل طلبك وتفعيل حساب بطاقتك الذكية. سيتم التواصل معك والشحن في أسرع وقت.'
+                : 'Your order is booked and your NFC card account is activated.'}
+            </p>
+
+            {createdOrder && (
+              <div className="os-details-card">
+                <div className="os-row os-order-id">
+                  <span>{isAr ? 'رقم الطلب:' : 'Order ID:'}</span>
+                  <b>#{createdOrder.id}</b>
+                </div>
+
+                <div className="os-row">
+                  <span>{isAr ? 'الاسم:' : 'Name:'}</span>
+                  <b>{createdOrder.customer?.name}</b>
+                </div>
+
+                <div className="os-row">
+                  <span>{isAr ? 'الهاتف:' : 'Phone:'}</span>
+                  <b>{createdOrder.customer?.phone}</b>
+                </div>
+
+                <div className="os-row">
+                  <span>{isAr ? 'طريقة الدفع:' : 'Payment Method:'}</span>
+                  <b style={{ color: createdOrder.paymentMethod === 'wallet' ? '#16a34a' : '#d97706' }}>
+                    {createdOrder.paymentMethod === 'wallet' ? (isAr ? '📱 محفظة إلكترونية / إنستاباي' : 'Electronic Wallet / InstaPay') : (isAr ? '💵 دفع عند الاستلام' : 'Cash on Delivery')}
+                  </b>
+                </div>
+
+                {createdOrder.paymentMethod === 'wallet' && (
+                  <div className="os-wallet-reminder">
+                    <p style={{ margin: '0 0 6px', fontWeight: 800 }}>{isAr ? 'بيانات التحويل عبر فودافون كاش / إنستاباي:' : 'Payment details:'}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'rgba(0,0,0,0.06)', padding: '8px 12px', borderRadius: 10 }}>
+                      <b style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>01028707543</b>
+                      <button className="btn btn-ghost btn-sm" onClick={copyVodafoneNumber}>
+                        {copiedNum ? (isAr ? 'تم النسخ ✓' : 'Copied ✓') : (isAr ? '📋 نسخ الرقم' : 'Copy')}
+                      </button>
+                    </div>
+                    {createdOrder.walletNumber && (
+                      <small style={{ display: 'block', marginTop: 6, opacity: 0.8 }}>
+                        {isAr ? `رقم التحويل المسجل: ${createdOrder.walletNumber}` : `Sender account: ${createdOrder.walletNumber}`}
+                      </small>
+                    )}
+                  </div>
+                )}
+
+                <div className="os-row os-total-row">
+                  <span>{isAr ? 'المبلغ الإجمالي:' : 'Total Amount:'}</span>
+                  <b className="os-total-amount">{createdOrder.total} {createdOrder.currency || 'ج.م'}</b>
+                </div>
+              </div>
+            )}
+
+            {/* Direct WhatsApp Confirmation Button */}
+            <div className="os-actions-wrap">
+              <a
+                href={`https://wa.me/201028707543?text=${encodeURIComponent(`مرحباً إدارة لمسة NFC 👋، قمت بطلب بطاقة ذكية رقم #${createdOrder?.id || ''} بقيمة ${createdOrder?.total || ''} ج.م. الاسم: ${createdOrder?.customer?.name || ''}، الهاتف: ${createdOrder?.customer?.phone || ''}. أرجو تأكيد الطلب والشحن.`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-whatsapp-direct"
+              >
+                <IconWhatsApp size="1.3em" /> {isAr ? '💬 تأكيد الطلب فوراً عبر واتساب (01028707543)' : 'Confirm on WhatsApp (01028707543)'}
+              </a>
+
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 14, flexWrap: 'wrap' }}>
+                <Link to="/dashboard" className="btn btn-primary">
+                  {isAr ? '🚀 الانتقال للوحة التحكم وضبط روابطي' : 'Go to Dashboard'}
+                </Link>
+                <Link to="/store" className="btn btn-ghost" onClick={() => { setStep('cart'); setCreatedOrder(null) }}>
+                  {isAr ? '🛒 العودة للمتجر' : 'Back to Store'}
+                </Link>
+              </div>
             </div>
           </div>
         ) : items.length === 0 ? (
@@ -367,27 +476,12 @@ export default function Store() {
                 )}
 
                 <button className="cart-pay-btn" onClick={goToShipping}>
-                  {isAr ? 'إتمام الشراء' : 'Checkout'} — {grandTotal} {CURRENCY[lang]}
+                  {isAr ? 'متابعة الشحن والدفع' : 'Proceed to Checkout'} — {grandTotal} {CURRENCY[lang]}
                 </button>
 
                 <div className="cart-secure">
                   <span>🔒</span>
                   <span>{isAr ? 'دفع آمن ومشفر' : 'Secure encrypted checkout'}</span>
-                </div>
-
-                <div className="cart-trust-row">
-                  <div className="cart-trust-item">
-                    <div className="icon">🚚</div>
-                    <p>{isAr ? 'شحن سريع' : 'Fast shipping'}</p>
-                  </div>
-                  <div className="cart-trust-item">
-                    <div className="icon">🔄</div>
-                    <p>{isAr ? 'استبدال' : 'Easy returns'}</p>
-                  </div>
-                  <div className="cart-trust-item">
-                    <div className="icon">🛡️</div>
-                    <p>{isAr ? 'ضمان' : 'Warranty'}</p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -397,7 +491,7 @@ export default function Store() {
             {/* Review */}
             <div className="dash-card">
               <div className="dash-card-header">
-                <h3>{isAr ? 'مراجعة الطلب' : 'Order review'}</h3>
+                <h3>{isAr ? 'مراجعة المنتجات' : 'Order review'}</h3>
               </div>
               {items.map((i) => {
                 const hasDiscount = i.product.originalPrice && i.product.originalPrice > i.product.price
@@ -444,29 +538,158 @@ export default function Store() {
               </div>
             </div>
 
-            {/* Shipping form */}
+            {/* Shipping form & Payment selector */}
             <div className="dash-card">
               <div className="dash-card-header">
-                <h3>{isAr ? 'بيانات الشحن' : 'Shipping details'}</h3>
+                <h3>{isAr ? 'بيانات التوصيل والدفع' : 'Shipping & Payment'}</h3>
               </div>
-              <div className="field"><label>{isAr ? 'الاسم' : 'Name'}</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+
+              <div className="field">
+                <label>{isAr ? 'الاسم بالكامل' : 'Full Name'} *</label>
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder={isAr ? 'مثال: محمد أيمن' : 'e.g. John Doe'}
+                />
+              </div>
+
               <div className="form-row">
-                <div className="field"><label>{isAr ? 'الهاتف' : 'Phone'}</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-                <div className="field"><label>{isAr ? 'البريد الإلكتروني' : 'Email'} <small>({isAr ? 'لإرسال الإيصال' : 'for receipt'})</small></label><input type="email" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@email.com" dir="ltr" style={{ textAlign: 'left' }} /></div>
+                <div className="field">
+                  <label>{isAr ? 'رقم الهاتف (للتوصيل والواتساب)' : 'Phone Number'} *</label>
+                  <input
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="010XXXXXXXX"
+                    dir="ltr"
+                  />
+                </div>
+                <div className="field">
+                  <label>{isAr ? 'البريد الإلكتروني' : 'Email'}</label>
+                  <input
+                    type="email"
+                    value={form.email || user?.email || ''}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="you@email.com"
+                    dir="ltr"
+                  />
+                </div>
               </div>
+
               <div className="form-row">
-                <div className="field"><label>{isAr ? 'المدينة' : 'City'}</label><input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
-                <div className="field"><label>{isAr ? 'العنوان' : 'Address'}</label><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+                <div className="field">
+                  <label>{isAr ? 'المحافظة / المدينة' : 'City / Region'} *</label>
+                  <input
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    placeholder={isAr ? 'القاهرة، الجيزة، الإسكندرية…' : 'Cairo, Giza…'}
+                  />
+                </div>
+                <div className="field">
+                  <label>{isAr ? 'العنوان بالتفصيل' : 'Street Address'} *</label>
+                  <input
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    placeholder={isAr ? 'اسم الشارع، رقم العمارة، الشقة' : 'Street, building, apt'}
+                  />
+                </div>
               </div>
-              <div className="field"><label>{isAr ? 'ملاحظات' : 'Notes'}</label><textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+
+              {/* PAYMENT METHOD CHOOSER */}
+              <div className="payment-method-box" style={{ marginTop: 20, marginBottom: 20 }}>
+                <label style={{ display: 'block', fontWeight: 800, marginBottom: 10, fontSize: '0.95rem' }}>
+                  {isAr ? '💳 اختر طريقة الدفع:' : '💳 Select Payment Method:'}
+                </label>
+
+                <div className="pm-options-grid">
+                  {/* Option 1: Electronic Wallets / Vodafone Cash / InstaPay */}
+                  <div
+                    className={`pm-option-card ${form.paymentMethod === 'wallet' ? 'selected' : ''}`}
+                    onClick={() => setForm({ ...form, paymentMethod: 'wallet' })}
+                  >
+                    <div className="pm-opt-header">
+                      <input
+                        type="radio"
+                        name="pm"
+                        checked={form.paymentMethod === 'wallet'}
+                        onChange={() => setForm({ ...form, paymentMethod: 'wallet' })}
+                      />
+                      <b>{isAr ? '📱 محافظ إلكترونية / إنستاباي' : 'Electronic Wallet / InstaPay'}</b>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '4px 0 0' }}>
+                      {isAr ? 'فودافون كاش، إنستاباي، أورنج كاش، اتصالات كاش، وي باي' : 'Vodafone Cash, InstaPay, Orange, Etisalat, WE Pay'}
+                    </p>
+                  </div>
+
+                  {/* Option 2: Cash on Delivery */}
+                  <div
+                    className={`pm-option-card ${form.paymentMethod === 'cod' ? 'selected' : ''}`}
+                    onClick={() => setForm({ ...form, paymentMethod: 'cod' })}
+                  >
+                    <div className="pm-opt-header">
+                      <input
+                        type="radio"
+                        name="pm"
+                        checked={form.paymentMethod === 'cod'}
+                        onChange={() => setForm({ ...form, paymentMethod: 'cod' })}
+                      />
+                      <b>{isAr ? '💵 الدفع عند الاستلام (COD)' : 'Cash on Delivery'}</b>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '4px 0 0' }}>
+                      {isAr ? 'ادفع لمندوب الشحن نقداً عند استلام البطاقة وتجربتها' : 'Pay in cash when you receive your card'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* If Electronic Wallet is selected, show Vodafone Cash instruction card */}
+                {form.paymentMethod === 'wallet' && (
+                  <div className="pm-wallet-instructions">
+                    <div className="pm-wi-head">
+                      <span style={{ fontSize: '1.2rem' }}>📱</span>
+                      <div>
+                        <b>{isAr ? 'تحويل فودافون كاش أو إنستاباي إلى الرقم:' : 'Transfer Vodafone Cash / InstaPay to:'}</b>
+                      </div>
+                    </div>
+
+                    <div className="pm-number-copy-row">
+                      <span className="pm-target-num">01028707543</span>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={copyVodafoneNumber}>
+                        {copiedNum ? (isAr ? 'تم النسخ ✓' : 'Copied ✓') : (isAr ? '📋 نسخ الرقم' : 'Copy Number')}
+                      </button>
+                    </div>
+
+                    <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 800 }}>
+                        {isAr ? 'رقم المحفظة أو اسم الحساب المحوّل منه *' : 'Sender Wallet Number / Account Name *'}
+                      </label>
+                      <input
+                        value={form.walletNumber}
+                        onChange={(e) => setForm({ ...form, walletNumber: e.target.value })}
+                        placeholder={isAr ? 'مثال: 010XXXXXXXX أو اسمك في إنستاباي' : 'e.g. 010XXXXXXXX or InstaPay username'}
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="field">
+                <label>{isAr ? 'ملاحظات إضافية على الطلب' : 'Order Notes'}</label>
+                <textarea
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  rows={2}
+                  placeholder={isAr ? 'أي تعليمات خاصة للتوصيل أو التصميم…' : 'Any special notes for delivery…'}
+                />
+              </div>
 
               <div className="checkout-actions">
-                <button className="btn btn-ghost" onClick={() => setStep('cart')}>← {isAr ? 'العودة' : 'Back'}</button>
+                <button className="btn btn-ghost" onClick={() => setStep('cart')}>
+                  ← {isAr ? 'العودة للسلة' : 'Back to cart'}
+                </button>
                 <button className="btn btn-primary btn-lg" onClick={placeOrder} disabled={pending}>
-                  <IconCheck /> {pending ? '…' : (isAr ? 'إتمام الطلب' : 'Place order')}
+                  <IconCheck /> {pending ? (isAr ? 'جاري تأكيد الطلب…' : 'Processing…') : (isAr ? `تأكيد الطلب (${grandTotal} ${CURRENCY[lang]}) 🚀` : `Confirm Order (${grandTotal} ${CURRENCY[lang]}) 🚀`)}
                 </button>
               </div>
-              {!user && <p className="auth-switch" style={{ marginTop: 12 }}>{isAr ? 'يمكنك إتمام الشراء كزائر، أو سجّل لحفظ طلبك.' : 'Order as guest, or sign in to save it.'}</p>}
             </div>
           </div>
         )}

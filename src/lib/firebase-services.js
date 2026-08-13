@@ -154,18 +154,20 @@ export async function createOrder(uid, payload) {
     total: payload.total,
     currency: payload.currency || 'EGP',
     customer: payload.customer,
+    paymentMethod: payload.paymentMethod || 'wallet',
+    walletNumber: payload.walletNumber || '',
+    shipping: payload.shipping || 0,
     createdAt: Date.now(),
     status: 'pending',
   }
 
-  let firestoreId = `order_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+  let firestoreId = `LMS-${Math.floor(100000 + Math.random() * 900000)}`
   try {
-    const { collection, addDoc } = await import('firebase/firestore')
+    const { doc, setDoc } = await import('firebase/firestore')
     const d = await getDbInstance()
-    const docRef = await addDoc(collection(d, 'orders'), orderData)
-    if (docRef?.id) firestoreId = docRef.id
+    await setDoc(doc(d, 'orders', firestoreId), orderData)
   } catch (err) {
-    console.warn('[createOrder] Firestore addDoc failed, using local cache:', err?.message)
+    console.warn('[createOrder] Firestore setDoc failed, using local cache:', err?.message)
   }
 
   const savedOrder = { id: firestoreId, ...orderData }

@@ -492,6 +492,7 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
               <tr>
                 <th>#</th>
                 <th>{isAr ? 'العميل' : 'Customer'}</th>
+                <th>{isAr ? 'طريقة الدفع' : 'Payment'}</th>
                 <th>{isAr ? 'المنتجات' : 'Items'}</th>
                 <th>{isAr ? 'الإجمالي' : 'Total'}</th>
                 <th>{isAr ? 'التاريخ' : 'Date'}</th>
@@ -501,17 +502,31 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
             </thead>
             <tbody>
               {filtered.map((o) => {
-                const phone = o.customer?.phone ? o.customer.phone.replace(/[^0-9]/g, '') : ''
-                const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(`مرحباً ${o.customer?.name || ''}، بخصوص طلبك من منصة لمسة NFC رقم #${o.id.slice(0, 6)}...`)}` : ''
+                let phone = o.customer?.phone ? o.customer.phone.replace(/[^0-9]/g, '') : ''
+                if (phone.startsWith('01')) phone = '2' + phone
+                const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(`مرحباً ${o.customer?.name || ''} 👋، بخصوص طلبك من منصة لمسة NFC رقم #${o.id}...`)}` : ''
 
                 return (
                   <tr key={o.id}>
-                    <td className="adm-mono">#{o.id.slice(0, 8)}</td>
+                    <td className="adm-mono">#{o.id}</td>
                     <td>
                       <div>
                         <b>{o.customer?.name || '—'}</b>
                         <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{o.customer?.phone} · {o.customer?.city || ''}</div>
+                        {o.customer?.address && <div style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>{o.customer.address}</div>}
                       </div>
+                    </td>
+                    <td>
+                      {o.paymentMethod === 'wallet' ? (
+                        <div style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 800 }}>
+                          📱 {isAr ? 'فودافون كاش / إنستاباي' : 'Wallet / InstaPay'}
+                          {o.walletNumber && <div style={{ fontSize: '0.74rem', color: 'var(--muted)', fontWeight: 600 }}>من: {o.walletNumber}</div>}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '0.82rem', color: '#d97706', fontWeight: 800 }}>
+                          💵 {isAr ? 'عند الاستلام' : 'Cash on Delivery'}
+                        </div>
+                      )}
                     </td>
                     <td>{(o.items || []).map((i) => `${i.name} ×${i.qty}`).join(', ') || '—'}</td>
                     <td className="adm-money">{currency(o.total)} {cur}</td>
@@ -523,7 +538,7 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
                     </td>
                     <td>
                       {waUrl && (
-                        <a href={waUrl} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ color: '#16a34a', fontWeight: 800 }}>
+                        <a href={waUrl} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ color: '#16a34a', fontWeight: 800, whiteSpace: 'nowrap' }}>
                           💬 واتساب
                         </a>
                       )}
