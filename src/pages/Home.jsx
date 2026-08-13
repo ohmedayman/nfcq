@@ -199,13 +199,6 @@ const CREATOR_CARDS = [
   },
 ]
 
-const CARD_MATERIALS = [
-  { id: 'matte-black', nameAr: 'أسود مطفي بريميوم', nameEn: 'Matte Black Pro', bg: '#0f172a', border: '#334155', accent: '#38bdf8' },
-  { id: 'brushed-gold', nameAr: 'ذهب فينيسيا ملكي', nameEn: 'Luxury Gold Metal', bg: 'linear-gradient(135deg, #78350f, #d97706)', border: '#f59e0b', accent: '#fbbf24' },
-  { id: 'emerald-carbon', nameAr: 'ألياف كربون زمردي', nameEn: 'Emerald Carbon VIP', bg: 'linear-gradient(135deg, #064e3b, #022c22)', border: '#10b981', accent: '#34d399' },
-  { id: 'crystal-frost', nameAr: 'أبيض لؤلؤي سحابي', nameEn: 'Pearl Frost White', bg: 'linear-gradient(135deg, #f8fafc, #cbd5e1)', border: '#94a3b8', accent: '#0284c7', light: true },
-]
-
 export default function Home() {
   const { text, lang } = useLang()
   const { products } = useProducts()
@@ -216,15 +209,6 @@ export default function Home() {
   const [selectedPersona, setSelectedPersona] = useState(PERSONAS[0])
   const [activeTheme, setActiveTheme] = useState('midnight-gold')
   const [faqOpen, setFaqOpen] = useState(null)
-
-  // 3D Card Studio State
-  const [customCardName, setCustomCardName] = useState('')
-  const [selectedMaterial, setSelectedMaterial] = useState(CARD_MATERIALS[0])
-  const [cardTilted, setCardTilted] = useState(false)
-
-  // NFC Tap Simulator State
-  const [simTapped, setSimTapped] = useState(false)
-  const [simRippling, setSimRippling] = useState(false)
 
   function handleClaimSubmit(e) {
     e.preventDefault()
@@ -502,111 +486,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ==========================================================================
-          INTERACTIVE 3D CARD STUDIO (استوديو تخصيص البطاقة الحية)
-          ========================================================================== */}
-      <section className="section">
-        <div className="container">
-          <div className="section-head">
-            <span className="kicker">{isAr ? 'استوديو البطاقات 3D' : '3D Card Customizer'}</span>
-            <h2>{isAr ? 'صمم بطاقتك الذكية وشاهدها بالثلاثي الأبعاد 💳' : 'Customize your card & view in 3D'}</h2>
-            <p>{isAr ? 'اكتب اسمك، اختر الخامة واللون، وشاهد تصميم بطاقتك الفاخرة يتشكل أمامك مباشرة' : 'Type your name, select material and preview your luxury NFC card live'}</p>
-          </div>
-
-          <div className="card-studio-grid">
-            {/* Controls */}
-            <div className="cs-controls">
-              <div className="field" style={{ marginBottom: 20 }}>
-                <label style={{ fontWeight: 800 }}>{isAr ? 'الاسم المحفور على البطاقة' : 'Name embossed on card'}</label>
-                <input
-                  type="text"
-                  placeholder={isAr ? 'مثال: د. محمد أيمن / Milano' : 'e.g. Alex Rivera'}
-                  value={customCardName}
-                  onChange={(e) => setCustomCardName(e.target.value)}
-                  style={{ width: '100%', padding: '14px 18px', borderRadius: 14, border: '2px solid var(--line)', fontSize: '1rem', fontWeight: 800 }}
-                />
-              </div>
-
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ fontWeight: 800, display: 'block', marginBottom: 10 }}>{isAr ? 'اختر خامة البطاقة الملكية:' : 'Choose Card Material:'}</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {CARD_MATERIALS.map((m) => (
-                    <button
-                      key={m.id}
-                      className={`cs-mat-btn ${selectedMaterial.id === m.id ? 'active' : ''}`}
-                      onClick={() => setSelectedMaterial(m)}
-                    >
-                      <span className="cs-mat-dot" style={{ background: m.bg, border: `1.5px solid ${m.border}` }} />
-                      <span>{isAr ? m.nameAr : m.nameEn}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="cs-cta-box">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <div>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{isAr ? 'السعر يشمل البرمجة والشحن:' : 'Total Price:'}</span>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--cobalt)' }}>349 {isAr ? 'ج.م' : 'EGP'}</div>
-                  </div>
-                  <span className="badge-chip">⚡ {isAr ? 'شحن فوري لباب البيت' : 'Fast Delivery'}</span>
-                </div>
-                <Link
-                  to={`/store?custom_name=${encodeURIComponent(customCardName || 'Lamsa Member')}&material=${selectedMaterial.id}`}
-                  className="btn btn-primary"
-                  style={{ width: '100%', padding: '14px', fontSize: '1rem' }}
-                >
-                  {isAr ? '🛒 اطلب هذه البطاقة الآن وتفعيل حسابك' : '🛒 Order this card & activate'}
-                </Link>
-              </div>
-            </div>
-
-            {/* 3D Render Canvas */}
-            <div className="cs-preview-wrap">
-              <div
-                className={`cs-3d-card ${cardTilted ? 'tilted' : ''}`}
-                style={{ background: selectedMaterial.bg, borderColor: selectedMaterial.border }}
-                onMouseEnter={() => setCardTilted(true)}
-                onMouseLeave={() => setCardTilted(false)}
-              >
-                <div className="cs-card-chip">
-                  <div className="cs-chip-lines" />
-                </div>
-
-                <div className="cs-card-nfc-icon">
-                  <NfcIcon size="2.2rem" />
-                </div>
-
-                <div className="cs-card-brand">
-                  <span style={{ color: selectedMaterial.light ? '#0f172a' : '#fff', fontWeight: 900, letterSpacing: '0.1em' }}>LAMSA</span>
-                  <span style={{ fontSize: '0.65rem', opacity: 0.8, color: selectedMaterial.light ? '#334155' : '#cbd5e1' }}>SMART NFC</span>
-                </div>
-
-                <div className="cs-card-bottom">
-                  <div className="cs-card-name" style={{ color: selectedMaterial.light ? '#0f172a' : '#fff' }}>
-                    {customCardName || (isAr ? 'اسمك هنا' : 'YOUR NAME')}
-                  </div>
-                  <div className="cs-card-qr">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https://lamsa.ink&color=${selectedMaterial.light ? '0f172a' : 'ffffff'}&bgcolor=transparent`}
-                      alt="QR"
-                    />
-                  </div>
-                </div>
-
-                {/* Shimmer Light Reflection */}
-                <div className="cs-card-shimmer" />
-              </div>
-              <p style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--muted)', marginTop: 14 }}>
-                {isAr ? '✨ مرر الماوس على البطاقة لرؤية انعكاس الضوء والحفر الليزري الفاخر' : '✨ Hover to see 3D light reflection'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* 3D CREATOR SHOWCASE CAROUSEL */}
-      <section className="section section-alt" style={{ overflow: 'hidden' }}>
+      <section className="section" style={{ overflow: 'hidden' }}>
         <div className="container">
           <div className="section-head">
             <span className="kicker">{isAr ? 'انضم للمتميزين' : 'Creator Showcase'}</span>
