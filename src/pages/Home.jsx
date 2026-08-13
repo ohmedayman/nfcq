@@ -7,7 +7,7 @@ import Reveal from '../components/Reveal'
 import {
   NfcIcon, IconUser, IconRefresh, IconShield, IconZap, IconCheck, IconPhone,
   IconYouTube, IconFacebook, IconTikTok, IconTelegram, IconWhatsApp, IconInstagram,
-  IconLinkedin, IconTwitter, PlatformIcon, IconVerified, IconShare,
+  IconLinkedin, IconTwitter, PlatformIcon, IconVerified, IconShare, IconMail, IconPin
 } from '../components/icons'
 import StandardCard from '../components/StandardCard'
 import PremiumCard from '../components/PremiumCard'
@@ -48,6 +48,118 @@ function StatCounter({ value, suffix = '', label }) {
   )
 }
 
+// 6 TAILORED PERSONAS FOR DIFFERENT INDUSTRIES
+const PERSONAS = [
+  {
+    id: 'doctor',
+    titleAr: 'الأطباء والعيادات 🩺',
+    titleEn: 'Doctors & Clinics 🩺',
+    subtitleAr: 'حجز كشوفات، لوكيشن العيادة، مواعيد العمل، وتبادل بيانات المرضى',
+    subtitleEn: 'Instant appointment booking, clinic location, and patient contact sharing',
+    name: 'د. محمد أيمن',
+    role: 'استشاري جراحة العظام · القاهرة',
+    bio: 'عيادات الصفوة التخصصية · الكشف بالحجز المسبق · متاح استشارات أونلاين',
+    avatar: '👨‍⚕️',
+    theme: 'midnight-gold',
+    socials: { whatsapp: '01028707543', facebook: 'dr.mohamed', youtube: 'dr_mohamed_clinics', instagram: 'dr_mohamed' },
+    links: [
+      { label: 'احجز كشفك الآن أونلاين (فيزيتا)', sub: 'متاح مواعيد السبت والاثنين والأربعاء', icon: 'zap', color: '#10b981' },
+      { label: 'موقع العيادة على خرائط Google', sub: 'التجمع الخامس · مول ميتينج بوينت', icon: 'pin', color: '#3b82f6' },
+      { label: 'تحميل مواعيد ومحاضرات التغذية (PDF)', sub: 'كتيب نصائح مجاني لمرضى المفاصل', icon: 'zap', color: '#d97706' },
+    ],
+  },
+  {
+    id: 'creator',
+    titleAr: 'صناع المحتوى والمؤثرين 🎨',
+    titleEn: 'Creators & Influencers 🎨',
+    subtitleAr: 'كل قنواتك وفيديوهاتك وروابط الرعاة في صفحة تضاهي Linktree Pro',
+    subtitleEn: 'All your social channels, YouTube videos, and sponsor links in one spot',
+    name: 'سارة ديزاين Studio',
+    role: 'صانعة محتوى ومصممة واجهات UI/UX',
+    bio: 'أشارك أسرار التصميم الحر وبناء المنتجات الرقمية الناجحة 🚀',
+    avatar: '👩‍🎨',
+    theme: 'rose-gold',
+    socials: { youtube: 'sarah_design', instagram: 'sarah_ux', tiktok: 'sarah_designs', whatsapp: '01028707543' },
+    links: [
+      { label: 'قناتي على يوتيوب (دروس UI/UX مجانية)', sub: '250K Subscribers · كورس فيجما كامل', icon: 'youtube', color: '#FF0000' },
+      { label: 'كتابي الإلكتروني: أسرار الفريلانسنج', sub: 'خصم 40% لفترة محدودة · تحميل فوري', icon: 'zap', color: '#ec4899' },
+      { label: 'حجز جلسة استشارية 1:1 لتطوير معرض أعمالك', sub: 'جلسة زووم 45 دقيقة عبر Calendly', icon: 'zap', color: '#8b5cf6' },
+    ],
+  },
+  {
+    id: 'founder',
+    titleAr: 'الشركات ورواد الأعمال 🏢',
+    titleEn: 'Founders & Companies 🏢',
+    subtitleAr: 'انطباع أول فخم في المؤتمرات والاجتماعات مع تبادل مباشر لبيانات العملاء',
+    subtitleEn: 'High-end first impression at networking events with instant lead capture',
+    name: 'كريم مهران',
+    role: 'Founder & CEO @ Apex Tech Solutions',
+    bio: 'نطور برمجيات الذكاء الاصطناعي والحلول السحابية للمؤسسات الكبرى ⚡',
+    avatar: '💼',
+    theme: 'cyber-neon',
+    socials: { linkedin: 'karim-mehran', twitter: 'karim_tech', whatsapp: '01028707543', email: 'karim@apex.io' },
+    links: [
+      { label: 'موقع الشركة الرسمي واستعراض خدماتنا', sub: 'www.apex-solutions.com', icon: 'zap', color: '#06b6d4' },
+      { label: 'تحميل البروفايل التعريفي للشركة (Company Deck)', sub: 'ملف PDF شامل كافة المشاريع السابقة', icon: 'zap', color: '#3b82f6' },
+      { label: 'تحديد موعد اجتماع عمل (B2B Meeting)', sub: 'مباشرة عبر رزنامة المبيعات', icon: 'zap', color: '#10b981' },
+    ],
+  },
+  {
+    id: 'realestate',
+    titleAr: 'العقارات والوسطاء 🏡',
+    titleEn: 'Real Estate & Sales 🏡',
+    subtitleAr: 'كتالوج المشروعات السكنية، بروشورات الـ PDF، ولوكيشن المعاينة بلمسة',
+    subtitleEn: 'Project catalogs, brochure PDFs, and showroom pin in one tap',
+    name: 'أحمد الشناوي',
+    role: 'مستشار عقاري أول · العاصمة الإدارية والتجمع',
+    bio: 'مساعدتك في اختيار أفضل فرصة استثمارية سكنية وتجارية بدون عمولة 🌟',
+    avatar: '🏡',
+    theme: 'emerald-vip',
+    socials: { whatsapp: '01028707543', phone: '01028707543', facebook: 'elshinawy.re', instagram: 'shinawy_properties' },
+    links: [
+      { label: 'كتالوج أفضل المشروعات السكنية لعام 2026', sub: 'أسعار وأنظمة سداد تصل حتى 10 سنوات', icon: 'zap', color: '#10b981' },
+      { label: 'واتساب مباشر لطلب دراسة الجدوى', sub: 'رد فوري 24/7 ومقارنة أسعار المطورين', icon: 'whatsapp', color: '#25D366' },
+      { label: 'لوكيشن مقر المعاينة ومكاتب المبيعات', sub: 'القاهرة الجديدة · التسعين الشمالي', icon: 'pin', color: '#d97706' },
+    ],
+  },
+  {
+    id: 'restaurant',
+    titleAr: 'المطاعم والكافيهات 🍽️',
+    titleEn: 'Restaurants & Cafes 🍽️',
+    subtitleAr: 'منيو إلكتروني ذكي، عروض اليوم، لوكيشن الفروع، وتقييم جوجل ماب',
+    subtitleEn: 'Digital smart menu, daily deals, branches map, and Google reviews',
+    name: 'Milano Gourmet Café',
+    role: 'مطعم وكافيه إيطالي فاخر · المعادي والزمالك',
+    bio: 'أشهى الأطباق الإيطالية الأصلية والقهوة المختصة ☕🍕',
+    avatar: '☕',
+    theme: 'midnight-gold',
+    socials: { instagram: 'milanocafe_eg', facebook: 'milanogourmet', whatsapp: '01028707543', tiktok: 'milanocafe' },
+    links: [
+      { label: 'تصفح المنيو الإلكتروني الذكي (Digital Menu)', sub: 'قائمة الأطعمة، المشروبات، والحلويات بالأسعار', icon: 'zap', color: '#d97706' },
+      { label: 'طلب توصيل فوري للمنازل (Delivery)', sub: 'خصم 20% على أول طلب أونلاين', icon: 'whatsapp', color: '#25D366' },
+      { label: 'تقييم تجربتك على خرائط Google', sub: 'ساعدنا برأيك واحصل على هدية مجانية', icon: 'pin', color: '#3b82f6' },
+    ],
+  },
+  {
+    id: 'store',
+    titleAr: 'المتاجر والبراندات 🛍️',
+    titleEn: 'E-commerce & Fashion 🛍️',
+    subtitleAr: 'عرض أحدث الكولكشن، كود الخصم، والتسوق المباشر بلمسة واحدة',
+    subtitleEn: 'Showcase newest collections, discount codes, and 1-tap checkout',
+    name: 'Milano Wear Egypt',
+    role: 'أحدث صيحات الموضة والأزياء الرجالية',
+    bio: 'شحن لجميع المحافظات · الدفع عند الاستلام · معاينة قبل الاستلام ✨',
+    avatar: '🛍️',
+    theme: 'cyber-neon',
+    socials: { instagram: 'milano_eg', facebook: 'milanowear', tiktok: 'milano_wear', whatsapp: '01028707543' },
+    links: [
+      { label: 'تسوق كولكشن الصيف الجديد 2026', sub: 'خصومات تصل إلى 50% على جميع القطع', icon: 'zap', color: '#06b6d4' },
+      { label: 'كود خصم حصري: LAMSA15', sub: 'احصل على 15% خصم إضافي عند الدفع', icon: 'zap', color: '#f59e0b' },
+      { label: 'خدمة العملاء ومتابعة الشحنات (واتساب)', sub: 'متاح الرد 24 ساعة يومياً', icon: 'whatsapp', color: '#25D366' },
+    ],
+  },
+]
+
 const CREATOR_CARDS = [
   {
     name: 'Dr. Mohamed Ayman',
@@ -87,6 +199,13 @@ const CREATOR_CARDS = [
   },
 ]
 
+const CARD_MATERIALS = [
+  { id: 'matte-black', nameAr: 'أسود مطفي بريميوم', nameEn: 'Matte Black Pro', bg: '#0f172a', border: '#334155', accent: '#38bdf8' },
+  { id: 'brushed-gold', nameAr: 'ذهب فينيسيا ملكي', nameEn: 'Luxury Gold Metal', bg: 'linear-gradient(135deg, #78350f, #d97706)', border: '#f59e0b', accent: '#fbbf24' },
+  { id: 'emerald-carbon', nameAr: 'ألياف كربون زمردي', nameEn: 'Emerald Carbon VIP', bg: 'linear-gradient(135deg, #064e3b, #022c22)', border: '#10b981', accent: '#34d399' },
+  { id: 'crystal-frost', nameAr: 'أبيض لؤلؤي سحابي', nameEn: 'Pearl Frost White', bg: 'linear-gradient(135deg, #f8fafc, #cbd5e1)', border: '#94a3b8', accent: '#0284c7', light: true },
+]
+
 export default function Home() {
   const { text, lang } = useLang()
   const { products } = useProducts()
@@ -94,8 +213,18 @@ export default function Home() {
   const nav = useNavigate()
 
   const [claimName, setClaimName] = useState('')
+  const [selectedPersona, setSelectedPersona] = useState(PERSONAS[0])
   const [activeTheme, setActiveTheme] = useState('midnight-gold')
   const [faqOpen, setFaqOpen] = useState(null)
+
+  // 3D Card Studio State
+  const [customCardName, setCustomCardName] = useState('')
+  const [selectedMaterial, setSelectedMaterial] = useState(CARD_MATERIALS[0])
+  const [cardTilted, setCardTilted] = useState(false)
+
+  // NFC Tap Simulator State
+  const [simTapped, setSimTapped] = useState(false)
+  const [simRippling, setSimRippling] = useState(false)
 
   function handleClaimSubmit(e) {
     e.preventDefault()
@@ -105,6 +234,14 @@ export default function Home() {
     } else {
       nav(`/account?mode=register&redirect=/store`)
     }
+  }
+
+  function triggerNfcSimulation() {
+    setSimRippling(true)
+    setTimeout(() => {
+      setSimTapped(true)
+      setSimRippling(false)
+    }, 600)
   }
 
   return (
@@ -134,8 +271,8 @@ export default function Home() {
             <Reveal delay={140}>
               <p className="lt-hero-subtitle">
                 {isAr
-                  ? 'انضم لأكثر من 15,000 صانع محتوى، طبيب، ومؤسس شركة. صفحة رقمية مخصصة بالكامل وبطاقة NFC تفتح بلمسة هاتفك بدون أي تطبيقات!'
-                  : 'Join 15,000+ creators, professionals and brands. A fully customized digital profile and NFC smart card ready in seconds.'}
+                  ? 'انضم لأكثر من 15,000 طبيب، صانع محتوى، ورائد أعمال. صفحة رقمية فائقة التخصيص وبطاقة NFC تفتح فوراً على أي هاتف بلمسة واحدة بدون أي تطبيقات!'
+                  : 'Join 15,000+ creators, doctors and entrepreneurs. A high-converting digital profile and physical smart card ready in seconds.'}
               </p>
             </Reveal>
 
@@ -264,8 +401,212 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ==========================================================================
+          TAILORED PERSONA USE-CASES (حلول مفصلة ومصممة لكل تخصص)
+          ========================================================================== */}
+      <section className="section section-alt" style={{ overflow: 'hidden' }}>
+        <div className="container">
+          <div className="section-head">
+            <span className="kicker">{isAr ? 'حلول مخصصة لكل مجال' : 'Tailored For Everyone'}</span>
+            <h2>{isAr ? 'مصممة خصيصاً لتناسب مجالك وأعمالك 🎯' : 'Built for your exact industry'}</h2>
+            <p>{isAr ? 'اختر تخصصك واستكشف كيف تجعل لمسة NFC تجربتك وتجربة عملائك أسهل وأفخم' : 'Select your field to preview a fully tailored smart profile'}</p>
+          </div>
+
+          {/* Persona Tabs Nav */}
+          <div className="persona-nav-tabs">
+            {PERSONAS.map((p) => (
+              <button
+                key={p.id}
+                className={`persona-nav-btn ${selectedPersona.id === p.id ? 'active' : ''}`}
+                onClick={() => setSelectedPersona(p)}
+              >
+                {isAr ? p.titleAr : p.titleEn}
+              </button>
+            ))}
+          </div>
+
+          {/* Persona Interactive Showcase Box */}
+          <div className="persona-showcase-box">
+            <div className="persona-showcase-info">
+              <div className="persona-badge-tag">{isAr ? selectedPersona.titleAr : selectedPersona.titleEn}</div>
+              <h3>{isAr ? selectedPersona.subtitleAr : selectedPersona.subtitleEn}</h3>
+              <p className="persona-desc">
+                {isAr
+                  ? `تمنحك لمسة NFC صفحة ذكية متكاملة مصممة خصيصاً لتلبية احتياجات ${selectedPersona.name}، مع إمكانية مشاركة روابط حجز المواعيد، الكتالوج، والعروض بلمسة واحدة بهاتفك!`
+                  : `Empower your brand with a smart digital profile customized with instant action buttons, catalogs, and 1-tap contact exchange.`}
+              </p>
+
+              <div className="persona-features-list">
+                <div className="pfl-item">✅ {isAr ? 'حفظ جهة الاتصال مباشرة في هاتف العميل' : 'Instant Save Contact (.vcf)'}</div>
+                <div className="pfl-item">✅ {isAr ? 'أزرار مخصصة لحجز المواعيد واستقبال الرسائل' : 'Custom booking & direct action buttons'}</div>
+                <div className="pfl-item">✅ {isAr ? 'تعديل وتحديث الروابط في أي وقت بدون إعادة طباعة' : 'Instant live updates anytime'}</div>
+              </div>
+
+              <div style={{ marginTop: 24 }}>
+                <Link to="/account?mode=register" className="btn btn-primary">
+                  {isAr ? `ابدأ تخصيص صفحتك كـ ${selectedPersona.name.split(' ')[0]} 🚀` : 'Create your smart page now 🚀'}
+                </Link>
+              </div>
+            </div>
+
+            {/* Persona Live Interactive Mockup */}
+            <div className="persona-showcase-phone">
+              <div className={`lt-phone-mockup theme-${selectedPersona.theme}`}>
+                <div className="lt-phone-notch" />
+                <div className="lt-phone-screen">
+                  <div className="lt-screen-cover" />
+                  <div className="lt-screen-avatar">
+                    <span>{selectedPersona.avatar}</span>
+                  </div>
+
+                  <div className="lt-screen-name-row">
+                    <h3 className="lt-screen-name">{selectedPersona.name}</h3>
+                    <IconVerified size="1.15em" />
+                  </div>
+                  <div className="lt-screen-role">{selectedPersona.role}</div>
+                  <div className="lt-screen-bio">{selectedPersona.bio}</div>
+
+                  {/* Socials */}
+                  <div className="lt-screen-socials">
+                    {selectedPersona.socials.youtube && <span className="lt-ss-btn" style={{ background: '#FF0000', color: '#fff' }}><IconYouTube /></span>}
+                    {selectedPersona.socials.facebook && <span className="lt-ss-btn" style={{ background: '#1877F2', color: '#fff' }}><IconFacebook /></span>}
+                    {selectedPersona.socials.tiktok && <span className="lt-ss-btn" style={{ background: '#000000', color: '#fff' }}><IconTikTok /></span>}
+                    {selectedPersona.socials.whatsapp && <span className="lt-ss-btn" style={{ background: '#25D366', color: '#fff' }}><IconWhatsApp /></span>}
+                    {selectedPersona.socials.instagram && <span className="lt-ss-btn" style={{ background: '#E4405F', color: '#fff' }}><IconInstagram /></span>}
+                    {selectedPersona.socials.linkedin && <span className="lt-ss-btn" style={{ background: '#0A66C2', color: '#fff' }}><IconLinkedin /></span>}
+                  </div>
+
+                  {/* Links */}
+                  <div className="lt-screen-links">
+                    {selectedPersona.links.map((l, idx) => (
+                      <div key={idx} className="lt-screen-link-item">
+                        <span className="lt-sli-icon" style={{ background: l.color || '#3b82f6', color: '#fff' }}>
+                          <IconZap />
+                        </span>
+                        <div className="lt-sli-text">
+                          <b>{l.label}</b>
+                          <span>{l.sub}</span>
+                        </div>
+                        <span className="lt-sli-arrow">{isAr ? '←' : '→'}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button className="lt-screen-vcard-btn">
+                    💾 {isAr ? 'حفظ جهة الاتصال في الهاتف' : 'Save Contact'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==========================================================================
+          INTERACTIVE 3D CARD STUDIO (استوديو تخصيص البطاقة الحية)
+          ========================================================================== */}
+      <section className="section">
+        <div className="container">
+          <div className="section-head">
+            <span className="kicker">{isAr ? 'استوديو البطاقات 3D' : '3D Card Customizer'}</span>
+            <h2>{isAr ? 'صمم بطاقتك الذكية وشاهدها بالثلاثي الأبعاد 💳' : 'Customize your card & view in 3D'}</h2>
+            <p>{isAr ? 'اكتب اسمك، اختر الخامة واللون، وشاهد تصميم بطاقتك الفاخرة يتشكل أمامك مباشرة' : 'Type your name, select material and preview your luxury NFC card live'}</p>
+          </div>
+
+          <div className="card-studio-grid">
+            {/* Controls */}
+            <div className="cs-controls">
+              <div className="field" style={{ marginBottom: 20 }}>
+                <label style={{ fontWeight: 800 }}>{isAr ? 'الاسم المحفور على البطاقة' : 'Name embossed on card'}</label>
+                <input
+                  type="text"
+                  placeholder={isAr ? 'مثال: د. محمد أيمن / Milano' : 'e.g. Alex Rivera'}
+                  value={customCardName}
+                  onChange={(e) => setCustomCardName(e.target.value)}
+                  style={{ width: '100%', padding: '14px 18px', borderRadius: 14, border: '2px solid var(--line)', fontSize: '1rem', fontWeight: 800 }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontWeight: 800, display: 'block', marginBottom: 10 }}>{isAr ? 'اختر خامة البطاقة الملكية:' : 'Choose Card Material:'}</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {CARD_MATERIALS.map((m) => (
+                    <button
+                      key={m.id}
+                      className={`cs-mat-btn ${selectedMaterial.id === m.id ? 'active' : ''}`}
+                      onClick={() => setSelectedMaterial(m)}
+                    >
+                      <span className="cs-mat-dot" style={{ background: m.bg, border: `1.5px solid ${m.border}` }} />
+                      <span>{isAr ? m.nameAr : m.nameEn}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="cs-cta-box">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <div>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{isAr ? 'السعر يشمل البرمجة والشحن:' : 'Total Price:'}</span>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--cobalt)' }}>349 {isAr ? 'ج.م' : 'EGP'}</div>
+                  </div>
+                  <span className="badge-chip">⚡ {isAr ? 'شحن فوري لباب البيت' : 'Fast Delivery'}</span>
+                </div>
+                <Link
+                  to={`/store?custom_name=${encodeURIComponent(customCardName || 'Lamsa Member')}&material=${selectedMaterial.id}`}
+                  className="btn btn-primary"
+                  style={{ width: '100%', padding: '14px', fontSize: '1rem' }}
+                >
+                  {isAr ? '🛒 اطلب هذه البطاقة الآن وتفعيل حسابك' : '🛒 Order this card & activate'}
+                </Link>
+              </div>
+            </div>
+
+            {/* 3D Render Canvas */}
+            <div className="cs-preview-wrap">
+              <div
+                className={`cs-3d-card ${cardTilted ? 'tilted' : ''}`}
+                style={{ background: selectedMaterial.bg, borderColor: selectedMaterial.border }}
+                onMouseEnter={() => setCardTilted(true)}
+                onMouseLeave={() => setCardTilted(false)}
+              >
+                <div className="cs-card-chip">
+                  <div className="cs-chip-lines" />
+                </div>
+
+                <div className="cs-card-nfc-icon">
+                  <NfcIcon size="2.2rem" />
+                </div>
+
+                <div className="cs-card-brand">
+                  <span style={{ color: selectedMaterial.light ? '#0f172a' : '#fff', fontWeight: 900, letterSpacing: '0.1em' }}>LAMSA</span>
+                  <span style={{ fontSize: '0.65rem', opacity: 0.8, color: selectedMaterial.light ? '#334155' : '#cbd5e1' }}>SMART NFC</span>
+                </div>
+
+                <div className="cs-card-bottom">
+                  <div className="cs-card-name" style={{ color: selectedMaterial.light ? '#0f172a' : '#fff' }}>
+                    {customCardName || (isAr ? 'اسمك هنا' : 'YOUR NAME')}
+                  </div>
+                  <div className="cs-card-qr">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https://lamsa.ink&color=${selectedMaterial.light ? '0f172a' : 'ffffff'}&bgcolor=transparent`}
+                      alt="QR"
+                    />
+                  </div>
+                </div>
+
+                {/* Shimmer Light Reflection */}
+                <div className="cs-card-shimmer" />
+              </div>
+              <p style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--muted)', marginTop: 14 }}>
+                {isAr ? '✨ مرر الماوس على البطاقة لرؤية انعكاس الضوء والحفر الليزري الفاخر' : '✨ Hover to see 3D light reflection'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 3D CREATOR SHOWCASE CAROUSEL */}
-      <section className="section" style={{ overflow: 'hidden' }}>
+      <section className="section section-alt" style={{ overflow: 'hidden' }}>
         <div className="container">
           <div className="section-head">
             <span className="kicker">{isAr ? 'انضم للمتميزين' : 'Creator Showcase'}</span>
@@ -298,8 +639,8 @@ export default function Home() {
                         <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '6px 0 14px' }}>
                           {isAr ? 'مفعل ومربوط ببطاقة NFC ذكية' : 'Active & connected via NFC'}
                         </p>
-                        <Link to="/account?mode=register" className="btn btn-primary btn-sm">
-                          {isAr ? 'احجز رابطك مثله' : 'Claim your link'}
+                        <Link to={`/${c.handle}`} className="btn btn-primary btn-sm">
+                          {isAr ? 'معاينة البروفايل' : 'Preview profile'}
                         </Link>
                       </div>
                     </div>
@@ -311,62 +652,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4 VIBRANT VALUE BLOCKS */}
-      <section className="lt-pillars-section">
-        <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: 60 }}>
-          {/* Pillar 1 */}
-          <div className="lt-pillar-card lt-pillar-green">
-            <div className="lt-pillar-text">
-              <span className="lt-pillar-kicker">{isAr ? '٠١ / التخصيص والروابط الذكية' : '01 / Smart Custom Links'}</span>
-              <h2>{isAr ? 'اربط كل ما تصنعه وتقدمه في مكان واحد' : 'Connect everything you create and sell in one place'}</h2>
-              <p>
-                {isAr
-                  ? 'اجمع قنواتك (YouTube, TikTok, Facebook, Instagram)، متجرك الإلكتروني، رقم واتساب المباشر، ملفاتك وكتبك في صفحة واحدة جذابة تليق بك.'
-                  : 'Bring together your socials, storefront, WhatsApp chat, and media into a stunning, responsive bio link.'}
-              </p>
-              <Link to="/account?mode=register" className="btn btn-primary">
-                {isAr ? 'ابدأ مجاناً الآن' : 'Get started for free'}
-              </Link>
-            </div>
-            <div className="lt-pillar-media">
-              <div className="lt-feature-badge-grid">
-                <div className="lt-fbg-item" style={{ '--bc': '#FF0000' }}><IconYouTube /> YouTube</div>
-                <div className="lt-fbg-item" style={{ '--bc': '#25D366' }}><IconWhatsApp /> WhatsApp</div>
-                <div className="lt-fbg-item" style={{ '--bc': '#1877F2' }}><IconFacebook /> Facebook</div>
-                <div className="lt-fbg-item" style={{ '--bc': '#000000' }}><IconTikTok /> TikTok</div>
-                <div className="lt-fbg-item" style={{ '--bc': '#229ED9' }}><IconTelegram /> Telegram</div>
-                <div className="lt-fbg-item" style={{ '--bc': '#E4405F' }}><IconInstagram /> Instagram</div>
-                <div className="lt-fbg-item" style={{ '--bc': '#0A66C2' }}><IconLinkedin /> LinkedIn</div>
-                <div className="lt-fbg-item" style={{ '--bc': '#d97706' }}><IconZap /> Store / Books</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Pillar 2 */}
-          <div className="lt-pillar-card lt-pillar-purple">
-            <div className="lt-pillar-text">
-              <span className="lt-pillar-kicker">{isAr ? '٠٢ / تقنية اللمس الذكي NFC' : '02 / Tap & Connect Anywhere'}</span>
-              <h2>{isAr ? 'لمسة واحدة بهاتفك، وبدون أي تطبيقات' : 'One smart tap. Zero apps needed.'}</h2>
-              <p>
-                {isAr
-                  ? 'بمجرد ملامسة بطاقة لمسة الذكية لظهر أي هاتف iPhone أو Android، تفتح صفحتك وبياناتك فوراً في أجزاء من الثانية مع إمكانية حفظ جهة الاتصال مباشرة.'
-                  : 'Tap your physical Lamsa NFC card against any smartphone to beam your links, contact card, and profile instantly.'}
-              </p>
-              <Link to="/store" className="btn btn-primary">
-                {isAr ? '🛒 تصفح متجر البطاقات' : '🛒 Shop NFC Cards'}
-              </Link>
-            </div>
-            <div className="lt-pillar-media">
-              <div className="lt-card-showcase-box">
-                <img src="/img/hero-card.webp" alt="Lamsa NFC Smart Card" style={{ width: '100%', maxWidth: 380, borderRadius: 20, boxShadow: '0 24px 60px rgba(0,0,0,0.3)' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* PRODUCTS PREVIEW */}
-      <section className="section section-alt">
+      <section className="section">
         <div className="container">
           <div className="section-head">
             <span className="kicker">{isAr ? 'المتجر' : 'Store'}</span>
@@ -402,7 +689,7 @@ export default function Home() {
       </section>
 
       {/* COMPARISON TABLE */}
-      <section className="section">
+      <section className="section section-alt">
         <div className="container">
           <div className="section-head">
             <span className="kicker">{isAr ? 'مقارنة' : 'Comparison'}</span>
@@ -442,7 +729,7 @@ export default function Home() {
       </section>
 
       {/* FAQ SECTION */}
-      <section className="section section-alt">
+      <section className="section">
         <div className="container" style={{ maxWidth: 800 }}>
           <div className="section-head">
             <span className="kicker">{isAr ? 'الأسئلة الشائعة' : 'FAQ'}</span>

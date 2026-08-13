@@ -3140,6 +3140,267 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   color: var(--text);
 }
 
+/* ==========================================================================
+   PERSONA USE-CASE SHOWCASE
+   ========================================================================== */
+
+.persona-nav-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+.persona-nav-btn {
+  padding: 10px 20px;
+  border-radius: 99px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+.persona-nav-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--cobalt);
+}
+.persona-nav-btn.active {
+  background: var(--cobalt);
+  color: #fff;
+  border-color: var(--cobalt);
+  box-shadow: 0 8px 24px rgba(24, 84, 232, 0.3);
+}
+
+.persona-showcase-box {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+  align-items: center;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 28px;
+  padding: 40px;
+  box-shadow: var(--shadow-lg);
+}
+@media (max-width: 900px) {
+  .persona-showcase-box {
+    grid-template-columns: 1fr;
+    padding: 24px;
+    gap: 30px;
+  }
+}
+.persona-badge-tag {
+  display: inline-block;
+  background: rgba(24, 84, 232, 0.1);
+  color: var(--cobalt);
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+.persona-showcase-info h3 {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin: 0 0 14px;
+  line-height: 1.35;
+}
+.persona-desc {
+  font-size: 0.98rem;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+.persona-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pfl-item {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.persona-showcase-phone {
+  display: flex;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   INTERACTIVE 3D CARD STUDIO
+   ========================================================================== */
+
+.card-studio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 48px;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(24, 84, 232, 0.04) 0%, rgba(6, 182, 212, 0.04) 100%);
+  border: 2px solid var(--line);
+  border-radius: 28px;
+  padding: 44px;
+  box-shadow: var(--shadow-lg);
+}
+@media (max-width: 900px) {
+  .card-studio-grid {
+    grid-template-columns: 1fr;
+    padding: 24px;
+    gap: 32px;
+  }
+}
+.cs-controls {
+  display: flex;
+  flex-direction: column;
+}
+.cs-mat-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cs-mat-btn:hover {
+  border-color: var(--cobalt);
+}
+.cs-mat-btn.active {
+  border-color: var(--cobalt);
+  background: rgba(24, 84, 232, 0.08);
+  color: var(--cobalt);
+}
+.cs-mat-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cs-cta-box {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+/* 3D Rendered Physical Card */
+.cs-preview-wrap {
+  perspective: 1200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.cs-3d-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 250px;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
+  transform-style: preserve-3d;
+  overflow: hidden;
+  cursor: pointer;
+}
+.cs-3d-card:hover, .cs-3d-card.tilted {
+  transform: rotateY(-14deg) rotateX(10deg) scale(1.04);
+  box-shadow: -20px 40px 90px rgba(0, 0, 0, 0.45);
+}
+.cs-card-chip {
+  width: 44px;
+  height: 34px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d4af37, #aa7c11);
+  border: 1px solid #ffe066;
+  position: relative;
+  overflow: hidden;
+}
+.cs-chip-lines {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(0,0,0,0.25);
+  background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.15) 4px, rgba(0,0,0,0.15) 8px);
+}
+.cs-card-nfc-icon {
+  position: absolute;
+  top: 24px;
+  inset-inline-end: 24px;
+  opacity: 0.8;
+  color: #fff;
+}
+.cs-card-brand {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cs-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+}
+.cs-card-name {
+  font-family: 'Syne', sans-serif, system-ui;
+  font-size: 1.25rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+.cs-card-qr {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px;
+  border-radius: 8px;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+}
+.cs-card-qr img {
+  width: 100%;
+  height: 100%;
+}
+.cs-card-shimmer {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 65%
+  );
+  transform: rotate(25deg);
+  pointer-events: none;
+  animation: shimmerLight 4s infinite linear;
+}
+@keyframes shimmerLight {
+  0% { transform: translate(-100%, -100%) rotate(25deg); }
+  100% { transform: translate(100%, 100%) rotate(25deg); }
+}
+
+
 
 
 
