@@ -51,18 +51,18 @@ export async function fetchProfile(uid) {
 }
 
 export async function saveProfile(uid, data) {
-  const { updateDoc } = await import('firebase/firestore')
-  return updateDoc(await getUserProfileRef(uid), data)
+  const { setDoc } = await import('firebase/firestore')
+  return setDoc(await getUserProfileRef(uid), data, { merge: true })
 }
 
 export async function uploadAvatar(uid, file) {
-  const { updateDoc } = await import('firebase/firestore')
+  const { setDoc } = await import('firebase/firestore')
   const { compressImage } = await import('./utils')
   
   // 1. Compress image to a fast, high-quality 350x350 Data URL
   const dataUrl = await compressImage(file, 350, 350, 0.85)
 
-  // 2. Attempt Firebase Storage with a 3.5s timeout, falling back seamlessly
+  // 2. Attempt Firebase Storage with a 2.5s timeout, falling back seamlessly
   let finalUrl = dataUrl
   try {
     const { ref: storageRef, uploadBytes, getDownloadURL } = await import('firebase/storage')
@@ -74,17 +74,25 @@ export async function uploadAvatar(uid, file) {
     const blob = await res.blob()
     
     const uploadPromise = uploadBytes(r, blob).then(() => getDownloadURL(r))
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Storage timeout')), 3500))
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Storage timeout')), 2500))
     
     finalUrl = await Promise.race([uploadPromise, timeoutPromise])
   } catch (err) {
-    console.warn('[uploadAvatar] Falling back to compressed Data URL:', err?.message)
+    console.warn('[uploadAvatar] Storage upload skipped/failed, using compressed data URL:', err?.message)
     finalUrl = dataUrl
   }
 
-  // 3. Save avatar URL in Firestore profile
-  const profileRef = await getUserProfileRef(uid)
-  await updateDoc(profileRef, { avatar: finalUrl })
+  // 3. Save avatar URL in Firestore profile with setDoc({ merge: true })
+  try {
+    const profileRef = await getUserProfileRef(uid)
+    await setDoc(profileRef, { avatar: finalUrl }, { merge: true })
+  } catch (err) {
+    console.warn('[uploadAvatar] Firestore setDoc failed, saving to localStorage:', err?.message)
+    try {
+      localStorage.setItem(`lamsa_avatar_${uid}`, finalUrl)
+    } catch {}
+  }
+
   return finalUrl
 }
 

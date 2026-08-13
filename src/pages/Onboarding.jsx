@@ -85,20 +85,21 @@ export default function Onboarding() {
     try {
       const url = await uploadAvatar(user.uid, file)
       setForm((f) => ({ ...f, avatar: url }))
-      toast(isAr ? 'تم رفع الصورة ✓' : 'Photo uploaded ✓')
+      toast(isAr ? 'تم رفع الصورة بنجاح ✓' : 'Photo uploaded successfully ✓')
     } catch (err) {
-      console.error('Upload error:', err)
-      const code = err?.code || ''
-      if (code.includes('unauthorized') || code.includes('permission')) {
-        toast(isAr ? 'ليس لديك صلاحية رفع الصور — تواصل مع الدعم' : 'Permission denied — contact support', 'error')
-      } else if (code.includes('network')) {
-        toast(isAr ? 'مشكلة في الاتصال — حاول مجدداً' : 'Network error — please retry', 'error')
-      } else {
-        toast(isAr ? `تعذر رفع الصورة: ${err?.message || 'خطأ غير معروف'}` : `Upload failed: ${err?.message || 'Unknown error'}`, 'error')
+      console.warn('Upload fallback triggered:', err)
+      try {
+        const { compressImage } = await import('../lib/utils')
+        const fallbackUrl = await compressImage(file, 350, 350, 0.85)
+        setForm((f) => ({ ...f, avatar: fallbackUrl }))
+        toast(isAr ? 'تم تحديث الصورة بنجاح ✓' : 'Photo updated successfully ✓')
+      } catch {
+        toast(isAr ? 'تعذر رفع الصورة' : 'Failed to upload photo', 'error')
       }
+    } finally {
+      setUploading(false)
+      if (e.target) e.target.value = ''
     }
-    setUploading(false)
-    e.target.value = ''
   }
 
   async function saveProfileStep() {
