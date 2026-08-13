@@ -24,6 +24,25 @@ export default function Navbar() {
   const userMenuRef = useRef(null)
   const nav = useNavigate()
 
+  // Live countdown timer
+  const [timeLeft, setTimeLeft] = useState({ h: 23, m: 59, s: 59 })
+  useEffect(() => {
+    function calcTimeLeft() {
+      const now = new Date()
+      const midnight = new Date(now)
+      midnight.setHours(23, 59, 59, 999)
+      const diff = midnight - now
+      return {
+        h: Math.floor(diff / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+      }
+    }
+    setTimeLeft(calcTimeLeft())
+    const interval = setInterval(() => setTimeLeft(calcTimeLeft()), 1000)
+    return () => clearInterval(interval)
+  }, [])
+
   const close = () => { setMobileOpen(false); setUserMenuOpen(false); document.body.style.overflow = '' }
   const toggleMobile = () => {
     const next = !mobileOpen
@@ -54,12 +73,12 @@ export default function Navbar() {
 
   function copyCoupon() {
     navigator.clipboard.writeText('LAMSA')
-    toast(isAr ? 'تم نسخ كوبون الخصم 50% (LAMSA) ✓' : '50% OFF Coupon (LAMSA) copied ✓')
+    toast(isAr ? 'تم نسخ كوبون الخصم 50% (LAMSA) وتطبيقه تلقائياً ✓' : '50% OFF Coupon (LAMSA) copied & auto-applied ✓')
   }
 
   return (
     <>
-      {/* 50% OFF Announcement Banner */}
+      {/* 50% OFF Announcement Banner with Live Countdown Timer */}
       {!bannerDismissed && (
         <div className="top-announcement-bar">
           <div className="container tab-inner">
@@ -67,18 +86,24 @@ export default function Navbar() {
               <span className="tab-pill">🔥 {isAr ? 'عرض الإطلاق الحصري' : 'Launch Offer'}</span>
               <span className="tab-msg">
                 {isAr ? (
-                  <>خصم <b style={{ color: '#fde047' }}>50%</b> على جميع البطاقات الذكية بكوبون: <code className="tab-coupon-code" onClick={copyCoupon} title="انقر للنسخ">LAMSA</code> (صالح لمدة شهر ⏳)</>
+                  <>خصم <b style={{ color: '#fde047' }}>50%</b> تلقائي على جميع البطاقات بكوبون: <code className="tab-coupon-code" onClick={copyCoupon} title="انقر للنسخ">LAMSA</code></>
                 ) : (
-                  <><b style={{ color: '#fde047' }}>50% OFF</b> all smart cards with code: <code className="tab-coupon-code" onClick={copyCoupon}>LAMSA</code></>
+                  <><b style={{ color: '#fde047' }}>50% OFF</b> auto-applied with code: <code className="tab-coupon-code" onClick={copyCoupon}>LAMSA</code></>
                 )}
               </span>
+              <div className="tab-timer-box">
+                <span className="tab-timer-pulse" />
+                <span className="tab-timer-text">
+                  ⏳ {String(timeLeft.h).padStart(2, '0')}:{String(timeLeft.m).padStart(2, '0')}:{String(timeLeft.s).padStart(2, '0')}
+                </span>
+              </div>
             </div>
             <div className="tab-actions">
               <button className="tab-copy-btn" onClick={copyCoupon}>
                 📋 {isAr ? 'نسخ الكوبون' : 'Copy Code'}
               </button>
               <Link to="/store" className="tab-shop-btn">
-                🛒 {isAr ? 'اطلب الآن' : 'Shop'}
+                🛒 {isAr ? 'شراء بالخصم' : 'Claim 50%'}
               </Link>
               <button className="tab-close-btn" onClick={() => setBannerDismissed(true)} aria-label="Close">✕</button>
             </div>

@@ -42,8 +42,13 @@ export default function Store() {
   const [copiedNum, setCopiedNum] = useState(false)
   const [createdOrder, setCreatedOrder] = useState(null)
   const [selectedVariants, setSelectedVariants] = useState({})
-  const [coupon, setCoupon] = useState('')
-  const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [appliedCoupon, setAppliedCoupon] = useState({
+    code: 'LAMSA',
+    type: 'percent',
+    value: 50,
+    labelEn: '50% OFF (Launch Offer)',
+    labelAr: 'خصم 50% (عرض الإطلاق)',
+  })
 
   // Live countdown timer — resets daily at midnight
   const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 })
