@@ -66,13 +66,36 @@ export default function Onboarding() {
   async function onUpload(e) {
     const file = e.target.files && e.target.files[0]
     if (!file) return
+
+    // Validate file before attempting upload
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      toast(isAr ? 'نوع الملف غير مدعوم — استخدم JPG أو PNG أو WebP' : 'Unsupported file type — use JPG, PNG, or WebP', 'error')
+      e.target.value = ''
+      return
+    }
+    const sizeMB = file.size / (1024 * 1024)
+    if (sizeMB > 5) {
+      toast(isAr ? `الملف كبير جداً (${sizeMB.toFixed(1)}MB) — الحد الأقصى 5MB` : `File too large (${sizeMB.toFixed(1)}MB) — max 5MB`, 'error')
+      e.target.value = ''
+      return
+    }
+
     setUploading(true)
     try {
       const url = await uploadAvatar(user.uid, file)
       setForm((f) => ({ ...f, avatar: url }))
       toast(isAr ? 'تم رفع الصورة ✓' : 'Photo uploaded ✓')
-    } catch {
-      toast(isAr ? 'تعذر رفع الصورة' : 'Upload failed', 'error')
+    } catch (err) {
+      console.error('Upload error:', err)
+      const code = err?.code || ''
+      if (code.includes('unauthorized') || code.includes('permission')) {
+        toast(isAr ? 'ليس لديك صلاحية رفع الصور — تواصل مع الدعم' : 'Permission denied — contact support', 'error')
+      } else if (code.includes('network')) {
+        toast(isAr ? 'مشكلة في الاتصال — حاول مجدداً' : 'Network error — please retry', 'error')
+      } else {
+        toast(isAr ? `تعذر رفع الصورة: ${err?.message || 'خطأ غير معروف'}` : `Upload failed: ${err?.message || 'Unknown error'}`, 'error')
+      }
     }
     setUploading(false)
     e.target.value = ''

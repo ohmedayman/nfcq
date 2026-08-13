@@ -57,7 +57,7 @@ export default function ProductDetail() {
   const ar = isAr
   const features = ar ? product.featuresAr : product.featuresEn
   const specs = ar ? product.specs.ar : product.specs.en
-  const similar = PRODUCTS.filter((p) => p.id !== id)
+  const similar = products.filter((p) => p.id !== id)
 
   function addToCart() {
     const cart = getCart()

@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { fetchPublic } from '../lib/firebase'
 import { CUSTOMER } from '../data/content'
+import { normalizeUrl, normalizeSocialUrl } from '../lib/utils'
 import Logo from '../components/Logo'
 import {
   NfcIcon, IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconMail, IconPhone, IconLink,
@@ -186,22 +187,22 @@ export default function PublicNfc() {
             {hasSocial && (
               <div className="nfc-socials">
                 {profile.social.instagram && (
-                  <a href={profile.social.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="nfc-social-btn" style={{ '--sc': '#E4405F' }}>
+                  <a href={normalizeSocialUrl('instagram', profile.social.instagram)} target="_blank" rel="noreferrer" aria-label="Instagram" className="nfc-social-btn" style={{ '--sc': '#E4405F' }}>
                     <IconInstagram />
                   </a>
                 )}
                 {profile.social.linkedin && (
-                  <a href={profile.social.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="nfc-social-btn" style={{ '--sc': '#0A66C2' }}>
+                  <a href={normalizeSocialUrl('linkedin', profile.social.linkedin)} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="nfc-social-btn" style={{ '--sc': '#0A66C2' }}>
                     <IconLinkedin />
                   </a>
                 )}
                 {profile.social.twitter && (
-                  <a href={profile.social.twitter} target="_blank" rel="noreferrer" aria-label="X" className="nfc-social-btn" style={{ '--sc': '#000' }}>
+                  <a href={normalizeSocialUrl('twitter', profile.social.twitter)} target="_blank" rel="noreferrer" aria-label="X" className="nfc-social-btn" style={{ '--sc': '#000' }}>
                     <IconTwitter />
                   </a>
                 )}
                 {profile.social.whatsapp && (
-                  <a href={profile.social.whatsapp} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="nfc-social-btn" style={{ '--sc': '#25D366' }}>
+                  <a href={normalizeSocialUrl('whatsapp', profile.social.whatsapp)} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="nfc-social-btn" style={{ '--sc': '#25D366' }}>
                     <IconWhatsApp />
                   </a>
                 )}
@@ -214,7 +215,7 @@ export default function PublicNfc() {
                 {profile.links.map((l, i) => (
                   <a
                     key={i}
-                    href={l.url || '#'}
+                    href={normalizeUrl(l.url)}
                     className="nfc-link"
                     target="_blank"
                     rel="noreferrer"

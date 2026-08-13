@@ -21,9 +21,12 @@ export async function getDbInstance() {
 
 export async function getStorageInstance() {
   if (!_storage && _getApp) {
+    const app = getAppInstance()
+    if (!app) throw new Error('Firebase app not initialized')
     const { getStorage } = await import('firebase/storage')
-    _storage = getStorage(getAppInstance())
+    _storage = getStorage(app)
   }
+  if (!_storage) throw new Error('Firebase Storage not available')
   return _storage
 }
 

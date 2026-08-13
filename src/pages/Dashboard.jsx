@@ -5,6 +5,7 @@ import { useLang } from '../context/LanguageContext'
 import { toast } from '../components/Toast'
 import { FIREBASE_READY } from '../firebase.config'
 import { initProfileIfMissing, fetchProfile, saveProfile, uploadAvatar, listUserOrders } from '../lib/firebase'
+import { normalizeUrl, normalizeSocialUrl } from '../lib/utils'
 import {
   IconUser, IconLink, IconCreditCard, IconCheck, IconPlus, IconRefresh, IconHome,
   IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconShield, IconZap, NfcIcon,
@@ -55,9 +56,25 @@ export default function Dashboard() {
   async function save() {
     setSaving(true)
     try {
-      await saveProfile(user.uid, { ...form, links, social })
+      // Normalize social URLs before saving
+      const normalizedSocial = {
+        instagram: normalizeSocialUrl('instagram', social.instagram),
+        linkedin: normalizeSocialUrl('linkedin', social.linkedin),
+        twitter: normalizeSocialUrl('twitter', social.twitter),
+        whatsapp: normalizeSocialUrl('whatsapp', social.whatsapp),
+      }
+      // Normalize custom link URLs
+      const normalizedLinks = links.map((l) => ({
+        ...l,
+        url: normalizeUrl(l.url),
+      }))
+      await saveProfile(user.uid, { ...form, links: normalizedLinks, social: normalizedSocial })
+      // Update local state with normalized values
+      setSocial(normalizedSocial)
+      setLinks(normalizedLinks)
       toast(isAr ? 'تم حفظ التغييرات ✓' : 'Changes saved ✓')
-    } catch {
+    } catch (err) {
+      console.error('Save error:', err)
       toast(isAr ? 'لم يتم الحفظ — حاول مجددًا' : 'Save failed — try again', 'error')
     }
     setSaving(false)
@@ -66,13 +83,38 @@ export default function Dashboard() {
   async function onUpload(e) {
     const file = e.target.files && e.target.files[0]
     if (!file) return
+
+    // Validate file before attempting upload
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      toast(isAr ? 'نوع الملف غير مدعوم — استخدم JPG أو PNG أو WebP' : 'Unsupported file type — use JPG, PNG, or WebP', 'error')
+      e.target.value = ''
+      return
+    }
+    const sizeMB = file.size / (1024 * 1024)
+    if (sizeMB > 5) {
+      toast(isAr ? `الملف كبير جداً (${sizeMB.toFixed(1)}MB) — الحد الأقصى 5MB` : `File too large (${sizeMB.toFixed(1)}MB) — max 5MB`, 'error')
+      e.target.value = ''
+      return
+    }
+
     setUploading(true)
     try {
       const url = await uploadAvatar(user.uid, file)
       setForm((f) => ({ ...f, avatar: url }))
       toast(isAr ? 'الصورة اترفعت ✓' : 'Photo uploaded ✓')
-    } catch {
-      toast(isAr ? 'مقدرش أرفع الصورة' : 'Upload failed', 'error')
+    } catch (err) {
+      console.error('Upload error:', err)
+      const code = err?.code || ''
+      if (code.includes('unauthorized') || code.includes('permission')) {
+        toast(isAr ? 'ليس لديك صلاحية رفع الصور — تواصل مع الدعم' : 'Permission denied — contact support', 'error')
+      } else if (code.includes('canceled')) {
+        toast(isAr ? 'تم إلغاء الرفع' : 'Upload cancelled', 'error')
+      } else if (code.includes('retry') || code.includes('network')) {
+        toast(isAr ? 'مشكلة في الاتصال — حاول مجدداً' : 'Network error — please retry', 'error')
+      } else {
+        toast(isAr ? `فشل رفع الصورة: ${err?.message || 'خطأ غير معروف'}` : `Upload failed: ${err?.message || 'Unknown error'}`, 'error')
+      }
     }
     setUploading(false)
     e.target.value = ''
