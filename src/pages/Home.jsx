@@ -291,7 +291,7 @@ export default function Home() {
                   />
                 </div>
                 <button type="submit" className="lt-claim-btn">
-                  {isAr ? 'احصل على بطاقتك مجاناً 🚀' : 'Claim your link 🚀'}
+                  {isAr ? 'احجز اسمك ورابطك 🚀' : 'Claim your link 🚀'}
                 </button>
               </form>
             </Reveal>
