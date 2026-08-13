@@ -597,27 +597,30 @@ export default function Dashboard() {
           {/* Right Mobile Live Mockup */}
           <div className="dash-sidebar">
             <div className={`preview-phone theme-${form.theme || 'default'}`}>
-              <div className="preview-notch" />
+              <div className="preview-notch">
+                <div className="dpn-speaker" />
+                <div className="dpn-cam" />
+              </div>
               <div className="preview-screen">
                 <div className="preview-cover" />
                 <div className="preview-avatar">
-                  {form.avatar ? <img src={form.avatar} alt="" /> : (form.name || 'U').charAt(0).toUpperCase()}
+                  {form.avatar ? <img src={form.avatar} alt="" /> : <span>{(form.name || 'U').charAt(0).toUpperCase()}</span>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '8px 0 2px' }}>
-                  <div className="preview-name" style={{ margin: 0 }}>{form.name || (isAr ? 'اسمك' : 'Your Name')}</div>
-                  <IconVerified size="1.05em" />
+                  <div className="preview-name" style={{ margin: 0 }}>{form.name || (isAr ? 'اسمك هنا' : 'Your Name')}</div>
+                  <IconVerified size="1.1em" />
                 </div>
                 {form.role && <div className="preview-role">{form.role}</div>}
                 {form.bio && <div className="preview-bio">{form.bio}</div>}
 
                 <div className="preview-socials" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', margin: '10px 0' }}>
+                  {social.whatsapp && <span className="ps-icon" style={{ background: '#25D366', color: '#fff' }}><IconWhatsApp /></span>}
+                  {social.instagram && <span className="ps-icon" style={{ background: '#E4405F', color: '#fff' }}><IconInstagram /></span>}
+                  {social.linkedin && <span className="ps-icon" style={{ background: '#0A66C2', color: '#fff' }}><IconLinkedin /></span>}
                   {social.youtube && <span className="ps-icon" style={{ background: '#FF0000', color: '#fff' }}><IconYouTube /></span>}
                   {social.facebook && <span className="ps-icon" style={{ background: '#1877F2', color: '#fff' }}><IconFacebook /></span>}
                   {social.tiktok && <span className="ps-icon" style={{ background: '#000000', color: '#fff' }}><IconTikTok /></span>}
                   {social.telegram && <span className="ps-icon" style={{ background: '#229ED9', color: '#fff' }}><IconTelegram /></span>}
-                  {social.whatsapp && <span className="ps-icon" style={{ background: '#25D366', color: '#fff' }}><IconWhatsApp /></span>}
-                  {social.instagram && <span className="ps-icon" style={{ background: '#E4405F', color: '#fff' }}><IconInstagram /></span>}
-                  {social.linkedin && <span className="ps-icon" style={{ background: '#0A66C2', color: '#fff' }}><IconLinkedin /></span>}
                   {social.twitter && <span className="ps-icon" style={{ background: '#000000', color: '#fff' }}><IconTwitter /></span>}
                   {social.snapchat && <span className="ps-icon" style={{ background: '#eab308', color: '#000' }}><IconSnapchat /></span>}
                   {social.spotify && <span className="ps-icon" style={{ background: '#1DB954', color: '#fff' }}><IconSpotify /></span>}
@@ -632,10 +635,10 @@ export default function Dashboard() {
                           display: 'flex',
                           alignItems: 'center',
                           gap: 8,
-                          padding: '7px 10px',
+                          padding: '8px 12px',
                           borderRadius: 12,
-                          background: 'rgba(255,255,255,0.06)',
-                          border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'rgba(255,255,255,0.08)',
+                          border: '1px solid rgba(255,255,255,0.14)',
                           textAlign: isAr ? 'right' : 'left',
                         }}>
                           <div style={{
@@ -652,7 +655,7 @@ export default function Dashboard() {
                             <PlatformIcon name={detected.icon} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                            <div style={{ fontWeight: 800, fontSize: '0.78rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: '#fff' }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: '#fff' }}>
                               {l.label || l.url}
                             </div>
                             {l.subtitle && (
@@ -661,7 +664,7 @@ export default function Dashboard() {
                               </div>
                             )}
                           </div>
-                          <span style={{ opacity: 0.5, fontSize: '0.75rem' }}>{isAr ? '←' : '→'}</span>
+                          <span style={{ opacity: 0.7, fontSize: '0.75rem', color: '#fff' }}>{isAr ? '←' : '→'}</span>
                         </div>
                       )
                     })}
@@ -674,9 +677,15 @@ export default function Dashboard() {
                     {form.email && <span>✉️ {form.email}</span>}
                   </div>
                 )}
+
+                <div style={{ textAlign: 'center', marginTop: 'auto', paddingTop: 14, fontSize: '0.66rem', color: '#94a3b8' }}>
+                  ⚡️ {isAr ? 'مدعوم بتقنية لمسة NFC' : 'Powered by Lamsa NFC'}
+                </div>
               </div>
             </div>
-            <a href={directPath} target="_blank" rel="noreferrer" className="preview-open">{isAr ? 'افتح الصفحة كلها' : 'Open full page'}</a>
+            <a href={directPath} target="_blank" rel="noreferrer" className="preview-open">
+              👁️ {isAr ? 'معاينة البطاقة في صفحة كاملة' : 'Open full card preview'}
+            </a>
           </div>
         </div>
       </div>
