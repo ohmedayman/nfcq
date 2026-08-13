@@ -20,6 +20,12 @@ const REVIEWS = [
   { name: 'نوران شريف', role: 'صانعة محتوى ومصممة', stars: 5, date: 'منذ أسبوعين', comment: 'سهولة تعديل الروابط والبروفايل من الداشبورد تجعلها الحل الأفضل بدون منازع. شكراً لفريق لمسة!' },
 ]
 
+const CUSTOM_PRICES = {
+  none: 0,
+  print: 50,
+  laser: 85,
+}
+
 export default function ProductDetail() {
   const { id } = useParams()
   const { lang } = useLang()
@@ -30,6 +36,7 @@ export default function ProductDetail() {
   const [activeImg, setActiveImg] = useState(0)
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
+  const [customType, setCustomType] = useState('none') // 'none' | 'print' | 'laser'
   const [customName, setCustomName] = useState('')
   const [tapActive, setTapActive] = useState(false)
 
@@ -61,13 +68,31 @@ export default function ProductDetail() {
   const specs = ar ? product.specs.ar : product.specs.en
   const similar = products.filter((p) => p.id !== id)
 
+  const customCost = CUSTOM_PRICES[customType] || 0
+  const unitPrice = product.price + customCost
+  const totalPrice = unitPrice * qty
+
   function addToCart() {
     const cart = getCart()
-    cart[id] = (cart[id] || 0) + qty
+    const cartKey = customType !== 'none' ? `${id}_${customType}` : id
+    cart[cartKey] = (cart[cartKey] || 0) + qty
     saveCart(cart)
-    if (customName) {
+
+    // Save custom engraving metadata
+    const customMeta = JSON.parse(localStorage.getItem('lamsa_custom_meta') || '{}')
+    if (customType !== 'none') {
+      customMeta[cartKey] = {
+        type: customType,
+        typeName: customType === 'laser' ? (isAr ? 'حفر بالليزر (+85 ج.م)' : 'Laser Engraved (+85 EGP)') : (isAr ? 'طباعة بالألوان UV (+50 ج.م)' : 'UV Color Print (+50 EGP)'),
+        text: customName || 'اسم مخصص',
+        cost: customCost,
+      }
       localStorage.setItem('lamsa_custom_engrave', customName)
+    } else {
+      delete customMeta[cartKey]
     }
+    localStorage.setItem('lamsa_custom_meta', JSON.stringify(customMeta))
+
     setAdded(true)
     toast(isAr ? 'تمت إضافة البطاقة إلى السلة ✓' : 'Card added to cart ✓')
     setTimeout(() => setAdded(false), 2000)
@@ -75,7 +100,7 @@ export default function ProductDetail() {
 
   function buyNow() {
     addToCart()
-    nav(`/store?custom_name=${encodeURIComponent(customName || '')}`)
+    nav(`/store?custom_type=${customType}&custom_name=${encodeURIComponent(customName || '')}&custom_cost=${customCost}`)
   }
 
   function triggerTap() {
@@ -153,9 +178,9 @@ export default function ProductDetail() {
               <div className="pd-price-box">
                 <div className="pd-price-main">
                   {product.originalPrice && (
-                    <span className="pd-price-old">{product.originalPrice} {CURRENCY[lang]}</span>
+                    <span className="pd-price-old">{product.originalPrice + customCost} {CURRENCY[lang]}</span>
                   )}
-                  <span className="pd-price"><b>{product.price}</b><small>{CURRENCY[lang]}</small></span>
+                  <span className="pd-price"><b>{unitPrice}</b><small>{CURRENCY[lang]}</small></span>
                   {product.originalPrice && (
                     <span className="pd-price-badge">-50%</span>
                   )}
@@ -163,22 +188,113 @@ export default function ProductDetail() {
                 <span className="pd-stock">{isAr ? '✓ متوفر فوراً والشحن لجميع المحافظات' : '✓ In stock & fast shipping'}</span>
               </div>
 
-              {/* Custom Laser Engraving Input */}
-              <div className="pd-engrave-box" style={{ background: 'var(--surface, rgba(0,0,0,0.03))', border: '1.5px solid var(--line)', borderRadius: 16, padding: 16, margin: '18px 0' }}>
-                <label style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontSize: '0.92rem' }}>
-                  <span>✍️ {isAr ? 'الاسم المحفور على وجه البطاقة (اختياري):' : 'Custom Laser Engraved Name (Optional):'}</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder={isAr ? 'مثال: د. محمد أيمن / Milano' : 'e.g. Dr. Mohamed / Milano'}
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--card)', fontWeight: 800 }}
-                />
-                <small style={{ color: 'var(--muted)', marginTop: 6, display: 'block', fontSize: '0.78rem' }}>
-                  {isAr ? 'سيتم حفر هذا الاسم بالليزر على بطاقتك وبرمجته على رقاقة الـ NFC' : 'This name will be laser engraved on your physical card'}
-                </small>
-              </div>
+              {/* Custom Laser Engraving or UV Printing Choice */}
+              {!product.digital && (
+                <div className="pd-engrave-box" style={{ background: 'var(--surface, rgba(0,0,0,0.03))', border: '1.5px solid var(--line)', borderRadius: 20, padding: 18, margin: '18px 0' }}>
+                  <label style={{ fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, fontSize: '0.95rem' }}>
+                    <span>✨ {isAr ? 'تخصيص الاسم والبراند على البطاقة:' : 'Card Customization & Branding:'}</span>
+                    {customCost > 0 && <span style={{ color: 'var(--cobalt)', fontWeight: 800 }}>+{customCost} {CURRENCY[lang]}</span>}
+                  </label>
+
+                  {/* 3 Choice Buttons */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(95px, 1fr))', gap: 8, marginBottom: 14 }}>
+                    <button
+                      type="button"
+                      className={`btn-custom-opt ${customType === 'none' ? 'active' : ''}`}
+                      onClick={() => setCustomType('none')}
+                      style={{
+                        padding: '12px 8px',
+                        borderRadius: 14,
+                        border: customType === 'none' ? '2px solid var(--cobalt)' : '1.5px solid var(--line)',
+                        background: customType === 'none' ? 'rgba(24, 84, 232, 0.08)' : 'var(--card)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 4,
+                        textAlign: 'center',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.2rem' }}>⚪️</span>
+                      <b style={{ fontSize: '0.82rem' }}>{isAr ? 'بدون اسم' : 'Standard'}</b>
+                      <small style={{ color: 'var(--muted)', fontSize: '0.72rem' }}>{isAr ? 'بدون رسوم' : '0 EGP'}</small>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`btn-custom-opt ${customType === 'print' ? 'active' : ''}`}
+                      onClick={() => setCustomType('print')}
+                      style={{
+                        padding: '12px 8px',
+                        borderRadius: 14,
+                        border: customType === 'print' ? '2px solid #06b6d4' : '1.5px solid var(--line)',
+                        background: customType === 'print' ? 'rgba(6, 182, 212, 0.08)' : 'var(--card)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 4,
+                        textAlign: 'center',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.2rem' }}>🖨️</span>
+                      <b style={{ fontSize: '0.82rem' }}>{isAr ? 'طباعة ألوان' : 'Color UV'}</b>
+                      <small style={{ color: '#0284c7', fontWeight: 800, fontSize: '0.72rem' }}>+50 {CURRENCY[lang]}</small>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`btn-custom-opt ${customType === 'laser' ? 'active' : ''}`}
+                      onClick={() => setCustomType('laser')}
+                      style={{
+                        padding: '12px 8px',
+                        borderRadius: 14,
+                        border: customType === 'laser' ? '2px solid #f59e0b' : '1.5px solid var(--line)',
+                        background: customType === 'laser' ? 'rgba(245, 158, 11, 0.08)' : 'var(--card)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 4,
+                        textAlign: 'center',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.2rem' }}>⚡️</span>
+                      <b style={{ fontSize: '0.82rem' }}>{isAr ? 'حفر ليزر فاخر' : 'Laser Engraved'}</b>
+                      <small style={{ color: '#d97706', fontWeight: 800, fontSize: '0.72rem' }}>+85 {CURRENCY[lang]}</small>
+                    </button>
+                  </div>
+
+                  {/* Input field when customType is print or laser */}
+                  {customType !== 'none' && (
+                    <div>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)', display: 'block', marginBottom: 6 }}>
+                        {customType === 'laser'
+                          ? (isAr ? '✍️ الاسم أو النص المطلوب حفره بالليزر (+85 ج.م):' : 'Laser Engraved Name (+85 EGP):')
+                          : (isAr ? '🎨 الاسم أو النص المطلوب طباعته بالألوان (+50 ج.م):' : 'UV Printed Name (+50 EGP):')
+                        }
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={isAr ? 'مثال: د. محمد أيمن / Milano' : 'e.g. Dr. Mohamed / Milano'}
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--card)', fontWeight: 800 }}
+                        autoFocus
+                      />
+                      <small style={{ color: 'var(--muted)', marginTop: 6, display: 'block', fontSize: '0.78rem' }}>
+                        {customType === 'laser'
+                          ? (isAr ? '✓ سيتم حفر هذا الاسم بدقة ليزر متناهية على سطح البطاقة وبرمجته على الـ NFC' : 'High precision laser engraving on card face')
+                          : (isAr ? '✓ سيتم طباعة الاسم بألوان UV زاهية ومقاومة للماء والمسح' : 'Vibrant waterproof UV printing')
+                        }
+                      </small>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Quantity */}
               <div className="pd-qty-row">
@@ -192,7 +308,7 @@ export default function ProductDetail() {
                     <IconPlus />
                   </button>
                 </div>
-                <span className="pd-qty-total">{product.price * qty} {CURRENCY[lang]}</span>
+                <span className="pd-qty-total">{totalPrice} {CURRENCY[lang]}</span>
               </div>
 
               {/* Actions */}
@@ -200,7 +316,7 @@ export default function ProductDetail() {
                 <button className="btn btn-primary btn-lg btn-block" onClick={addToCart}>
                   {added
                     ? (isAr ? '✓ تم الإضافة للسلة' : '✓ Added')
-                    : <><NfcIcon size={18} /> {isAr ? 'أضف للسلة' : 'Add to cart'}</>
+                    : <><NfcIcon size={18} /> {isAr ? `أضف للسلة (${totalPrice} ${CURRENCY[lang]})` : `Add to cart (${totalPrice} ${CURRENCY[lang]})`}</>
                   }
                 </button>
                 <button className="btn btn-ghost btn-lg btn-block" onClick={buyNow}>

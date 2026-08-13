@@ -528,7 +528,21 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
                         </div>
                       )}
                     </td>
-                    <td>{(o.items || []).map((i) => `${i.name} ×${i.qty}`).join(', ') || '—'}</td>
+                    <td>
+                      {(o.items || []).map((i, idx) => (
+                        <div key={idx} style={{ marginBottom: 6 }}>
+                          <b>{i.name} ×{i.qty}</b>
+                          {i.customType && i.customType !== 'none' ? (
+                            <div style={{ fontSize: '0.74rem', color: i.customType === 'laser' ? '#d97706' : '#0284c7', fontWeight: 800, marginTop: 2 }}>
+                              {i.customType === 'laser' ? '⚡️ حفر ليزر (+85 ج.م)' : '🖨️ طباعة ألوان (+50 ج.م)'}
+                              {i.customText && <span style={{ color: 'var(--text)' }}>: "{i.customText}"</span>}
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>⚪️ بدون تخصيص اسم</div>
+                          )}
+                        </div>
+                      ))}
+                    </td>
                     <td className="adm-money">{currency(o.total)} {cur}</td>
                     <td className="adm-date">{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '—'}</td>
                     <td>

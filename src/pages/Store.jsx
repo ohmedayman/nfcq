@@ -81,12 +81,41 @@ export default function Store() {
     return next
   })
 
-  const items = products.map((p) => {
-    const variant = selectedVariants[p.id] || (p.variants ? p.variants[0].id : null)
-    const cartKey = variant ? `${p.id}_${variant}` : p.id
-    return { product: p, qty: cart[cartKey] || 0, variant }
-  }).filter((x) => x.qty > 0)
-  const total = items.reduce((s, x) => s + x.product.price * x.qty, 0)
+  const customMeta = (() => {
+    try { return JSON.parse(localStorage.getItem('lamsa_custom_meta') || '{}') } catch { return {} }
+  })()
+
+  const items = Object.entries(cart).map(([cartKey, qty]) => {
+    if (!qty || qty <= 0) return null
+    const parts = cartKey.split('_')
+    const prodId = parts[0]
+    const sub = parts[1] || null
+    const product = products.find((p) => p.id === prodId)
+    if (!product) return null
+
+    const meta = customMeta[cartKey] || {}
+    const isLaser = sub === 'laser' || meta.type === 'laser'
+    const isPrint = sub === 'print' || meta.type === 'print'
+    const customCost = meta.cost ?? (isLaser ? 85 : isPrint ? 50 : 0)
+    const customType = meta.type || (isLaser ? 'laser' : isPrint ? 'print' : 'none')
+    const customTypeName = meta.typeName || (isLaser ? (isAr ? 'حفر بالليزر (+85 ج.م)' : 'Laser Engraved (+85 EGP)') : isPrint ? (isAr ? 'طباعة بالألوان UV (+50 ج.م)' : 'UV Color Print (+50 EGP)') : (isAr ? 'بدون تخصيص' : 'Standard'))
+    const customText = meta.text || localStorage.getItem('lamsa_custom_engrave') || ''
+    const unitPrice = product.price + customCost
+
+    return {
+      cartKey,
+      product,
+      qty,
+      unitPrice,
+      customCost,
+      customType,
+      customTypeName,
+      customText,
+      variant: sub && !['laser', 'print', 'none'].includes(sub) ? sub : null,
+    }
+  }).filter(Boolean)
+
+  const total = items.reduce((s, x) => s + x.unitPrice * x.qty, 0)
 
   // Coupon discount — only applied when a valid coupon is entered
   const VALID_COUPONS = {
@@ -125,8 +154,7 @@ export default function Store() {
   const shipping = isDigitalOnly || total >= 500 ? 0 : 50
   const grandTotal = Math.max(0, total - couponDiscount) + shipping
 
-  const setQty = (id, qty, variant = null) => setCart((c) => {
-    const cartKey = variant ? `${id}_${variant}` : id
+  const setQty = (cartKey, qty) => setCart((c) => {
     const n = { ...c, [cartKey]: Math.max(0, qty) }
     if (n[cartKey] === 0) delete n[cartKey]
     return n
@@ -165,11 +193,19 @@ export default function Store() {
           id: x.product.id,
           name: isAr ? x.product.nameAr : x.product.nameEn,
           qty: x.qty,
-          price: x.product.price,
+          price: x.unitPrice,
+          basePrice: x.product.price,
+          customType: x.customType || 'none',
+          customTypeName: x.customTypeName || (isAr ? 'بدون تخصيص' : 'Standard'),
+          customText: x.customText || '',
+          customCost: x.customCost || 0,
           variant: x.variant || null,
           digital: x.product.digital || false,
         })),
         total: grandTotal,
+        subtotal: total,
+        discount: couponDiscount,
+        couponCode: appliedCoupon?.code || null,
         shipping,
         currency: CURRENCY[lang],
         customer: {
@@ -192,6 +228,7 @@ export default function Store() {
 
       setCreatedOrder(orderResult)
       setCart({})
+      localStorage.removeItem('lamsa_custom_meta')
       setStep('done')
       window.scrollTo({ top: 0, behavior: 'smooth' })
       toast(isAr ? 'تم تسجيل وتأكيد طلبك بنجاح! 🎉' : 'Order placed successfully! 🎉')
@@ -399,25 +436,33 @@ export default function Store() {
                 const hasDiscount = i.product.originalPrice && i.product.originalPrice > i.product.price
                 const discountPct = hasDiscount ? Math.round((1 - i.product.price / i.product.originalPrice) * 100) : 0
                 return (
-                  <div key={i.product.id} className="cart-item">
+                  <div key={i.cartKey} className="cart-item">
                     <div className="cart-item-img" style={{ background: i.product.color }}>
                       <img src={`/img/${i.product.img}`} alt={i.product.nameEn} loading="lazy" />
                     </div>
                     <div className="cart-item-info">
                       <b>{isAr ? i.product.nameAr : i.product.nameEn}</b>
                       <small>{isAr ? i.product.materialAr : i.product.materialEn}</small>
+
+                      {/* Customization Details Pill */}
+                      {i.customType && i.customType !== 'none' && (
+                        <div style={{ margin: '4px 0', padding: '3px 8px', borderRadius: 8, background: i.customType === 'laser' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(6, 182, 212, 0.12)', border: i.customType === 'laser' ? '1px solid #f59e0b' : '1px solid #06b6d4', display: 'inline-block', fontSize: '0.74rem', fontWeight: 800 }}>
+                          {i.customType === 'laser' ? '⚡️' : '🖨️'} {i.customTypeName} {i.customText && `• "${i.customText}"`}
+                        </div>
+                      )}
+
                       <div className="cart-item-price">
-                        <span className="price-now">{i.product.price} {CURRENCY[lang]}</span>
-                        {hasDiscount && <span className="price-old">{i.product.originalPrice} {CURRENCY[lang]}</span>}
+                        <span className="price-now">{i.unitPrice} {CURRENCY[lang]}</span>
+                        {hasDiscount && <span className="price-old">{i.product.originalPrice + i.customCost} {CURRENCY[lang]}</span>}
                         {hasDiscount && <span className="discount-badge">-{discountPct}%</span>}
                       </div>
                     </div>
                     <div className="cart-item-qty">
-                      <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty - 1, i.variant)}><IconMinus /></button>
+                      <button className="qty-btn" onClick={() => setQty(i.cartKey, i.qty - 1)}><IconMinus /></button>
                       <span className="qty-val">{i.qty}</span>
-                      <button className="qty-btn" onClick={() => setQty(i.product.id, i.qty + 1, i.variant)}><IconPlus /></button>
+                      <button className="qty-btn" onClick={() => setQty(i.cartKey, i.qty + 1)}><IconPlus /></button>
                     </div>
-                    <button className="cart-item-remove" onClick={() => setQty(i.product.id, 0, i.variant)} title={isAr ? 'حذف' : 'Remove'}>✕</button>
+                    <button className="cart-item-remove" onClick={() => setQty(i.cartKey, 0)} title={isAr ? 'حذف' : 'Remove'}>✕</button>
                   </div>
                 )
               })}
