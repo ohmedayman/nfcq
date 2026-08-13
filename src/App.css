@@ -4191,28 +4191,29 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-top: 54px;
 }
 
 .demo-ios-toast {
   position: absolute;
-  top: -24px;
+  top: 0;
   width: 90%;
   max-width: 360px;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(15, 23, 42, 0.98);
   backdrop-filter: blur(16px);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 18px;
-  padding: 10px 16px;
+  color: #ffffff;
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  border-radius: 20px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
   gap: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-  z-index: 10;
-  transform: translateY(-40px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  z-index: 20;
+  transform: translateY(-20px);
   opacity: 0;
   pointer-events: none;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .demo-ios-toast.visible {
   transform: translateY(0);
@@ -4241,9 +4242,10 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   background: #0f172a;
   border: 10px solid #1e293b;
   border-radius: 46px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.1);
   overflow: hidden;
   position: relative;
+  color: #ffffff;
 }
 .demo-phone-notch {
   position: absolute;
@@ -4279,13 +4281,42 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   min-height: 580px;
   display: flex;
   flex-direction: column;
+  background: #0f172a;
+  color: #ffffff;
 }
+
+/* Themes for Phone Screen */
+.demo-phone-casing.theme-midnight-gold .demo-phone-screen { background: #0b0c10; }
+.demo-phone-casing.theme-midnight-gold .dps-cover-hero { background: linear-gradient(135deg, #1f1d14, #d4af37); }
+.demo-phone-casing.theme-midnight-gold .dps-role { color: #fde047; }
+.demo-phone-casing.theme-midnight-gold .dps-vcard-btn { background: linear-gradient(135deg, #d4af37, #f59e0b); color: #0f172a; }
+
+.demo-phone-casing.theme-cyber-neon .demo-phone-screen { background: #030712; }
+.demo-phone-casing.theme-cyber-neon .dps-cover-hero { background: linear-gradient(135deg, #06b6d4, #a855f7); }
+.demo-phone-casing.theme-cyber-neon .dps-role { color: #38bdf8; }
+.demo-phone-casing.theme-cyber-neon .dps-vcard-btn { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #ffffff; }
+
+.demo-phone-casing.theme-emerald-vip .demo-phone-screen { background: #022c22; }
+.demo-phone-casing.theme-emerald-vip .dps-cover-hero { background: linear-gradient(135deg, #064e3b, #10b981); }
+.demo-phone-casing.theme-emerald-vip .dps-role { color: #34d399; }
+.demo-phone-casing.theme-emerald-vip .dps-vcard-btn { background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; }
+
+.demo-phone-casing.theme-rose-gold .demo-phone-screen { background: #1c0b14; }
+.demo-phone-casing.theme-rose-gold .dps-cover-hero { background: linear-gradient(135deg, #881337, #f43f5e); }
+.demo-phone-casing.theme-rose-gold .dps-role { color: #fb7185; }
+.demo-phone-casing.theme-rose-gold .dps-vcard-btn { background: linear-gradient(135deg, #f43f5e, #e11d48); color: #ffffff; }
+
+.demo-phone-casing.theme-default .demo-phone-screen { background: #081226; }
+.demo-phone-casing.theme-default .dps-cover-hero { background: linear-gradient(135deg, #1854e8, #0aa5c8); }
+.demo-phone-casing.theme-default .dps-role { color: #60a5fa; }
+.demo-phone-casing.theme-default .dps-vcard-btn { background: linear-gradient(135deg, #1854e8, #06b6d4); color: #ffffff; }
 
 .dps-cover-hero {
   height: 100px;
   margin: -44px -20px 0;
   position: relative;
   overflow: hidden;
+  background: linear-gradient(135deg, #1854e8, #0aa5c8);
 }
 .dps-avatar-box {
   position: relative;
@@ -4295,8 +4326,9 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   margin: -40px auto 12px;
   display: grid;
   place-items: center;
+  background: #1e293b;
   border: 3.5px solid #fff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 .dps-avatar-txt {
   font-size: 2.2rem;
@@ -4315,17 +4347,17 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   font-size: 1.35rem;
   font-weight: 900;
   margin: 0 0 2px;
+  color: #ffffff !important;
 }
 .dps-role {
   font-size: 0.85rem;
   font-weight: 700;
-  opacity: 0.85;
   margin-bottom: 8px;
 }
 .dps-bio {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   line-height: 1.5;
-  opacity: 0.75;
+  color: #cbd5e1 !important;
   margin: 0;
 }
 
@@ -4361,7 +4393,13 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   gap: 10px;
   padding: 10px 14px;
   border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff !important;
   transition: transform 0.15s ease;
+}
+.dps-link-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 .dps-lb-icon {
   width: 28px;
@@ -4379,14 +4417,16 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   display: block;
   font-size: 0.82rem;
   font-weight: 800;
+  color: #ffffff !important;
 }
 .dps-lb-txt small {
   font-size: 0.7rem;
-  opacity: 0.75;
+  color: #94a3b8 !important;
 }
 .dps-lb-arrow {
   font-weight: 800;
   font-size: 0.85rem;
+  color: #ffffff !important;
 }
 
 .dps-vcard-btn {
@@ -4399,6 +4439,7 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   margin-top: auto;
   border: none;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 .dps-vcard-btn:hover {
   transform: translateY(-1px);
@@ -4407,7 +4448,7 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   text-align: center;
   margin-top: 14px;
   font-size: 0.68rem;
-  opacity: 0.6;
+  color: #94a3b8 !important;
 }
 
 
