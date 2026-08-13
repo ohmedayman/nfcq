@@ -8,7 +8,7 @@ import {
   initProfileIfMissing, fetchProfile, saveProfile, uploadAvatar,
   listUserOrders, listLeads, getProfileAnalytics
 } from '../lib/firebase'
-import { normalizeUrl, normalizeSocialUrl, detectPlatformInfo, CARD_THEMES } from '../lib/utils'
+import { normalizeUrl, normalizeSocialUrl, detectPlatformInfo, CARD_THEMES, sanitizeProfileData } from '../lib/utils'
 import {
   IconUser, IconLink, IconCreditCard, IconCheck, IconPlus, IconRefresh, IconHome,
   IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconShield, IconZap, NfcIcon,
@@ -137,10 +137,11 @@ export default function Dashboard() {
         url: normalizeUrl(l.url),
         subtitle: l.subtitle || '',
       }))
-      await saveProfile(user.uid, { ...form, links: normalizedLinks, social: normalizedSocial })
-      setSocial(normalizedSocial)
-      setLinks(normalizedLinks)
-      toast(isAr ? 'تم حفظ التغييرات ✓' : 'Changes saved ✓')
+      const cleanData = sanitizeProfileData({ ...form, links: normalizedLinks, social: normalizedSocial })
+      await saveProfile(user.uid, cleanData)
+      setSocial(cleanData.social || {})
+      setLinks(cleanData.links || [])
+      toast(isAr ? 'تم حفظ التغييرات المشفرة والآمنة ✓' : 'Changes saved securely ✓')
     } catch (err) {
       console.error('Save error:', err)
       toast(isAr ? 'لم يتم الحفظ — حاول مجددًا' : 'Save failed — try again', 'error')

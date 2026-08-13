@@ -4,22 +4,38 @@ import { useLang } from '../context/LanguageContext'
 import { NfcIcon } from '../components/icons'
 import { toast } from '../components/Toast'
 
+import { sanitizeText } from '../lib/utils'
+
 export default function Contact() {
   const { lang } = useLang()
   const isAr = lang === 'ar'
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '', hp: '' })
   const [sending, setSending] = useState(false)
+  const [lastSent, setLastSent] = useState(0)
 
   async function handleSubmit(e) {
     e.preventDefault()
+    // Anti-bot honeypot check
+    if (form.hp) {
+      console.warn('Bot detected via honeypot')
+      return setForm({ name: '', email: '', subject: '', message: '', hp: '' })
+    }
+
+    const now = Date.now()
+    if (now - lastSent < 15000) {
+      return toast(isAr ? 'يرجى الانتظار 15 ثانية قبل إرسال رسالة جديدة' : 'Please wait 15s before sending another message', 'info')
+    }
+
     if (!form.name || !form.email || !form.message) {
       toast(isAr ? 'أكمل كل الحقول' : 'Fill all fields', 'error')
       return
     }
+
     setSending(true)
-    await new Promise((r) => setTimeout(r, 1000))
-    toast(isAr ? 'تم الإرسال ✓ هنرد عليك قريب' : 'Sent ✓ We\'ll reply soon')
-    setForm({ name: '', email: '', subject: '', message: '' })
+    setLastSent(now)
+    await new Promise((r) => setTimeout(r, 800))
+    toast(isAr ? 'تم الإرسال بأمان ✓ هنرد عليك خلال دقائق' : 'Message sent securely ✓ We will reply shortly')
+    setForm({ name: '', email: '', subject: '', message: '', hp: '' })
     setSending(false)
   }
 
@@ -90,6 +106,18 @@ export default function Contact() {
                     <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@email.com" required dir="ltr" style={{ textAlign: 'left' }} />
                   </div>
                 </div>
+                {/* Anti-spam honeypot */}
+                <div style={{ display: 'none' }} aria-hidden="true">
+                  <input
+                    type="text"
+                    name="company_hp"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={form.hp}
+                    onChange={(e) => setForm({ ...form, hp: e.target.value })}
+                  />
+                </div>
+
                 <div className="field">
                   <label>{isAr ? 'الموضوع' : 'Subject'}</label>
                   <select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })}>

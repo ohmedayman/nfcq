@@ -108,6 +108,48 @@ export function normalizeUrl(url) {
   return `https://${v.replace(/^https?:\/\//i, '')}`
 }
 
+export function sanitizeText(str) {
+  if (typeof str !== 'string') return ''
+  return str
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/<[^>]+>/g, '') // Strip all raw HTML tags
+    .trim()
+}
+
+export function sanitizeProfileData(p = {}) {
+  const clean = { ...p }
+  if (clean.name) clean.name = sanitizeText(clean.name).slice(0, 100)
+  if (clean.role) clean.role = sanitizeText(clean.role).slice(0, 120)
+  if (clean.bio) clean.bio = sanitizeText(clean.bio).slice(0, 500)
+  if (clean.email) clean.email = sanitizeText(clean.email).toLowerCase().slice(0, 100)
+  if (clean.phone) clean.phone = sanitizeText(clean.phone).replace(/[^0-9+]/g, '').slice(0, 20)
+  if (clean.city) clean.city = sanitizeText(clean.city).slice(0, 80)
+
+  if (Array.isArray(clean.links)) {
+    clean.links = clean.links.map((l) => ({
+      label: sanitizeText(l.label || '').slice(0, 100),
+      subtitle: sanitizeText(l.subtitle || '').slice(0, 100),
+      url: normalizeUrl(l.url || ''),
+    }))
+  }
+
+  if (clean.social && typeof clean.social === 'object') {
+    const s = {}
+    for (const [k, v] of Object.entries(clean.social)) {
+      if (v) s[k] = sanitizeText(v).slice(0, 100)
+    }
+    clean.social = s
+  }
+
+  return clean
+}
+
+export function generateSecureQrUrl(targetUrl, size = 240) {
+  const safeTarget = normalizeUrl(targetUrl || 'https://lamsa.ink')
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(safeTarget)}&color=0f172a&bgcolor=ffffff&qzone=1`
+}
+
 /**
  * Validate a file before upload.
  * @param {File} file

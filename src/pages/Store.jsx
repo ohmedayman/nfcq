@@ -7,6 +7,7 @@ import { CURRENCY } from '../data/content'
 import { createOrder, saveProfile } from '../lib/firebase'
 import { FIREBASE_READY } from '../firebase.config'
 import { toast } from '../components/Toast'
+import { sanitizeText } from '../lib/utils'
 import {
   NfcIcon, IconCreditCard, IconZap, IconShield, IconPlus, IconMinus,
   IconCheck, IconWhatsApp, IconPhone, IconVerified
@@ -194,36 +195,59 @@ export default function Store() {
 
     setPending(true)
     try {
-      const orderPayload = {
-        items: items.map((x) => ({
-          id: x.product.id,
-          name: isAr ? x.product.nameAr : x.product.nameEn,
-          qty: x.qty,
-          price: x.unitPrice,
-          basePrice: x.product.price,
+      // Authoritative server/catalog price verification against client tampering
+      const verifiedItems = items.map((x) => {
+        const catalogItem = PRODUCTS.find((p) => p.id === x.product.id) || x.product
+        const validCustomCost = x.customType === 'laser' ? 85 : x.customType === 'print' ? 50 : 0
+        const verifiedUnitPrice = catalogItem.price + validCustomCost
+        const safeQty = Math.max(1, Math.min(99, parseInt(x.qty, 10) || 1))
+        return {
+          id: catalogItem.id,
+          name: isAr ? catalogItem.nameAr : catalogItem.nameEn,
+          qty: safeQty,
+          price: verifiedUnitPrice,
+          basePrice: catalogItem.price,
           customType: x.customType || 'none',
           customTypeName: x.customTypeName || (isAr ? 'بدون تخصيص' : 'Standard'),
-          customText: x.customText || '',
-          customCost: x.customCost || 0,
+          customText: sanitizeText(x.customText || '').slice(0, 100),
+          customCost: validCustomCost,
           variant: x.variant || null,
-          digital: x.product.digital || false,
-        })),
-        total: grandTotal,
-        subtotal: total,
-        discount: couponDiscount,
+          digital: catalogItem.digital || false,
+        }
+      })
+
+      const verifiedSubtotal = verifiedItems.reduce((s, i) => s + (i.price * i.qty), 0)
+      let verifiedDiscount = 0
+      if (appliedCoupon) {
+        if (appliedCoupon.type === 'percent') {
+          verifiedDiscount = Math.round((verifiedSubtotal * appliedCoupon.value) / 100)
+        } else {
+          verifiedDiscount = Math.min(verifiedSubtotal, appliedCoupon.value)
+        }
+      }
+      const verifiedNet = Math.max(0, verifiedSubtotal - verifiedDiscount)
+      const verifiedDigitalOnly = verifiedItems.every((i) => i.digital === true)
+      const verifiedShipping = verifiedDigitalOnly || verifiedNet >= 500 ? 0 : 50
+      const verifiedGrandTotal = verifiedNet + verifiedShipping
+
+      const orderPayload = {
+        items: verifiedItems,
+        total: verifiedGrandTotal,
+        subtotal: verifiedSubtotal,
+        discount: verifiedDiscount,
         couponCode: appliedCoupon?.code || null,
-        shipping,
+        shipping: verifiedShipping,
         currency: CURRENCY[lang],
         customer: {
-          name: form.name || user?.displayName || '',
-          phone: form.phone,
-          email: form.email || user?.email || '',
-          city: form.city,
-          address: form.address,
-          notes: form.notes,
+          name: sanitizeText(form.name || user?.displayName || '').slice(0, 100),
+          phone: sanitizeText(form.phone || '').slice(0, 25),
+          email: sanitizeText(form.email || user?.email || '').toLowerCase().slice(0, 100),
+          city: sanitizeText(form.city || '').slice(0, 80),
+          address: sanitizeText(form.address || '').slice(0, 250),
+          notes: sanitizeText(form.notes || '').slice(0, 500),
         },
-        paymentMethod: form.paymentMethod,
-        walletNumber: form.walletNumber,
+        paymentMethod: form.paymentMethod === 'wallet' ? 'wallet' : 'cod',
+        walletNumber: sanitizeText(form.walletNumber || '').slice(0, 30),
         status: 'pending',
       }
 

@@ -22,6 +22,8 @@ export default function Account() {
   const [busy, setBusy] = useState(false)
   const [ok, setOk] = useState('')
   const [resetSent, setResetSent] = useState(false)
+  const [failCount, setFailCount] = useState(0)
+  const [lockoutUntil, setLockoutUntil] = useState(0)
 
   useEffect(() => {
     if (user) setForm((f) => ({ ...f, email: user.email || '' }))
@@ -33,6 +35,12 @@ export default function Account() {
 
   const submit = async (e) => {
     e.preventDefault()
+    const now = Date.now()
+    if (lockoutUntil > now) {
+      const waitSec = Math.ceil((lockoutUntil - now) / 1000)
+      return toast(isAr ? `يرجى الانتظار ${waitSec} ثانية قبل المحاولة مجدداً` : `Too many attempts. Wait ${waitSec}s`, 'error')
+    }
+
     setBusy(true)
     setOk('')
     let success = false
@@ -44,7 +52,18 @@ export default function Account() {
       success = await login(form.email, form.pass)
     }
     setBusy(false)
-    if (success) setOk(isAr ? 'تم التسجيل بنجاح' : 'Done')
+
+    if (success) {
+      setFailCount(0)
+      setOk(isAr ? 'تم بنجاح' : 'Done')
+    } else {
+      const nextFails = failCount + 1
+      setFailCount(nextFails)
+      if (nextFails >= 5) {
+        setLockoutUntil(Date.now() + 30000)
+        toast(isAr ? 'تم تعليق المحاولات مؤقتاً لمدة 30 ثانية لحماية حسابك' : 'Too many failed attempts. Locked for 30s', 'error')
+      }
+    }
   }
 
   async function handleForgotPassword() {
