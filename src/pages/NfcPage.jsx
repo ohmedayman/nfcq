@@ -256,11 +256,13 @@ export default function NfcPage() {
 
               <div className="dps-avatar-box">
                 <span className="dps-avatar-txt">{profile.avatar || profile.name.charAt(0)}</span>
-                <span className="dps-avatar-verified"><IconVerified size="1.2em" /></span>
               </div>
 
               <div className="dps-info">
-                <h3 className="dps-name">{profile.name}</h3>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '0 auto 2px' }}>
+                  <h3 className="dps-name" style={{ margin: 0 }}>{profile.name}</h3>
+                  <IconVerified size="1.15em" />
+                </div>
                 <div className="dps-role">{profile.role}</div>
                 <p className="dps-bio">{profile.bio}</p>
               </div>
