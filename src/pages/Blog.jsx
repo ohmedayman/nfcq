@@ -1,7 +1,170 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
+import { subscribeNewsletter } from '../lib/firebase'
+import { toast } from '../components/Toast'
 import Reveal from '../components/Reveal'
+
+function BlogNewsletterBox({ isAr }) {
+  const [email, setEmail] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [subscribed, setSubscribed] = useState(false)
+  const [lastSubTime, setLastSubTime] = useState(0)
+
+  async function handleSubscribe(e) {
+    e.preventDefault()
+    if (!email) return
+    const now = Date.now()
+    if (now - lastSubTime < 10000) {
+      return toast(isAr ? 'يرجى الانتظار بضع ثوانٍ قبل المحاولة مجدداً' : 'Please wait a few seconds before trying again', 'info')
+    }
+    setLastSubTime(now)
+    setSubmitting(true)
+    try {
+      await subscribeNewsletter(email, 'blog')
+      setSubscribed(true)
+      setEmail('')
+      toast(isAr ? 'تم الاشتراك بنجاح! شكراً لك ✓' : 'Subscribed successfully! Thank you ✓')
+    } catch (err) {
+      toast(isAr ? 'يرجى إدخال بريد إلكتروني صالح' : 'Please enter a valid email', 'error')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="blog-newsletter-card" style={{
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1854e8 100%)',
+      borderRadius: 24,
+      padding: '36px 32px',
+      color: '#ffffff',
+      margin: '48px auto 24px',
+      boxShadow: '0 16px 40px rgba(24, 84, 232, 0.25)',
+      textAlign: 'center',
+      maxWidth: 760,
+    }}>
+      <div style={{ fontSize: 42, marginBottom: 12 }}>📬</div>
+      <h3 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 8, color: '#ffffff' }}>
+        {isAr ? 'اشترك في نشرة مقالات وتحديثات لمسة الذكية' : 'Subscribe to Lamsa Articles & Updates'}
+      </h3>
+      <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.92rem', maxWidth: 520, margin: '0 auto 24px', lineHeight: 1.6 }}>
+        {isAr ? 'احصل على مقالات حصرية، نصائح لزيادة مبيعاتك وتقييماتك بـ NFC، وكوبونات خصم دورية في بريدك.' : 'Get exclusive networking guides, NFC conversion tips, and discount codes directly to your inbox.'}
+      </p>
+
+      {subscribed ? (
+        <div className="blog-subscribe-success" style={{
+          background: 'rgba(16, 185, 129, 0.2)',
+          border: '1.5px solid #10b981',
+          borderRadius: 16,
+          padding: '20px 24px',
+          color: '#ffffff',
+          fontWeight: 800,
+          display: 'inline-flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 8,
+          maxWidth: 480,
+        }}>
+          <span style={{ fontSize: '1.6rem' }}>🎉</span>
+          <span style={{ fontSize: '1.1rem', color: '#6ee7b7' }}>
+            {isAr ? 'شكراً لاشتراكك! تم تسجيل بريدك بنجاح' : 'Thank you! Subscribed successfully'}
+          </span>
+          <span style={{ fontSize: '0.85rem', fontWeight: 500, opacity: 0.9 }}>
+            {isAr ? 'ستصلك أحدث المقالات والعروض الحصرية أولاً بأول.' : 'You will receive our latest articles and offers.'}
+          </span>
+        </div>
+      ) : (
+        <form onSubmit={handleSubscribe} style={{ display: 'flex', gap: 10, maxWidth: 500, margin: '0 auto', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={isAr ? 'اكتب بريدك الإلكتروني هنا...' : 'Enter your email address...'}
+            required
+            dir="ltr"
+            style={{
+              flex: '1 1 280px',
+              padding: '14px 18px',
+              borderRadius: 14,
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(8px)',
+              color: '#ffffff',
+              fontSize: '0.95rem',
+              outline: 'none',
+            }}
+          />
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn btn-primary"
+            style={{
+              padding: '14px 28px',
+              borderRadius: 14,
+              background: '#fde047',
+              color: '#0f172a',
+              fontWeight: 900,
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(253, 224, 71, 0.4)',
+            }}
+          >
+            {submitting ? (isAr ? 'جاري الاشتراك…' : 'Subscribing…') : (isAr ? 'اشترك الآن 🚀' : 'Subscribe Now 🚀')}
+          </button>
+        </form>
+      )}
+    </div>
+  )
+}
+
+export default function Blog() {
+  const { lang } = useLang()
+  const isAr = lang === 'ar'
+
+  return (
+    <div className="pd-page">
+      <section className="section">
+        <div className="container">
+          <nav className="pd-breadcrumb">
+            <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+            <span>/</span>
+            <span className="pd-bc-current">{isAr ? 'المدونة' : 'Blog'}</span>
+          </nav>
+          <div className="section-head">
+            <span className="kicker">Blog</span>
+            <h1>{isAr ? 'المدونة' : 'Blog'}</h1>
+            <p>{isAr ? 'نصائح ومقالات عن البطاقات الرقمية والتواصل' : 'Tips and articles about digital cards and networking'}</p>
+          </div>
+
+          <div className="blog-grid">
+            {POSTS.map((post, i) => (
+              <Reveal key={post.slug} delay={i * 120}>
+                <Link to={`/blog/${post.slug}`} className="blog-card">
+                  <div className="blog-card-img">
+                    <img src={`/img/${post.img}`} alt={isAr ? post.titleAr : post.titleEn} loading="lazy" />
+                  </div>
+                  <div className="blog-card-body">
+                    <div className="blog-card-meta">
+                      <span>{post.date}</span>
+                      <span>·</span>
+                      <span>{isAr ? `${post.readTime} قراءة` : `${post.readTime} read`}</span>
+                    </div>
+                    <h3>{isAr ? post.titleAr : post.titleEn}</h3>
+                    <p>{isAr ? post.descAr : post.descEn}</p>
+                    <span className="blog-card-link">{isAr ? 'اقرأ المزيد' : 'Read more'} →</span>
+                  </div>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+
+          {/* Newsletter Box in Blog */}
+          <BlogNewsletterBox isAr={isAr} />
+        </div>
+      </section>
+    </div>
+  )
+}
 
 const POSTS = [
   {
@@ -168,52 +331,6 @@ An NFC review stand placed at your counter makes it effortless:
   },
 ]
 
-export default function Blog() {
-  const { lang } = useLang()
-  const isAr = lang === 'ar'
-
-  return (
-    <div className="pd-page">
-      <section className="section">
-        <div className="container">
-          <nav className="pd-breadcrumb">
-            <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
-            <span>/</span>
-            <span className="pd-bc-current">{isAr ? 'المدونة' : 'Blog'}</span>
-          </nav>
-          <div className="section-head">
-            <span className="kicker">Blog</span>
-            <h1>{isAr ? 'المدونة' : 'Blog'}</h1>
-            <p>{isAr ? 'نصائح ومقالات عن البطاقات الرقمية والتواصل' : 'Tips and articles about digital cards and networking'}</p>
-          </div>
-
-          <div className="blog-grid">
-            {POSTS.map((post, i) => (
-              <Reveal key={post.slug} delay={i * 120}>
-                <Link to={`/blog/${post.slug}`} className="blog-card">
-                  <div className="blog-card-img">
-                    <img src={`/img/${post.img}`} alt={isAr ? post.titleAr : post.titleEn} loading="lazy" />
-                  </div>
-                  <div className="blog-card-body">
-                    <div className="blog-card-meta">
-                      <span>{post.date}</span>
-                      <span>·</span>
-                      <span>{isAr ? `${post.readTime} قراءة` : `${post.readTime} read`}</span>
-                    </div>
-                    <h3>{isAr ? post.titleAr : post.titleEn}</h3>
-                    <p>{isAr ? post.descAr : post.descEn}</p>
-                    <span className="blog-card-link">{isAr ? 'اقرأ المزيد' : 'Read more'} →</span>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
 export function BlogPost() {
   const { lang } = useLang()
   const { slug } = useParams()
@@ -281,6 +398,9 @@ export function BlogPost() {
             <p>{isAr ? 'اطلب بطاقة NFC وابدأ تواصلك' : 'Order your NFC card and start connecting'}</p>
             <Link to="/store" className="btn btn-primary">{isAr ? 'اطلب الآن' : 'Order now'}</Link>
           </div>
+
+          {/* Newsletter Box in BlogPost */}
+          <BlogNewsletterBox isAr={isAr} />
         </div>
       </section>
     </div>

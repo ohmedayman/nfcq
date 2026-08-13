@@ -144,3 +144,4 @@ export async function trackLinkClick(uid, url, label) { return (await loadServic
 export async function saveLead(profileUid, data) { return (await loadServices()).saveLead(profileUid, data) }
 export async function listLeads(profileUid) { return (await loadServices()).listLeads(profileUid) }
 export async function getProfileAnalytics(uid) { return (await loadServices()).getProfileAnalytics(uid) }
+export async function subscribeNewsletter(email, source) { return (await loadServices()).subscribeNewsletter(email, source) }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
+import { subscribeNewsletter } from '../lib/firebase'
 import Logo from './Logo'
 import { toast } from './Toast'
 
@@ -11,7 +12,7 @@ export default function Footer() {
   const [subscribed, setSubscribed] = useState(false)
   const [lastSubTime, setLastSubTime] = useState(0)
 
-  function subscribe(e) {
+  async function subscribe(e) {
     e.preventDefault()
     if (!email) return
     const now = Date.now()
@@ -19,10 +20,15 @@ export default function Footer() {
       return toast(isAr ? 'يرجى الانتظار بضع ثوانٍ قبل المحاولة مجدداً' : 'Please wait a few seconds before trying again', 'info')
     }
     setLastSubTime(now)
-    setSubscribed(true)
-    setEmail('')
-    toast(isAr ? 'شكراً لاشتراكك في نشرة لمسة! ✓' : 'Thanks for subscribing to Lamsa newsletter! ✓')
-    setTimeout(() => setSubscribed(false), 3000)
+    try {
+      await subscribeNewsletter(email, 'footer')
+      setSubscribed(true)
+      setEmail('')
+      toast(isAr ? 'شكراً لاشتراكك في نشرة لمسة! ✓' : 'Thanks for subscribing to Lamsa newsletter! ✓')
+      setTimeout(() => setSubscribed(false), 5000)
+    } catch (err) {
+      toast(isAr ? 'يرجى إدخال بريد إلكتروني صالح' : 'Please enter a valid email', 'error')
+    }
   }
 
   return (
@@ -33,10 +39,17 @@ export default function Footer() {
             <h3>{isAr ? 'اشترك في نشرتنا البريدية' : 'Subscribe to our newsletter'}</h3>
             <p>{isAr ? 'احصل على آخر العروض والنصائح مباشرة في بريدك' : 'Get the latest offers and tips straight to your inbox'}</p>
           </div>
-          <form className="footer-newsletter-form" onSubmit={subscribe}>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={isAr ? 'بريدك الإلكتروني' : 'Your email'} required />
-            <button type="submit" className="btn btn-primary">{subscribed ? '✓' : (isAr ? 'اشتراك' : 'Subscribe')}</button>
-          </form>
+          {subscribed ? (
+            <div className="newsletter-success-inline" style={{ color: '#10b981', fontWeight: 800, padding: '12px 20px', background: 'rgba(16, 185, 129, 0.12)', borderRadius: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>✓</span>
+              <span>{isAr ? 'تم الاشتراك بنجاح! شكراً لانضمامك لنشرة لمسة' : 'Subscribed successfully! Thank you for joining'}</span>
+            </div>
+          ) : (
+            <form className="footer-newsletter-form" onSubmit={subscribe}>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={isAr ? 'بريدك الإلكتروني' : 'Your email'} required />
+              <button type="submit" className="btn btn-primary">{isAr ? 'اشتراك' : 'Subscribe'}</button>
+            </form>
+          )}
         </div>
 
         <div className="footer-top">

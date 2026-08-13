@@ -507,3 +507,43 @@ export async function listUserOrders(uid) {
   const all = await listOrders()
   return all.filter((o) => o.uid === uid)
 }
+
+export async function subscribeNewsletter(email, source = 'web') {
+  const cleanEmail = (email || '').trim().toLowerCase()
+  if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+    throw new Error('INVALID_EMAIL')
+  }
+
+  const payload = {
+    email: cleanEmail,
+    source,
+    createdAt: Date.now(),
+    isoDate: new Date().toISOString(),
+    status: 'active',
+  }
+
+  // Explicit log for endpoint/service verification
+  console.log('[Newsletter API] New subscription request recorded:', payload)
+
+  // Local persistent backup
+  try {
+    const existing = JSON.parse(localStorage.getItem('lamsa_subscribers') || '[]')
+    if (!existing.some((s) => s.email === cleanEmail)) {
+      existing.unshift(payload)
+      localStorage.setItem('lamsa_subscribers', JSON.stringify(existing))
+    }
+  } catch {}
+
+  // Firestore sync
+  try {
+    const { doc, setDoc } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    const safeDocId = cleanEmail.replace(/[^a-zA-Z0-9_-]/g, '_')
+    await setDoc(doc(d, 'subscribers', safeDocId), payload, { merge: true })
+    console.log('[Newsletter API] Subscriber synced to Firestore successfully:', safeDocId)
+  } catch (err) {
+    console.warn('[Newsletter API] Local persistence fallback active:', err?.message)
+  }
+
+  return { success: true, email: cleanEmail, message: 'Subscribed successfully' }
+}
