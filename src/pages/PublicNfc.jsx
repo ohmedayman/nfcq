@@ -125,24 +125,6 @@ export default function PublicNfc() {
     )
   }
 
-  if (data && data.activated === false) {
-    return (
-      <div className="nfc-page">
-        <div className="aurora" />
-        <div className="container nfc-wrap" style={{ textAlign: 'center', paddingTop: 80 }}>
-          <div className="nfc-missing-icon" style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-          <h2 style={{ color: 'var(--text)', marginBottom: 8, fontSize: '1.6rem' }}>{isAr ? 'الملف الشخصي غير نشط' : 'Profile Inactive'}</h2>
-          <p style={{ color: 'var(--muted)', marginBottom: 24 }}>
-            {isAr 
-              ? 'هذا الملف الشخصي لم يتم تفعيله بعد. يرجى إتمام عملية شراء البطاقة لتفعيل هذا الحساب.' 
-              : 'This profile is not activated yet. Please complete a card purchase to activate it.'}
-          </p>
-          <Link to="/store" className="btn btn-primary">{isAr ? 'شراء بطاقة NFC لتفعيل الحساب' : 'Purchase NFC Card to Activate'}</Link>
-        </div>
-      </div>
-    )
-  }
-
   const profile = {
     name: data.name || CUSTOMER.name,
     role: data.role || CUSTOMER.role,

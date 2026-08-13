@@ -94,19 +94,40 @@ export async function saveProfile(uid, data) { return (await loadServices()).sav
 export async function uploadAvatar(uid, file) { return (await loadServices()).uploadAvatar(uid, file) }
 export async function createOrder(uid, payload) { return (await loadServices()).createOrder(uid, payload) }
 export async function fetchPublic(uid) {
-  if (!FIREBASE_READY) return null
+  if (!uid) return null
   try {
     const svc = await loadServices()
     const result = await svc.fetchProfile(uid)
-    return result
+    if (result) return result
   } catch (err) {
-    console.error('[fetchPublic] Error loading profile for uid:', uid, err?.code || '', err?.message || err)
-    // Re-throw permission errors so the UI can show a proper message
-    if (err?.code === 'permission-denied') {
-      throw err
-    }
-    return null
+    console.warn('[fetchPublic] Service fetch error:', err?.message)
   }
+
+  // Tier 2: Check localStorage cache
+  try {
+    const cached = localStorage.getItem(`lamsa_profile_${uid}`)
+    if (cached) return JSON.parse(cached)
+  } catch {}
+
+  // Tier 3: If viewing own profile while signed in
+  try {
+    const cur = authApi.currentUser()
+    if (cur && cur.uid === uid) {
+      return {
+        uid: cur.uid,
+        name: cur.displayName || cur.email?.split('@')[0] || 'User',
+        email: cur.email || '',
+        role: '',
+        bio: '',
+        links: [],
+        social: {},
+        theme: 'default',
+        activated: true,
+      }
+    }
+  } catch {}
+
+  return null
 }
 export async function listOrders() { return (await loadServices()).listOrders() }
 export async function updateOrderStatus(orderId, status) { return (await loadServices()).updateOrderStatus(orderId, status) }

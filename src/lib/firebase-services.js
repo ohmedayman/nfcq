@@ -40,18 +40,38 @@ export async function initProfileIfMissing(uid, email, name) {
   const ref = await getUserProfileRef(uid)
   const snap = await getDoc(ref)
   if (!snap.exists()) {
-    await setDoc(ref, { uid, email, name, role: '', bio: '', links: [], activated: false, createdAt: Date.now() })
+    const initialData = { uid, email, name, role: '', bio: '', links: [], activated: true, createdAt: Date.now() }
+    await setDoc(ref, initialData)
+    try { localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(initialData)) } catch {}
   }
 }
 
 export async function fetchProfile(uid) {
-  const { getDoc } = await import('firebase/firestore')
-  const snap = await getDoc(await getUserProfileRef(uid))
-  return snap.exists() ? snap.data() : null
+  try {
+    const { getDoc } = await import('firebase/firestore')
+    const snap = await getDoc(await getUserProfileRef(uid))
+    if (snap.exists()) {
+      const data = snap.data()
+      try { localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(data)) } catch {}
+      return data
+    }
+  } catch (err) {
+    console.warn('[fetchProfile] Firestore fetch failed, checking local storage cache:', err?.message)
+  }
+  try {
+    const cached = localStorage.getItem(`lamsa_profile_${uid}`)
+    if (cached) return JSON.parse(cached)
+  } catch {}
+  return null
 }
 
 export async function saveProfile(uid, data) {
   const { setDoc } = await import('firebase/firestore')
+  try {
+    const cached = localStorage.getItem(`lamsa_profile_${uid}`)
+    const merged = { ...(cached ? JSON.parse(cached) : {}), ...data, uid }
+    localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(merged))
+  } catch {}
   return setDoc(await getUserProfileRef(uid), data, { merge: true })
 }
 

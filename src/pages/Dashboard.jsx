@@ -187,18 +187,6 @@ export default function Dashboard() {
   return (
     <section className="section dash-section">
       <div className="container">
-        {/* Header */}
-        {!activated && (
-          <div className="dash-alert-banner" style={{ marginBottom: 24 }}>
-            <div className="dash-alert-icon">⚠️</div>
-            <div className="dash-alert-body" style={{ flex: 1 }}>
-              <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800 }}>{isAr ? 'حسابك قيد الانتظار' : 'Account Pending Activation'}</h4>
-              <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--muted)' }}>{isAr ? 'يرجى إتمام شراء بطاقتك لتفعيل ملفك الشخصي وعرضه للعامة.' : 'Please purchase a card from the store to activate your public profile.'}</p>
-            </div>
-            <Link to="/store" className="btn btn-primary btn-sm">{isAr ? 'شراء الآن' : 'Buy Now'}</Link>
-          </div>
-        )}
-
         <div className="dash-header">
           <div className="dash-header-left">
             <div className="dash-avatar-lg">
@@ -238,9 +226,9 @@ export default function Dashboard() {
             <div className="ds-icon"><IconZap /></div>
             <div><b>{linkCount}</b><span>{isAr ? 'رابط خاص' : 'Custom links'}</span></div>
           </div>
-          <div className={`dash-stat ${activated ? 'active' : 'inactive'}`}>
+          <div className="dash-stat active">
             <div className="ds-icon"><NfcIcon /></div>
-            <div><b>{activated ? (isAr ? 'شغال' : 'Active') : (isAr ? 'غير مفعل' : 'Inactive')}</b><span>{isAr ? 'بطاقة NFC' : 'NFC Card'}</span></div>
+            <div><b>{isAr ? 'نشط ✓' : 'Active ✓'}</b><span>{isAr ? 'بطاقة NFC' : 'NFC Card'}</span></div>
           </div>
         </div>
 
