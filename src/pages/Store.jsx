@@ -7,6 +7,8 @@ import { createOrder } from '../lib/firebase'
 import { FIREBASE_READY } from '../firebase.config'
 import { toast } from '../components/Toast'
 import { NfcIcon, IconCreditCard, IconZap, IconShield, IconPlus, IconMinus, IconCheck } from '../components/icons'
+import StandardCard from '../components/StandardCard'
+import PremiumCard from '../components/PremiumCard'
 
 function getCart() {
   try { return JSON.parse(localStorage.getItem('lamsa_cart') || '{}') } catch { return {} }
@@ -151,7 +153,15 @@ export default function Store() {
                 <div className={`pcard${p.popular ? ' hot' : ''}`} key={p.id}>
                   {p.popular && <span className="pop">{isAr ? 'الأكثر مبيعًا' : 'Popular'}</span>}
                   {p.originalPrice && <span className="pcard-discount">-50%</span>}
-                  <Link to={`/store/${p.id}`} className="pcard-visual" style={{ background: p.color }}><img src={`/img/${p.img}`} alt={p.nameEn} loading="lazy" /></Link>
+                  <Link to={`/store/${p.id}`} className="pcard-visual" style={{ background: p.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {p.id === 'classic' ? (
+                      <div style={{ pointerEvents: 'none', transform: 'scale(0.8)', width: '100%' }}><StandardCard /></div>
+                    ) : p.id === 'premium' ? (
+                      <div style={{ pointerEvents: 'none', transform: 'scale(0.8)', width: '100%' }}><PremiumCard /></div>
+                    ) : (
+                      <img src={`/img/${p.img}`} alt={p.nameEn} loading="lazy" />
+                    )}
+                  </Link>
                   <div className="pcard-body">
                     <h3><Link to={`/store/${p.id}`}>{isAr ? p.nameAr : p.nameEn}</Link></h3>
                     <p className="pcard-material">{isAr ? p.materialAr : p.materialEn}</p>

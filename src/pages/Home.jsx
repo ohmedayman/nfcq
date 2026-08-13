@@ -4,7 +4,8 @@ import { useLang } from '../context/LanguageContext'
 import { PRODUCTS, CURRENCY } from '../data/content'
 import Reveal from '../components/Reveal'
 import { NfcIcon, IconUser, IconRefresh, IconShield, IconZap } from '../components/icons'
-
+import StandardCard from '../components/StandardCard'
+import PremiumCard from '../components/PremiumCard'
 function useCountUp(target, duration = 1800) {
   const [val, setVal] = useState(0)
   const ref = useRef(null)
@@ -284,8 +285,14 @@ export default function Home() {
                   <div className={`pcard${p.popular ? ' hot' : ''}`}>
                     {p.popular && <span className="pop">{ar ? 'الأكثر مبيعًا' : 'Popular'}</span>}
                     {p.originalPrice && <span className="pcard-discount">-50%</span>}
-                    <Link to={`/store/${p.id}`} className="pcard-visual" style={{ background: p.color }}>
-                      <img src={`/img/${p.img || 'card-detail.png'}`} alt={p.nameEn} loading="lazy" />
+                    <Link to={`/store/${p.id}`} className="pcard-visual" style={{ background: p.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {p.id === 'classic' ? (
+                        <div style={{ pointerEvents: 'none', transform: 'scale(0.8)', width: '100%' }}><StandardCard /></div>
+                      ) : p.id === 'premium' ? (
+                        <div style={{ pointerEvents: 'none', transform: 'scale(0.8)', width: '100%' }}><PremiumCard /></div>
+                      ) : (
+                        <img src={`/img/${p.img || 'card-detail.png'}`} alt={p.nameEn} loading="lazy" />
+                      )}
                     </Link>
                     <div className="pcard-body">
                       <h3><Link to={`/store/${p.id}`}>{ar ? p.nameAr : p.nameEn}</Link></h3>
