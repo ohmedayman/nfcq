@@ -34,10 +34,13 @@ export function normalizeSocialUrl(platform, value) {
     discord: 'https://discord.gg/',
   }
 
-  // WhatsApp: accept phone numbers
+  // WhatsApp: normalize phone numbers to strict international E.164 format
   if (platform === 'whatsapp') {
-    const digits = v.replace(/[^0-9+]/g, '')
-    if (digits) return `https://wa.me/${digits.replace(/^\+/, '')}`
+    let digits = v.replace(/[^0-9]/g, '')
+    if (digits.startsWith('01') && digits.length === 11) {
+      digits = '2' + digits
+    }
+    if (digits) return `https://wa.me/${digits}`
     return v
   }
 
@@ -148,6 +151,15 @@ export function sanitizeProfileData(p = {}) {
 export function generateSecureQrUrl(targetUrl, size = 240) {
   const safeTarget = normalizeUrl(targetUrl || 'https://lamsa.ink')
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(safeTarget)}&color=0f172a&bgcolor=ffffff&qzone=1`
+}
+
+export function getWhatsAppDeepLink(phone = '201028707543', text = '') {
+  let digits = (phone || '').replace(/[^0-9]/g, '')
+  if (digits.startsWith('01') && digits.length === 11) {
+    digits = '2' + digits
+  }
+  const cleanPhone = digits || '201028707543'
+  return text ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/${cleanPhone}`
 }
 
 /**
