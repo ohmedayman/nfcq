@@ -14,7 +14,11 @@ export default function Account() {
   const [searchParams] = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/dashboard'
   const [mode, setMode] = useState(searchParams.get('mode') || 'register')
-  const [form, setForm] = useState({ name: '', email: '', pass: '' })
+  const [form, setForm] = useState({
+    name: searchParams.get('username') || searchParams.get('name') || '',
+    email: '',
+    pass: '',
+  })
   const [busy, setBusy] = useState(false)
   const [ok, setOk] = useState('')
   const [resetSent, setResetSent] = useState(false)

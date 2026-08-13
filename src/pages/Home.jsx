@@ -1,12 +1,17 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import { useLang } from '../context/LanguageContext'
 import { CURRENCY } from '../data/content'
 import { useProducts } from '../context/ProductContext'
 import Reveal from '../components/Reveal'
-import { NfcIcon, IconUser, IconRefresh, IconShield, IconZap } from '../components/icons'
+import {
+  NfcIcon, IconUser, IconRefresh, IconShield, IconZap, IconCheck, IconPhone,
+  IconYouTube, IconFacebook, IconTikTok, IconTelegram, IconWhatsApp, IconInstagram,
+  IconLinkedin, IconTwitter, PlatformIcon, IconVerified, IconShare,
+} from '../components/icons'
 import StandardCard from '../components/StandardCard'
 import PremiumCard from '../components/PremiumCard'
+
 function useCountUp(target, duration = 1800) {
   const [val, setVal] = useState(0)
   const ref = useRef(null)
@@ -43,116 +48,262 @@ function StatCounter({ value, suffix = '', label }) {
   )
 }
 
+const CREATOR_CARDS = [
+  {
+    name: 'Dr. Mohamed Ayman',
+    handle: 'dr_mohamed',
+    role: 'منصة تعليمية وطبيب',
+    theme: 'midnight-gold',
+    avatar: '👨‍⚕️',
+    gradient: 'linear-gradient(135deg, #1e1b4b, #d97706)',
+    tag: 'تعليم وصحة',
+  },
+  {
+    name: 'Milano Store',
+    handle: 'milano_eg',
+    role: 'علامة أزياء وتجارة إلكترونية',
+    theme: 'cyber-neon',
+    avatar: '🛍️',
+    gradient: 'linear-gradient(135deg, #0f172a, #06b6d4)',
+    tag: 'تجارة ومتاجر',
+  },
+  {
+    name: 'Sarah Design Studio',
+    handle: 'sarah_ux',
+    role: 'مصممة واجهات وتجارب مستخدم',
+    theme: 'rose-gold',
+    avatar: '🎨',
+    gradient: 'linear-gradient(135deg, #881337, #f43f5e)',
+    tag: 'تصميم وإبداع',
+  },
+  {
+    name: 'Karim Tech',
+    handle: 'karim_dev',
+    role: 'مؤسس شركة برمجيات',
+    theme: 'emerald-vip',
+    avatar: '💻',
+    gradient: 'linear-gradient(135deg, #064e3b, #10b981)',
+    tag: 'تكنولوجيا وريادة',
+  },
+]
+
 export default function Home() {
   const { text, lang } = useLang()
   const { products } = useProducts()
   const isAr = lang === 'ar'
+  const nav = useNavigate()
+
+  const [claimName, setClaimName] = useState('')
+  const [activeTheme, setActiveTheme] = useState('midnight-gold')
+  const [faqOpen, setFaqOpen] = useState(null)
+
+  function handleClaimSubmit(e) {
+    e.preventDefault()
+    const clean = claimName.trim().replace(/^@/, '')
+    if (clean) {
+      nav(`/account?mode=register&username=${encodeURIComponent(clean)}&redirect=/store`)
+    } else {
+      nav(`/account?mode=register&redirect=/store`)
+    }
+  }
 
   return (
-    <>
-      {/* HERO */}
-      <section className="hero">
-        <div className="hero-bg" />
-        <div className="container hero-grid">
-          <div className="hero-content">
+    <div className="home-wrapper">
+      {/* HERO SECTION WITH LINKTREE CLAIM BAR */}
+      <section className="lt-hero">
+        <div className="lt-hero-bg" />
+        <div className="container lt-hero-grid">
+          <div className="lt-hero-content">
             <Reveal>
-              <span className="hero-badge"><NfcIcon size={16} /> {text.tagline}</span>
+              <div className="lt-pill-badge">
+                <span className="lt-pulse-dot" />
+                <span>{isAr ? '✨ الجيل القادم من بطاقات الأعمال والروابط الذكية' : '✨ Next-Gen Link-in-Bio & NFC Card'}</span>
+              </div>
             </Reveal>
+
             <Reveal delay={80}>
-              <h1>
-                {text.hero_title.split(' ')[0]}{' '}
-                <span className="grad">{text.hero_title.split(' ').slice(1).join(' ')}</span>
+              <h1 className="lt-hero-title">
+                {isAr ? (
+                  <>كل ما تصنعه وتشاركه، في <span className="lt-text-gradient">رابط ولمسة واحدة ذكية</span></>
+                ) : (
+                  <>Everything you are, in <span className="lt-text-gradient">one simple link & smart tap</span></>
+                )}
               </h1>
             </Reveal>
-            <Reveal delay={160}>
-              <p className="lead">{text.hero_subtitle}</p>
+
+            <Reveal delay={140}>
+              <p className="lt-hero-subtitle">
+                {isAr
+                  ? 'انضم لأكثر من 15,000 صانع محتوى، طبيب، ومؤسس شركة. صفحة رقمية مخصصة بالكامل وبطاقة NFC تفتح بلمسة هاتفك بدون أي تطبيقات!'
+                  : 'Join 15,000+ creators, professionals and brands. A fully customized digital profile and NFC smart card ready in seconds.'}
+              </p>
             </Reveal>
-            <Reveal delay={240}>
-              <div className="hero-actions">
-                <Link to="/account?mode=register&redirect=/store" className="btn btn-primary">{text.hero_cta}</Link>
-                <Link to="/nfc/demo" className="btn btn-ghost">{text.hero_cta2}</Link>
-              </div>
-            </Reveal>
-            <Reveal delay={320}>
-              <div className="hero-trust-row">
-                <div className="hero-avatars">
-                  {[1,2,3,4].map(i => <span key={i} className="hero-av" style={{marginLeft: i>1?'-10px':0, zIndex:5-i}}>{String.fromCharCode(64+i)}</span>)}
+
+            {/* Claim Username Input Form */}
+            <Reveal delay={200}>
+              <form className="lt-claim-box" onSubmit={handleClaimSubmit}>
+                <div className="lt-claim-input-wrap">
+                  <span className="lt-claim-prefix">lamsa.ink/</span>
+                  <input
+                    type="text"
+                    className="lt-claim-input"
+                    placeholder={isAr ? 'اسمك_أو_براندك' : 'yourname'}
+                    value={claimName}
+                    onChange={(e) => setClaimName(e.target.value)}
+                    dir="ltr"
+                  />
                 </div>
-                <span className="hero-trust-text">{isAr ? 'أكثر من 2,000 مستخدم نشط' : '2,000+ active users'}</span>
+                <button type="submit" className="lt-claim-btn">
+                  {isAr ? 'احصل على بطاقتك مجاناً 🚀' : 'Claim your link 🚀'}
+                </button>
+              </form>
+            </Reveal>
+
+            <Reveal delay={260}>
+              <div className="lt-trust-row">
+                <div className="lt-avatars">
+                  <span className="lt-av" style={{ background: '#3b82f6' }}>👨‍⚕️</span>
+                  <span className="lt-av" style={{ background: '#ec4899' }}>👩‍🎨</span>
+                  <span className="lt-av" style={{ background: '#10b981' }}>👨‍💻</span>
+                  <span className="lt-av" style={{ background: '#f59e0b' }}>🛍️</span>
+                </div>
+                <div className="lt-trust-text">
+                  <b>{isAr ? 'موثوق من آلاف المشاهير والشركات في مصر والخليج' : 'Trusted by thousands of creators & businesses'}</b>
+                  <span>⭐️⭐️⭐️⭐️⭐️ 4.9/5 {isAr ? 'تقييم رضا العملاء' : 'Customer rating'}</span>
+                </div>
               </div>
             </Reveal>
           </div>
 
-          <div className="hero-visual">
-            <Reveal delay={200}>
-              <div className="hero-img-wrap">
-                <img src="/img/hero-card.webp" alt="Lamsa NFC card" loading="eager" width="520" height="360" />
+          {/* Interactive Live Phone Simulator */}
+          <div className="lt-hero-visual">
+            <Reveal delay={180}>
+              <div className={`lt-phone-mockup theme-${activeTheme}`}>
+                <div className="lt-phone-notch" />
+                <div className="lt-phone-screen">
+                  {/* Phone Header */}
+                  <div className="lt-screen-cover" />
+                  <div className="lt-screen-avatar">
+                    <span>👑</span>
+                  </div>
+                  
+                  <div className="lt-screen-name-row">
+                    <h3 className="lt-screen-name">{claimName ? claimName : (isAr ? 'Mohamed Ayman' : 'Alex Rivera')}</h3>
+                    <IconVerified size="1.15em" />
+                  </div>
+                  <div className="lt-screen-role">{isAr ? 'صانع محتوى ورائد أعمال' : 'Creator & Entrepreneur'}</div>
+                  <div className="lt-screen-bio">{isAr ? 'أشارك تجاربي في البرمجة وتطوير المنصات الرقمية 🚀' : 'Building digital products & sharing growth tools'}</div>
+
+                  {/* Social Row */}
+                  <div className="lt-screen-socials">
+                    <span className="lt-ss-btn" style={{ background: '#FF0000', color: '#fff' }}><IconYouTube /></span>
+                    <span className="lt-ss-btn" style={{ background: '#1877F2', color: '#fff' }}><IconFacebook /></span>
+                    <span className="lt-ss-btn" style={{ background: '#000000', color: '#fff' }}><IconTikTok /></span>
+                    <span className="lt-ss-btn" style={{ background: '#25D366', color: '#fff' }}><IconWhatsApp /></span>
+                    <span className="lt-ss-btn" style={{ background: '#E4405F', color: '#fff' }}><IconInstagram /></span>
+                  </div>
+
+                  {/* Links List */}
+                  <div className="lt-screen-links">
+                    <div className="lt-screen-link-item">
+                      <span className="lt-sli-icon" style={{ background: '#FF0000', color: '#fff' }}><IconYouTube /></span>
+                      <div className="lt-sli-text">
+                        <b>{isAr ? 'قناتي الرسمية على يوتيوب' : 'My YouTube Channel'}</b>
+                        <span>2.2M Subscribers</span>
+                      </div>
+                      <span className="lt-sli-arrow">{isAr ? '←' : '→'}</span>
+                    </div>
+
+                    <div className="lt-screen-link-item">
+                      <span className="lt-sli-icon" style={{ background: '#25D366', color: '#fff' }}><IconWhatsApp /></span>
+                      <div className="lt-sli-text">
+                        <b>{isAr ? 'الدعم الفني والواتساب' : 'WhatsApp Support'}</b>
+                        <span>{isAr ? 'تواصل فوري ومباشر' : 'Instant Chat'}</span>
+                      </div>
+                      <span className="lt-sli-arrow">{isAr ? '←' : '→'}</span>
+                    </div>
+
+                    <div className="lt-screen-link-item">
+                      <span className="lt-sli-icon" style={{ background: '#d97706', color: '#fff' }}><IconZap /></span>
+                      <div className="lt-sli-text">
+                        <b>{isAr ? 'كتابي ومنصتي التعليمية' : 'Platform & Store'}</b>
+                        <span>{isAr ? 'متوفر الشحن الفوري' : 'Available now'}</span>
+                      </div>
+                      <span className="lt-sli-arrow">{isAr ? '←' : '→'}</span>
+                    </div>
+                  </div>
+
+                  {/* Save Contact Button */}
+                  <button className="lt-screen-vcard-btn">
+                    💾 {isAr ? 'حفظ جهة الاتصال في الهاتف' : 'Save Contact'}
+                  </button>
+                </div>
+
+                {/* Live Theme Switcher Tabs */}
+                <div className="lt-theme-switcher-pills">
+                  <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--muted)' }}>{isAr ? 'جرّب الثيم:' : 'Theme:'}</span>
+                  <button className={`lt-theme-pill ${activeTheme === 'midnight-gold' ? 'active' : ''}`} onClick={() => setActiveTheme('midnight-gold')}>Gold</button>
+                  <button className={`lt-theme-pill ${activeTheme === 'cyber-neon' ? 'active' : ''}`} onClick={() => setActiveTheme('cyber-neon')}>Neon</button>
+                  <button className={`lt-theme-pill ${activeTheme === 'emerald-vip' ? 'active' : ''}`} onClick={() => setActiveTheme('emerald-vip')}>Emerald</button>
+                  <button className={`lt-theme-pill ${activeTheme === 'rose-gold' ? 'active' : ''}`} onClick={() => setActiveTheme('rose-gold')}>Rose</button>
+                  <button className={`lt-theme-pill ${activeTheme === 'default' ? 'active' : ''}`} onClick={() => setActiveTheme('default')}>Cobalt</button>
+                </div>
               </div>
             </Reveal>
-            <div className="float-chip fc-1">
-              <span className="pulse" />
-              NFC — <b>{isAr ? 'لمسة واحدة' : 'One tap'}</b>
-            </div>
-            <div className="float-chip fc-2">
-              <NfcIcon size="1.3em" />
-              <span>{isAr ? 'توصّل فوراً' : 'Instant connect'}<br /><b>{isAr ? '+10K بطاقة صادرة' : '10K+ cards issued'}</b></span>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* STATS */}
+      {/* STATS STRIP */}
       <section className="stats">
         <div className="container stats-grid">
-          <StatCounter value={10000} suffix="+" label={isAr ? 'بطاقة صادرة' : 'Cards issued'} />
-          <StatCounter value={50} suffix="+" label={isAr ? 'دولة' : 'Countries'} />
-          <StatCounter value={1} suffix="s" label={isAr ? 'لمسة وفتح' : 'Tap & connect'} />
+          <StatCounter value={15000} suffix="+" label={isAr ? 'بطاقة صادرة' : 'Cards issued'} />
+          <StatCounter value={850000} suffix="+" label={isAr ? 'نقرة ولمسة ذكية' : 'NFC taps & clicks'} />
+          <StatCounter value={1} suffix="s" label={isAr ? 'سرعة النقل والفتح' : 'Instant connect'} />
+          <StatCounter value={100} suffix="%" label={isAr ? 'بدون أي تطبيقات' : 'Zero app required'} />
         </div>
       </section>
 
-      {/* TRUST BAR */}
-      <section className="trust-bar">
-        <div className="container">
-          <div className="trust-items">
-            {[
-              { icon: '🚚', t: isAr ? 'شحن مجاني' : 'Free shipping', d: isAr ? 'للطلبات فوق 500 ج.م' : 'On orders over 500 EGP' },
-              { icon: '🛡️', t: isAr ? 'ضمان سنة' : '1-year warranty', d: isAr ? 'استبدال مجاني' : 'Free replacement' },
-              { icon: '⚡', t: isAr ? 'إصدار فوري' : 'Instant digital', d: isAr ? 'صفحتك جاهزة فوراً' : 'Your page ready now' },
-              { icon: '🔒', t: isAr ? 'دفع آمن' : 'Secure checkout', d: isAr ? 'مشفر بالكامل' : 'Fully encrypted' },
-            ].map((x, i) => (
-              <div key={i} className="trust-item-box">
-                <span className="trust-icon">{x.icon}</span>
-                <div>
-                  <b>{x.t}</b>
-                  <span>{x.d}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section className="section">
+      {/* 3D CREATOR SHOWCASE CAROUSEL */}
+      <section className="section" style={{ overflow: 'hidden' }}>
         <div className="container">
           <div className="section-head">
-            <span className="kicker">{isAr ? 'كيف تعمل' : 'How it works'}</span>
-            <h2>{isAr ? 'ثلاث خطوات بسيطة' : 'Three simple steps'}</h2>
-            <p>{isAr ? 'من التسجيل للبطاقة في دقائق' : 'From signup to card in minutes'}</p>
+            <span className="kicker">{isAr ? 'انضم للمتميزين' : 'Creator Showcase'}</span>
+            <h2>{isAr ? 'البطاقة الذكية المفضلة لدى كبار المشاهير وصناع المحتوى' : 'Trusted by Top Creators & Leaders'}</h2>
+            <p>{isAr ? 'مرر على أي بطاقة لتكتشف بروفايلهم ورابطهم الرقمي' : 'Hover over any card to reveal their live link'}</p>
           </div>
-          <div className="steps">
-            {[
-              { n: '01', icon: <IconUser size={26} />, t: isAr ? 'سجّل حسابك' : 'Create account', d: isAr ? 'سجّل مجاناً بريدك أو حسابك على Google' : 'Sign up free with email or Google' },
-              { n: '02', icon: <IconZap size={26} />, t: isAr ? 'صمّم بطاقتك' : 'Design your card', d: isAr ? 'أضف روابطك وصورك وبياناتك من لوحة التحكم' : 'Add your links, photos and info from the dashboard' },
-              { n: '03', icon: <NfcIcon size={26} />, t: isAr ? 'ادفع وابدأ' : 'Tap & connect', d: isAr ? 'اطلب البطاقة المادية أو شارك الرابط الرقمي فوراً' : 'Order the physical card or share the digital link instantly' },
-            ].map((s, i) => (
-              <Reveal key={i} delay={i * 120}>
-                <div className="step-card">
-                  <div className="step-num">{s.n}</div>
-                  <div className="step-icon">{s.icon}</div>
-                  <h3>{s.t}</h3>
-                  <p>{s.d}</p>
-                  {i < 2 && <div className="step-arrow">→</div>}
+
+          <div className="lt-creators-grid">
+            {CREATOR_CARDS.map((c, i) => (
+              <Reveal key={i} delay={i * 100}>
+                <div className="lt-flip-card">
+                  <div className="lt-flip-card-inner">
+                    {/* Front */}
+                    <div className="lt-flip-front" style={{ background: c.gradient }}>
+                      <div className="lt-flip-tag">{c.tag}</div>
+                      <div className="lt-flip-avatar">{c.avatar}</div>
+                      <div className="lt-flip-info">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                          <h4 style={{ margin: 0, color: '#fff' }}>{c.name}</h4>
+                          <IconVerified size="1.1em" />
+                        </div>
+                        <p style={{ margin: '4px 0 0', opacity: 0.85, fontSize: '0.84rem', color: '#fff' }}>{c.role}</p>
+                      </div>
+                    </div>
+                    {/* Back */}
+                    <div className="lt-flip-back">
+                      <div className="lt-flip-back-content">
+                        <NfcIcon size="2rem" />
+                        <b>lamsa.ink/{c.handle}</b>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '6px 0 14px' }}>
+                          {isAr ? 'مفعل ومربوط ببطاقة NFC ذكية' : 'Active & connected via NFC'}
+                        </p>
+                        <Link to="/account?mode=register" className="btn btn-primary btn-sm">
+                          {isAr ? 'احجز رابطك مثله' : 'Claim your link'}
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </Reveal>
             ))}
@@ -160,29 +311,92 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURES */}
+      {/* 4 VIBRANT VALUE BLOCKS */}
+      <section className="lt-pillars-section">
+        <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: 60 }}>
+          {/* Pillar 1 */}
+          <div className="lt-pillar-card lt-pillar-green">
+            <div className="lt-pillar-text">
+              <span className="lt-pillar-kicker">{isAr ? '٠١ / التخصيص والروابط الذكية' : '01 / Smart Custom Links'}</span>
+              <h2>{isAr ? 'اربط كل ما تصنعه وتقدمه في مكان واحد' : 'Connect everything you create and sell in one place'}</h2>
+              <p>
+                {isAr
+                  ? 'اجمع قنواتك (YouTube, TikTok, Facebook, Instagram)، متجرك الإلكتروني، رقم واتساب المباشر، ملفاتك وكتبك في صفحة واحدة جذابة تليق بك.'
+                  : 'Bring together your socials, storefront, WhatsApp chat, and media into a stunning, responsive bio link.'}
+              </p>
+              <Link to="/account?mode=register" className="btn btn-primary">
+                {isAr ? 'ابدأ مجاناً الآن' : 'Get started for free'}
+              </Link>
+            </div>
+            <div className="lt-pillar-media">
+              <div className="lt-feature-badge-grid">
+                <div className="lt-fbg-item" style={{ '--bc': '#FF0000' }}><IconYouTube /> YouTube</div>
+                <div className="lt-fbg-item" style={{ '--bc': '#25D366' }}><IconWhatsApp /> WhatsApp</div>
+                <div className="lt-fbg-item" style={{ '--bc': '#1877F2' }}><IconFacebook /> Facebook</div>
+                <div className="lt-fbg-item" style={{ '--bc': '#000000' }}><IconTikTok /> TikTok</div>
+                <div className="lt-fbg-item" style={{ '--bc': '#229ED9' }}><IconTelegram /> Telegram</div>
+                <div className="lt-fbg-item" style={{ '--bc': '#E4405F' }}><IconInstagram /> Instagram</div>
+                <div className="lt-fbg-item" style={{ '--bc': '#0A66C2' }}><IconLinkedin /> LinkedIn</div>
+                <div className="lt-fbg-item" style={{ '--bc': '#d97706' }}><IconZap /> Store / Books</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pillar 2 */}
+          <div className="lt-pillar-card lt-pillar-purple">
+            <div className="lt-pillar-text">
+              <span className="lt-pillar-kicker">{isAr ? '٠٢ / تقنية اللمس الذكي NFC' : '02 / Tap & Connect Anywhere'}</span>
+              <h2>{isAr ? 'لمسة واحدة بهاتفك، وبدون أي تطبيقات' : 'One smart tap. Zero apps needed.'}</h2>
+              <p>
+                {isAr
+                  ? 'بمجرد ملامسة بطاقة لمسة الذكية لظهر أي هاتف iPhone أو Android، تفتح صفحتك وبياناتك فوراً في أجزاء من الثانية مع إمكانية حفظ جهة الاتصال مباشرة.'
+                  : 'Tap your physical Lamsa NFC card against any smartphone to beam your links, contact card, and profile instantly.'}
+              </p>
+              <Link to="/store" className="btn btn-primary">
+                {isAr ? '🛒 تصفح متجر البطاقات' : '🛒 Shop NFC Cards'}
+              </Link>
+            </div>
+            <div className="lt-pillar-media">
+              <div className="lt-card-showcase-box">
+                <img src="/img/hero-card.webp" alt="Lamsa NFC Smart Card" style={{ width: '100%', maxWidth: 380, borderRadius: 20, boxShadow: '0 24px 60px rgba(0,0,0,0.3)' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PRODUCTS PREVIEW */}
       <section className="section section-alt">
         <div className="container">
           <div className="section-head">
-            <span className="kicker">Lamsa</span>
-            <h2>{text.features_title}</h2>
-            <p>{text.features_subtitle}</p>
+            <span className="kicker">{isAr ? 'المتجر' : 'Store'}</span>
+            <h2>{isAr ? 'اختر بطاقتك الذكية الفاخرة' : 'Choose Your Smart Card'}</h2>
+            <p>{isAr ? 'خامات معدنية ومطفية وخشبية مطبوعة بجودة عالمية وشحن حتى باب بيتك' : 'Luxury materials delivered to your doorstep'}</p>
           </div>
-          <div className="feats">
-            {[
-              { i: <NfcIcon size={22} />, t: text.f1_t, d: text.f1_d },
-              { i: <IconUser size={22} />, t: text.f2_t, d: text.f2_d },
-              { i: <IconShield size={22} />, t: text.f3_t, d: text.f3_d },
-              { i: <IconRefresh size={22} />, t: text.f4_t, d: text.f4_d },
-            ].map((f, k) => (
-              <Reveal key={k} delay={k * 100}>
-                <div className="feat">
-                  <div className="feat-emblem">{f.i}</div>
-                  <h3>{f.t}</h3>
-                  <p>{f.d}</p>
+          <div className="products-grid">
+            {products.slice(0, 3).map((p) => (
+              <div key={p.id} className="store-card">
+                <div className="store-card-img" style={{ background: p.color || 'var(--card)' }}>
+                  <img src={`/img/${p.img}`} alt={p.nameEn} loading="lazy" />
+                  {p.popular && <span className="store-badge">{isAr ? 'الأكثر مبيعاً' : 'Bestseller'}</span>}
                 </div>
-              </Reveal>
+                <div className="store-card-body">
+                  <h3>{isAr ? p.nameAr : p.nameEn}</h3>
+                  <div className="store-price-row">
+                    <span className="store-price">{p.price} {isAr ? 'ج.م' : 'EGP'}</span>
+                    {p.originalPrice && <span className="store-old-price">{p.originalPrice} {isAr ? 'ج.م' : 'EGP'}</span>}
+                  </div>
+                  <Link to={`/store/${p.id}`} className="btn btn-primary" style={{ width: '100%', marginTop: 12 }}>
+                    {isAr ? 'اطلب وتفعيل الحساب' : 'Order & Activate'}
+                  </Link>
+                </div>
+              </div>
             ))}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 32 }}>
+            <Link to="/store" className="btn btn-ghost">
+              {isAr ? 'عرض جميع الخامات والمنتجات في المتجر ←' : 'View all products in Store →'}
+            </Link>
           </div>
         </div>
       </section>
@@ -192,28 +406,27 @@ export default function Home() {
         <div className="container">
           <div className="section-head">
             <span className="kicker">{isAr ? 'مقارنة' : 'Comparison'}</span>
-            <h2>{isAr ? 'ليش Lamsa عن غيرها؟' : 'Why Lamsa beats the rest?'}</h2>
-            <p>{isAr ? 'قارن بين Lamsa والخيارات التقليدية' : 'Compare Lamsa with traditional options'}</p>
+            <h2>{isAr ? 'لماذا تتفوق لمسة NFC عن كل الخيارات؟' : 'Why Lamsa beats paper cards?'}</h2>
+            <p>{isAr ? 'مقارنة سريعة بين بطاقتك الذكية والبطاقات التقليدية' : 'Compare Lamsa with traditional alternatives'}</p>
           </div>
           <div className="comparison-table">
             <table>
               <thead>
                 <tr>
                   <th>{isAr ? 'الميزة' : 'Feature'}</th>
-                  <th className="highlight">Lamsa</th>
-                  <th>{isAr ? 'كرت عادي' : 'Paper card'}</th>
-                  <th>{isAr ? 'موقع شخصي' : 'Personal site'}</th>
+                  <th className="highlight">لمسة Lamsa NFC</th>
+                  <th>{isAr ? 'كرت ورقي عادي' : 'Paper card'}</th>
+                  <th>{isAr ? 'موقع شخصي تقليدي' : 'Custom site'}</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { f: isAr ? 'فتح بلمسة NFC' : 'NFC tap to open', v: '✓', p: '✕', s: '✕' },
-                  { f: isAr ? 'رمز QR' : 'QR code', v: '✓', p: '✕', s: '—' },
-                  { f: isAr ? 'صفحة تعريفية' : 'Profile page', v: '✓', p: '✕', s: '✓' },
-                  { f: isAr ? 'تعديل لحظي' : 'Live editing', v: '✓', p: '✕', s: '✓' },
-                  { f: isAr ? 'متابعة الزوار' : 'Visitor analytics', v: '✓', p: '✕', s: '—' },
-                  { f: isAr ? 'بدون تطبيق' : 'No app needed', v: '✓', p: '✓', s: '—' },
-                  { f: isAr ? 'التكلفة' : 'Cost', v: isAr ? 'من 85 ج.م' : 'From 85 EGP', p: isAr ? '50+ ج.م' : '50+ EGP', s: isAr ? '500+ ج.م/سنة' : '500+ EGP/yr' },
+                  { f: isAr ? 'فتح بلمسة NFC بدون تطبيقات' : 'NFC tap to open (No app)', v: '✓', p: '✕', s: '✕' },
+                  { f: isAr ? 'حفظ جهة الاتصال في الهاتف فوراً' : 'Instant Save Contact (.vcf)', v: '✓', p: '✕', s: '—' },
+                  { f: isAr ? 'تعديل البيانات والروابط لحظياً' : 'Live instant editing', v: '✓', p: '✕', s: '✓' },
+                  { f: isAr ? 'دعم جميع منصات السوشيال والفيديو' : 'Full social suite & video', v: '✓', p: '✕', s: '✓' },
+                  { f: isAr ? 'تحليلات تفاعل ومتابعة الزوار' : 'Visitor analytics', v: '✓', p: '✕', s: '—' },
+                  { f: isAr ? 'خامات فاخرة وعمر يدوم للأبد' : 'Lifetime durable materials', v: '✓', p: '✕', s: '—' },
                 ].map((r, i) => (
                   <tr key={i}>
                     <td>{r.f}</td>
@@ -228,181 +441,65 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SHOWCASE — detail */}
+      {/* FAQ SECTION */}
       <section className="section section-alt">
-        <div className="container split">
-          <Reveal>
-            <div className="split-media"><img src="/img/card-detail.webp" alt="Lamsa card detail" loading="lazy" /></div>
-          </Reveal>
-          <Reveal delay={150}>
-            <div className="split-body">
-              <span className="kicker">Lamsa</span>
-              <h3>{isAr ? 'بطاقة بحجم حلمك، ورد بجودة لا تنكر' : 'A card built around you'}</h3>
-              <p>{isAr ? 'سيرتك، روابطك، وصورك — كل شيء في تصميم واحد يفتح بلمسة هاتفك.' : 'Your story, links and media in a single tap-ready design.'}</p>
-              <div className="point-list">
-                <div className="point"><span className="tick">✓</span><div><b>{isAr ? 'تحرير لحظي' : 'Live editing'}</b><span>{isAr ? 'غيّر أي معلومة من حسابك' : 'Change anything from your account'}</span></div></div>
-                <div className="point"><span className="tick">✓</span><div><b>{isAr ? 'روابط مذهلة' : 'Beautiful links'}</b><span>{isAr ? 'سوشيال ميديا وأعمالك في مكان واحد' : 'Socials and portfolio in one place'}</span></div></div>
-                <div className="point"><span className="tick">✓</span><div><b>{isAr ? 'تحليلات' : 'Analytics'}</b><span>{isAr ? 'اعرف من بتفاعل مع صفحتك' : 'Know who engages with your page'}</span></div></div>
-              </div>
-              <Link to="/store" className="btn btn-primary">{text.buy}</Link>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* SHOWCASE — lifestyle */}
-      <section className="section">
-        <div className="container split split-reverse">
-          <Reveal delay={150}>
-            <div className="split-body">
-              <span className="kicker">Lamsa</span>
-              <h3>{isAr ? 'لمسة واحدة تكفيك' : 'Business in one tap'}</h3>
-              <p>{isAr ? 'من فكرة إلى شركة — منصة SaaS تجمع بطاقاتك وأعمالك وفريقك.' : 'From idea to company — manage cards, teams and growth all in one.'}</p>
-              <div className="point-list">
-                <div className="point"><span className="tick">✓</span><div><b>{isAr ? 'مثالي لـ' : 'Built for'}</b><span>{isAr ? 'رواد أعمال، محترفون، فرق' : 'Founders, professionals, teams'}</span></div></div>
-                <div className="point"><span className="tick">✓</span><div><b>{isAr ? 'قابل للتوسع' : 'Scale ready'}</b><span>{isAr ? 'أصدار وطبع بحجم التيريات' : 'Issue cards at any volume'}</span></div></div>
-              </div>
-              <Link to="/account?mode=register&redirect=/store" className="btn btn-primary">{isAr ? 'ابدأ مجاناً' : 'Start free'}</Link>
-            </div>
-          </Reveal>
-          <Reveal>
-            <div className="split-media"><img src="/img/tap-lifestyle.webp" alt="lamsa tap" loading="lazy" /></div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section className="section section-alt" id="store">
-        <div className="container">
+        <div className="container" style={{ maxWidth: 800 }}>
           <div className="section-head">
-            <span className="kicker">Pricing</span>
-            <h2>{text.store_title}</h2>
-            <p>{text.store_subtitle}</p>
+            <span className="kicker">{isAr ? 'الأسئلة الشائعة' : 'FAQ'}</span>
+            <h2>{isAr ? 'كل ما تحتاج معرفته عن بطاقات لمسة' : 'Frequently Asked Questions'}</h2>
           </div>
-          <div className="store-grid">
-            {products.map((p) => {
-              const ar = isAr
-              return (
-                <Reveal key={p.id}>
-                  <div className={`pcard${p.popular ? ' hot' : ''}`}>
-                    {p.popular && <span className="pop">{ar ? 'الأكثر مبيعًا' : 'Popular'}</span>}
-                    {p.originalPrice && <span className="pcard-discount">-50%</span>}
-                    <Link to={`/store/${p.id}`} className="pcard-visual" style={{ background: p.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {p.id === 'classic' ? (
-                        <div style={{ pointerEvents: 'none', transform: 'scale(0.8)', width: '100%' }}><StandardCard /></div>
-                      ) : p.id === 'premium' ? (
-                        <div style={{ pointerEvents: 'none', transform: 'scale(0.8)', width: '100%' }}><PremiumCard /></div>
-                      ) : (
-                        <img src={`/img/${p.img || 'card-detail.png'}`} alt={p.nameEn} loading="lazy" />
-                      )}
-                    </Link>
-                    <div className="pcard-body">
-                      <h3><Link to={`/store/${p.id}`}>{ar ? p.nameAr : p.nameEn}</Link></h3>
-                      <p className="pcard-material">{ar ? p.materialAr : p.materialEn}</p>
-                      <ul className="specs">
-                        {(ar ? p.specs.ar : p.specs.en).map((s, i) => (
-                          <li key={i}><span className="i">✓</span>{s}</li>
-                        ))}
-                      </ul>
-                      <div className="price">
-                        {p.originalPrice && <span className="price-old">{p.originalPrice} {CURRENCY[lang]}</span>}
-                        <b>{p.price}</b><small>{CURRENCY[lang]}</small>
-                      </div>
-                      <Link to={`/store/${p.id}`} className="btn btn-primary btn-block">{text.buy}</Link>
-                    </div>
-                  </div>
-                </Reveal>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <section className="section">
-        <div className="container">
-          <div className="section-head">
-            <span className="kicker">{isAr ? 'آراء عملائنا' : 'Testimonials'}</span>
-            <h2>{isAr ? 'يثقون بنا' : 'Trusted by people who care'}</h2>
-            <p>{isAr ? 'قصص حقيقية من مستخدمين غيروا طريقة تواصلهم.' : 'Real stories from people who changed how they connect.'}</p>
-          </div>
-          <div className="tests">
+          <div className="lt-faq-list">
             {[
-              { n: isAr ? 'أحمد سمير' : 'Ahmed Samir', r: isAr ? 'رائد أعمال' : 'Entrepreneur', co: 'TechStart', c: isAr ? 'وشّي شغلي مع كل عميل — لمسة واحدة ووصفت أعمالي كلها. أفضل استثمار عملتُه.' : 'Changed how clients reach my work — one tap and everything is there. Best investment ever.' },
-              { n: isAr ? 'سارة حسن' : 'Sarah Hassan', r: isAr ? 'مصممة UX' : 'UX Designer', co: 'Freelance', c: isAr ? 'التصميم فخم والبطاقة حصلت عليها. الكل بيسأل عنها! صارت أيقونة محادثة.' : 'The design is premium and everyone asks about it! It became a conversation starter.' },
-              { n: isAr ? 'محمد علي' : 'Mohamed Ali', r: isAr ? 'مدير تنفيذي' : 'CEO', co: 'Nile Corp', c: isAr ? 'سهولة وصول غيرت تعاملنا مع العملاء. رابط واحد في كل اجتماع.' : 'Streamlined and impressive at every meeting. One link, zero friction.' },
-              { n: isAr ? 'فاطمة أحمد' : 'Fatma Ahmed', r: isAr ? 'طبيبة أسنان' : 'Dentist', co: 'Smile Clinic', c: isAr ? 'المرضى بيمسحوا البطاقة ويوصلوا لمحفظتي الطبية فوراً. عملي أكتر بكتير.' : 'Patients scan and reach my portfolio instantly. Practice grew significantly.' },
-              { n: isAr ? 'عمر خالد' : 'Omar Khalid', r: isAr ? 'مصور فوتوغرافي' : 'Photographer', co: 'OmarLens', c: isAr ? 'بدال ما أوزع كروت ورقية، ببطاقة واحدة الناس بتفتح أعمالي كلها.' : 'Instead of paper cards, one tap opens all my work. Game changer.' },
-              { n: isAr ? 'نور حسين' : 'Nour Hussein', r: isAr ? 'مهندسة برمجيات' : 'Software Engineer', co: 'DevCo', c: isAr ? 'شاركت رابط GitHub و LinkedIn و Portfolio في لمسة واحدة. التوظيف أسرع.' : 'Shared GitHub, LinkedIn, and portfolio in one tap. Hiring became faster.' },
-            ].map((x, i) => (
-              <Reveal key={i} delay={i * 120}>
-                <div className="test">
-                  <div className="stars">★★★★★</div>
-                  <p className="quote">"{x.c}"</p>
-                  <div className="who">
-                    <div className="av" style={{ background: 'var(--grad)' }}>{x.n.charAt(0)}</div>
-                    <div>
-                      <b>{x.n}</b>
-                      <span>{x.r} · {x.co}</span>
-                    </div>
-                  </div>
+              {
+                q: isAr ? 'هل يحتاج الشخص الآخر إلى تحميل أي تطبيق لقراءة بطاقتي؟' : 'Does the other person need an app to tap my card?',
+                a: isAr ? 'لا نهائياً! تعمل بطاقة لمسة بتقنية NFC المدمجة في جميع هواتف iPhone و Android الحديثة. بمجرد ملامسة البطاقة لظهر الهاتف تفتح صفحتك فورياً في المتصفح.' : 'No app is needed! Works natively with built-in NFC on modern smartphones.',
+              },
+              {
+                q: isAr ? 'هل يمكنني تعديل روابطي وبياناتي بعد استلام البطاقة؟' : 'Can I update my links after receiving the physical card?',
+                a: isAr ? 'نعم بكل تأكيد! يمكنك الدخول إلى لوحة التحكم وتغيير اسمك، صورتك، روابطك، وثيمك في أي وقت وتتحدث البطاقة فورياً دون الحاجة لشراء بطاقة جديدة.' : 'Yes! All changes update in real-time from your dashboard without reprinting.',
+              },
+              {
+                q: isAr ? 'كيف يتم تفعيل البطاقة بعد الشراء؟' : 'How is my card activated after purchase?',
+                a: isAr ? 'بمجرد إتمام طلبك من المتجر، يتم ربط وتفعيل حسابك رسمياً وشحن البطاقة الذكية المبرمجة إلى عنوانك.' : 'Your card is activated upon order completion and shipped ready-to-use.',
+              },
+            ].map((faq, idx) => (
+              <div key={idx} className={`lt-faq-item ${faqOpen === idx ? 'open' : ''}`} onClick={() => setFaqOpen(faqOpen === idx ? null : idx)}>
+                <div className="lt-faq-q">
+                  <b>{faq.q}</b>
+                  <span>{faqOpen === idx ? '−' : '+'}</span>
                 </div>
-              </Reveal>
+                {faqOpen === idx && <p className="lt-faq-a">{faq.a}</p>}
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="section section-alt">
-        <div className="container">
-          <div className="section-head">
-            <span className="kicker">FAQ</span>
-            <h2>{isAr ? 'الأسئلة الشائعة' : 'Frequently asked questions'}</h2>
-            <p>{isAr ? 'كل ما تريد معرفته عن Lamsa.' : 'Everything you need to know about Lamsa.'}</p>
-          </div>
-          <div className="faq">
-            {[
-              { q: isAr ? 'كيف تعمل البطاقة؟' : 'How does the card work?', a: isAr ? 'تحمل البطاقة شريحة NFC تتصل برابط صفحتك. ضعها على هاتف أي شخص وتفتح صفحتك فوراً. كما تحمل رمز QR للهواتف القديمة.' : 'The card carries an NFC chip linked to your page. Tap it to any phone and your page opens instantly. It also has a QR code for older phones.' },
-              { q: isAr ? 'هل أحتاج تطبيقاً؟' : 'Do I need an app?', a: isAr ? 'لا، كل هاتف ذكي يقرأ NFC بدون أي تطبيقات — الصفحة تُفتح في المتصفح مباشرة.' : 'No app needed — every smartphone reads NFC, opening your page in the browser.' },
-              { q: isAr ? 'هل يمكنني تعديل البيانات لاحقاً؟' : 'Can I update it later?', a: isAr ? 'نعم، تعدّل صفحتك من لوحة التحكم في أي وقت ولن تضطر لإعادة طباعة البطاقة.' : 'Yes — edit everything from your dashboard anytime, without reprinting.' },
-              { q: isAr ? 'ما مدة التوصيل؟' : 'Delivery time?', a: isAr ? 'الإصدار الرقمي فوري، والبطاقة المادية تصلك خلال 3–5 أيام عمل.' : 'Digital issue is instant; the physical card arrives in 3–5 business days.' },
-              { q: isAr ? 'هل البطاقة مقاومة للماء؟' : 'Is the card waterproof?', a: isAr ? 'نعم، بطاقاتنا من PVC عالي الجودة مقاومة للماء والخدش.' : 'Yes, our cards are made of high-quality PVC, waterproof and scratch-resistant.' },
-              { q: isAr ? 'ما الفرق بين البطاقات؟' : 'What is the difference between cards?', a: isAr ? 'الرقمية فورية ومجاناً. القياسية بطاقة PVC NFC. البريميوم مع صفحة تعريفية وتحليلات. التنفيذية معدنية VIP مع موقع كامل.' : 'Digital is instant and free. Standard is a PVC NFC card. Premium includes a profile page and analytics. Executive is metal VIP with a full website.' },
-              { q: isAr ? 'هل أقدر أطلب لأكثر من شخص؟' : 'Can I order for multiple people?', a: isAr ? 'نعم، يمكنك طلب بطاقات لفريقك من خلال لوحة الإدارة.' : 'Yes, you can order cards for your team through the admin panel.' },
-              { q: isAr ? 'ما طرق الدفع المتاحة؟' : 'What payment methods are available?', a: isAr ? 'الدفع عند الاستلام أو تحويل بنكي. نعمل على إضافة بطاقات الائتمان قريباً.' : 'Cash on delivery or bank transfer. Credit card support coming soon.' },
-            ].map((f, i) => <FaqItem key={i} q={f.q} a={f.a} />)}
-          </div>
+      {/* BOTTOM FLOATING CTA */}
+      <section className="lt-bottom-cta">
+        <div className="container" style={{ textAlign: 'center' }}>
+          <h2>{isAr ? 'احجز اسمك ورابطك الذكي اليوم 🚀' : 'Claim your unique link today 🚀'}</h2>
+          <p style={{ maxWidth: 600, margin: '12px auto 28px', opacity: 0.9 }}>
+            {isAr ? 'انضم لنخبة صناع المحتوى والأطباء ورواد الأعمال وابدأ في مشاركة أعمالك بلمسة واحدة.' : 'Join thousands of creators & professionals sharing their world in one tap.'}
+          </p>
+          <form className="lt-claim-box" onSubmit={handleClaimSubmit} style={{ margin: '0 auto', maxWidth: 480 }}>
+            <div className="lt-claim-input-wrap">
+              <span className="lt-claim-prefix">lamsa.ink/</span>
+              <input
+                type="text"
+                className="lt-claim-input"
+                placeholder={isAr ? 'اسمك' : 'yourname'}
+                value={claimName}
+                onChange={(e) => setClaimName(e.target.value)}
+                dir="ltr"
+              />
+            </div>
+            <button type="submit" className="lt-claim-btn">
+              {isAr ? 'ابدأ الآن' : 'Get started'}
+            </button>
+          </form>
         </div>
       </section>
-
-      {/* CTA */}
-      <section className="cta-band">
-        <div className="container cta-inner">
-          <span className="kicker">Lamsa</span>
-          <h2>{isAr ? 'جاهز تشارك قِصتك؟' : 'Ready to tell your story?'}</h2>
-          <p>{isAr ? 'أنشئ حسابك، اطلب بطاقة، وابدأ تواصل بلمسة واحدة.' : 'Create an account, order a card, and start connecting.'}</p>
-          <div className="hero-actions" style={{ justifyContent: 'center' }}>
-            <Link to="/account?mode=register&redirect=/store" className="btn btn-primary">{text.nav_account}</Link>
-            <Link to="/account?mode=register&redirect=/store" className="btn btn-ghost">{text.buy}</Link>
-          </div>
-        </div>
-      </section>
-    </>
-  )
-}
-
-function FaqItem({ q, a }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className={`faq-item ${open ? 'open' : ''}`}>
-      <button className="faq-q" onClick={() => setOpen(!open)}>
-        <span>{q}</span>
-        <span className="chev">▾</span>
-      </button>
-      <div className="faq-a" style={{ maxHeight: open ? 200 : 0 }}>
-        <div>{a}</div>
-      </div>
     </div>
   )
 }
