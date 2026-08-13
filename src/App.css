@@ -1983,3 +1983,11 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 .adm-form-group input:focus { border-color: var(--primary); }
 .adm-modal-footer { padding: 16px 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 12px; background: #f9fafb; }
 
+
+.cart-coupon-applied { background: #ecfdf5; border: 1px solid #10b981; display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 8px; }
+.coupon-applied-info { display: flex; flex-direction: column; gap: 2px; }
+.coupon-applied-code { font-weight: 700; color: #047857; font-size: 0.95rem; letter-spacing: 0.5px; }
+.coupon-applied-label { font-size: 0.8rem; color: #10b981; }
+.coupon-remove-btn { background: none; border: none; color: #6b7280; font-size: 1.1rem; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: 0.2s; }
+.coupon-remove-btn:hover { background: #fee2e2; color: #ef4444; }
+

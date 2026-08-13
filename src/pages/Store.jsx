@@ -29,6 +29,27 @@ export default function Store() {
   const [step, setStep] = useState('cart')
   const [form, setForm] = useState({ name: user?.displayName || '', phone: '', address: '', city: '', notes: '' })
   const [selectedVariants, setSelectedVariants] = useState({})
+  const [coupon, setCoupon] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState(null)
+
+  // Live countdown timer — resets daily at midnight
+  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 })
+  useEffect(() => {
+    function calcTimeLeft() {
+      const now = new Date()
+      const midnight = new Date(now)
+      midnight.setHours(23, 59, 59, 999)
+      const diff = midnight - now
+      return {
+        h: Math.floor(diff / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+      }
+    }
+    setTimeLeft(calcTimeLeft())
+    const interval = setInterval(() => setTimeLeft(calcTimeLeft()), 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => { saveCart(cart) }, [cart])
 
@@ -43,11 +64,36 @@ export default function Store() {
     return { product: p, qty: cart[cartKey] || 0, variant }
   }).filter((x) => x.qty > 0)
   const total = items.reduce((s, x) => s + x.product.price * x.qty, 0)
-  const totalOriginal = items.reduce((s, x) => s + (x.product.originalPrice || x.product.price) * x.qty, 0)
-  const totalDiscount = totalOriginal - total
+
+  // Coupon discount — only applied when a valid coupon is entered
+  const VALID_COUPONS = {
+    'LAMSA50': { type: 'percent', value: 50, labelEn: '50% OFF', labelAr: 'خصم 50%' },
+    'LAMSA20': { type: 'percent', value: 20, labelEn: '20% OFF', labelAr: 'خصم 20%' },
+    'WELCOME': { type: 'fixed', value: 50, labelEn: '50 EGP OFF', labelAr: 'خصم 50 ج.م' },
+  }
+
+  function applyCoupon() {
+    const code = coupon.trim().toUpperCase()
+    if (VALID_COUPONS[code]) {
+      setAppliedCoupon({ code, ...VALID_COUPONS[code] })
+      toast(isAr ? `تم تطبيق كوبون ${code} ✓` : `Coupon ${code} applied ✓`)
+    } else {
+      toast(isAr ? 'كود الخصم غير صالح' : 'Invalid coupon code', 'error')
+    }
+  }
+
+  function removeCoupon() {
+    setAppliedCoupon(null)
+    setCoupon('')
+    toast(isAr ? 'تم إزالة الكوبون' : 'Coupon removed')
+  }
+
+  const couponDiscount = appliedCoupon
+    ? (appliedCoupon.type === 'percent' ? Math.round(total * appliedCoupon.value / 100) : appliedCoupon.value)
+    : 0
   const isDigitalOnly = items.length > 0 && items.every((x) => x.product.digital)
   const shipping = isDigitalOnly ? 0 : (total >= 500 ? 0 : 120)
-  const grandTotal = total + shipping
+  const grandTotal = Math.max(0, total - couponDiscount + shipping)
 
   const setQty = (id, qty, variant) => setCart((c) => {
     const cartKey = variant ? `${id}_${variant}` : id
@@ -263,7 +309,7 @@ export default function Store() {
                       <small>{isAr ? 'خصم إضافي عند الطلب اليوم' : 'Extra discount when you order today'}</small>
                     </div>
                     <div className="cart-urgency-timer">
-                      <span>02</span>:<span>14</span>:<span>36</span>
+                      <span>{String(timeLeft.h).padStart(2, '0')}</span>:<span>{String(timeLeft.m).padStart(2, '0')}</span>:<span>{String(timeLeft.s).padStart(2, '0')}</span>
                     </div>
                   </div>
                 )}
@@ -273,10 +319,10 @@ export default function Store() {
                     <span>{isAr ? 'المجموع الفرعي' : 'Subtotal'}</span>
                     <span>{total} {CURRENCY[lang]}</span>
                   </div>
-                  {totalDiscount > 0 && (
+                  {couponDiscount > 0 && (
                     <div className="cart-summary-row" style={{ color: '#22c55e' }}>
-                      <span>{isAr ? 'الخصم' : 'Discount'}</span>
-                      <span>-{totalDiscount} {CURRENCY[lang]}</span>
+                      <span>{isAr ? 'الخصم' : 'Discount'} ({appliedCoupon?.code})</span>
+                      <span>-{couponDiscount} {CURRENCY[lang]}</span>
                     </div>
                   )}
                   <div className="cart-summary-row">
@@ -297,10 +343,20 @@ export default function Store() {
                 </div>
 
                 {/* Coupon */}
-                <div className="cart-coupon">
-                  <input type="text" placeholder={isAr ? 'كود الخصم' : 'Coupon code'} />
-                  <button>{isAr ? 'تطبيق' : 'Apply'}</button>
-                </div>
+                {appliedCoupon ? (
+                  <div className="cart-coupon cart-coupon-applied">
+                    <div className="coupon-applied-info">
+                      <span className="coupon-applied-code">{appliedCoupon.code}</span>
+                      <span className="coupon-applied-label">{isAr ? appliedCoupon.labelAr : appliedCoupon.labelEn}</span>
+                    </div>
+                    <button onClick={removeCoupon} className="coupon-remove-btn">✕</button>
+                  </div>
+                ) : (
+                  <div className="cart-coupon">
+                    <input type="text" placeholder={isAr ? 'كود الخصم' : 'Coupon code'} value={coupon} onChange={(e) => setCoupon(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && applyCoupon()} />
+                    <button onClick={applyCoupon}>{isAr ? 'تطبيق' : 'Apply'}</button>
+                  </div>
+                )}
 
                 <button className="cart-pay-btn" onClick={goToShipping}>
                   {isAr ? 'إتمام الشراء' : 'Checkout'} — {grandTotal} {CURRENCY[lang]}
@@ -359,10 +415,10 @@ export default function Store() {
                   <span>{isAr ? 'المجموع' : 'Subtotal'}</span>
                   <span>{total} {CURRENCY[lang]}</span>
                 </div>
-                {totalDiscount > 0 && (
+                {couponDiscount > 0 && (
                   <div className="cart-summary-row" style={{ color: '#22c55e' }}>
-                    <span>{isAr ? 'خصم المنتجات' : 'Product discount'}</span>
-                    <span>-{totalDiscount} {CURRENCY[lang]}</span>
+                    <span>{isAr ? 'خصم الكوبون' : 'Coupon discount'} ({appliedCoupon?.code})</span>
+                    <span>-{couponDiscount} {CURRENCY[lang]}</span>
                   </div>
                 )}
                 <div className="cart-summary-row">
