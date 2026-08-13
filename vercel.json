@@ -1,19 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/admin/(.*)", "destination": "/index.html" },
-    { "source": "/admin", "destination": "/index.html" },
-    { "source": "/store/(.*)", "destination": "/index.html" },
-    { "source": "/store", "destination": "/index.html" },
-    { "source": "/dashboard", "destination": "/index.html" },
-    { "source": "/account", "destination": "/index.html" },
-    { "source": "/contact", "destination": "/index.html" },
-    { "source": "/blog/(.*)", "destination": "/index.html" },
-    { "source": "/blog", "destination": "/index.html" },
-    { "source": "/onboarding", "destination": "/index.html" },
-    { "source": "/settings", "destination": "/index.html" },
-    { "source": "/nfc/(.*)", "destination": "/index.html" },
-    { "source": "/u/(.*)", "destination": "/index.html" }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ],
   "cleanUrls": false,
   "headers": [
