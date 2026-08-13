@@ -1,21 +1,76 @@
-import { lazy, Suspense } from 'react'
+import React, { lazy, Suspense } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 
-const Home = lazy(() => import('./pages/Home'))
-const Store = lazy(() => import('./pages/Store'))
-const ProductDetail = lazy(() => import('./pages/ProductDetail'))
-const Account = lazy(() => import('./pages/Account'))
-const Dashboard = lazy(() => import('./pages/Dashboard'))
-const NfcPage = lazy(() => import('./pages/NfcPage'))
-const PublicNfc = lazy(() => import('./pages/PublicNfc'))
-const Admin = lazy(() => import('./pages/Admin'))
-const Onboarding = lazy(() => import('./pages/Onboarding'))
-const Blog = lazy(() => import('./pages/Blog').then(m => ({ default: m.default })))
-const BlogPost = lazy(() => import('./pages/Blog').then(m => ({ default: m.BlogPost })))
-const Settings = lazy(() => import('./pages/Settings'))
-const Contact = lazy(() => import('./pages/Contact'))
+// Resilient lazy loader that retries once on network / chunk error
+function safeLazy(importFn) {
+  return lazy(async () => {
+    try {
+      return await importFn()
+    } catch (err) {
+      console.warn('[safeLazy] Initial load failed, retrying once...', err)
+      // Retry once after 500ms
+      await new Promise((r) => setTimeout(r, 500))
+      try {
+        return await importFn()
+      } catch (retryErr) {
+        console.error('[safeLazy] Retry failed:', retryErr)
+        throw retryErr
+      }
+    }
+  })
+}
+
+const Home = safeLazy(() => import('./pages/Home'))
+const Store = safeLazy(() => import('./pages/Store'))
+const ProductDetail = safeLazy(() => import('./pages/ProductDetail'))
+const Account = safeLazy(() => import('./pages/Account'))
+const Dashboard = safeLazy(() => import('./pages/Dashboard'))
+const NfcPage = safeLazy(() => import('./pages/NfcPage'))
+const PublicNfc = safeLazy(() => import('./pages/PublicNfc'))
+const Admin = safeLazy(() => import('./pages/Admin'))
+const Onboarding = safeLazy(() => import('./pages/Onboarding'))
+const Blog = safeLazy(() => import('./pages/Blog').then(m => ({ default: m.default })))
+const BlogPost = safeLazy(() => import('./pages/Blog').then(m => ({ default: m.BlogPost })))
+const Settings = safeLazy(() => import('./pages/Settings'))
+const Contact = safeLazy(() => import('./pages/Contact'))
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('[ErrorBoundary caught error]:', error, errorInfo)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '75vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
+          <div style={{ fontSize: 52, marginBottom: 14 }}>⚠️</div>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: 8 }}>حدث تحديث في الصفحة</h2>
+          <p style={{ color: 'var(--muted)', maxWidth: 440, fontSize: '0.9rem', marginBottom: 22, lineHeight: 1.6 }}>
+            تم نشر تحديث جديد للموقع. اضغط على الزر أدناه لتحديث الصفحة والبدء فورا.
+          </p>
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              this.setState({ hasError: false })
+              window.location.reload()
+            }}
+          >
+            🔄 إعادة تحميل الصفحة
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 function PageLoader() {
   return (
@@ -30,7 +85,7 @@ export default function App() {
   const isNfc = location.pathname.startsWith('/nfc') || location.pathname.startsWith('/u/')
 
   return (
-    <>
+    <ErrorBoundary>
       {!isNfc && <Navbar />}
       <main>
         <Suspense fallback={<PageLoader />}>
@@ -53,6 +108,6 @@ export default function App() {
         </Suspense>
       </main>
       {!isNfc && <Footer />}
-    </>
+    </ErrorBoundary>
   )
 }

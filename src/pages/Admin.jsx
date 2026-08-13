@@ -2,10 +2,14 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
-import { listOrders, updateOrderStatus, listProfiles, listProducts, setProductActive, upsertProduct } from '../lib/firebase'
+import { listOrders, updateOrderStatus, listProfiles, adminUpdateProfile, listProducts, setProductActive, upsertProduct } from '../lib/firebase'
 import { PRODUCTS as STATIC_PRODUCTS } from '../data/content'
 import { toast } from '../components/Toast'
-import { IconRefresh } from '../components/icons'
+import { normalizeSocialUrl, detectPlatformInfo } from '../lib/utils'
+import {
+  IconRefresh, IconUser, IconLink, IconZap, IconCheck, IconPhone, IconMail,
+  PlatformIcon, IconVerified, NfcIcon,
+} from '../components/icons'
 
 const STATUSES = ['pending', 'processing', 'shipped', 'done', 'cancelled']
 const TIME_FILTERS = ['today', 'week', 'month', 'all']
@@ -33,6 +37,14 @@ export default function Admin() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // Notifications
+  const [notifications, setNotifications] = useState([])
+  const [showNotifs, setShowNotifs] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // Selected customer for modal inspector
+  const [selectedUser, setSelectedUser] = useState(null)
+
   const cur = isAr ? 'ج.م' : 'EGP'
 
   useEffect(() => {
@@ -40,16 +52,55 @@ export default function Admin() {
     if (!user) { nav('/account'); return }
     if (!isAdmin) { toast(isAr ? 'ليس لديك صلاحية المدير' : 'Owner access only', 'error'); nav('/'); return }
     loadAll()
+
+    // Listen to real-time local order events
+    function handleNewOrder(e) {
+      if (e.detail) {
+        toast(isAr ? `🔔 طلب جديد: ${e.detail.customer?.name || 'عميل'} (${e.detail.total} ج.م)` : `🔔 New order from ${e.detail.customer?.name || 'Customer'}`)
+        loadAll()
+      }
+    }
+    window.addEventListener('lamsa_order_created', handleNewOrder)
+    return () => window.removeEventListener('lamsa_order_created', handleNewOrder)
   }, [user, loading, isAdmin])
 
   async function loadAll() {
     setBoot(true)
     try {
       const [o, p, pr] = await Promise.all([listOrders(), listProfiles(), listProducts()])
-      setOrders(o)
-      setProfiles(p)
+      setOrders(o || [])
+      setProfiles(p || [])
       if (pr && pr.length) setProducts(pr)
-    } catch { /* offline/oops */ }
+
+      // Build notifications list
+      const notifs = []
+      ;(o || []).slice(0, 10).forEach((ord) => {
+        notifs.push({
+          id: `order_${ord.id}`,
+          type: 'order',
+          title: isAr ? `طلب جديد #${ord.id.slice(0, 6)}` : `New Order #${ord.id.slice(0, 6)}`,
+          desc: `${ord.customer?.name || 'عميل'} — ${ord.total} ${cur}`,
+          time: ord.createdAt || Date.now(),
+          status: ord.status,
+          raw: ord,
+        })
+      })
+      ;(p || []).slice(0, 5).forEach((prof) => {
+        notifs.push({
+          id: `user_${prof.uid || prof.id}`,
+          type: 'user',
+          title: isAr ? 'تسجيل مستخدم جديد' : 'New User Signup',
+          desc: `${prof.name || 'مستخدم جديد'} (${prof.email || ''})`,
+          time: prof.updatedAt || prof.createdAt || Date.now(),
+          raw: prof,
+        })
+      })
+      notifs.sort((a, b) => b.time - a.time)
+      setNotifications(notifs)
+      setUnreadCount(notifs.filter((n) => n.type === 'order' && n.status === 'pending').length)
+    } catch (err) {
+      console.warn('[Admin loadAll error]:', err)
+    }
     setBoot(false)
   }
 
@@ -57,6 +108,32 @@ export default function Admin() {
     await updateOrderStatus(id, val)
     setOrders((o) => o.map((x) => (x.id === id ? { ...x, status: val } : x)))
     toast(isAr ? 'تم تحديث حالة الطلب ✓' : 'Order status updated ✓')
+  }
+
+  async function handleCustomerSave(uid, updatedData) {
+    try {
+      await adminUpdateProfile(uid, updatedData)
+      setProfiles((prev) => prev.map((p) => ((p.uid === uid || p.id === uid) ? { ...p, ...updatedData } : p)))
+      setSelectedUser(null)
+      toast(isAr ? 'تم تحديث بيانات العميل بنجاح ✓' : 'Customer profile updated ✓')
+    } catch (err) {
+      console.error(err)
+      toast(isAr ? 'فشل حفظ البيانات' : 'Failed to update', 'error')
+    }
+  }
+
+  async function toggleCustomerActivation(uid, currentStatus) {
+    const nextStatus = !currentStatus
+    try {
+      await adminUpdateProfile(uid, { activated: nextStatus })
+      setProfiles((prev) => prev.map((p) => ((p.uid === uid || p.id === uid) ? { ...p, activated: nextStatus } : p)))
+      if (selectedUser && (selectedUser.uid === uid || selectedUser.id === uid)) {
+        setSelectedUser((u) => ({ ...u, activated: nextStatus }))
+      }
+      toast(nextStatus ? (isAr ? 'تم تفعيل بطاقة العميل رسمياً ✓' : 'Card activated ✓') : (isAr ? 'تم تحويل البطاقة لوضع المعاينة' : 'Card set to preview'))
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   async function toggleProduct(id, on) {
@@ -138,7 +215,7 @@ export default function Admin() {
   const tabs = [
     { id: 'overview', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>, label: isAr ? 'نظرة عامة' : 'Overview' },
     { id: 'orders', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>, label: isAr ? 'الطلبات' : 'Orders', badge: filteredOrders.length },
-    { id: 'users', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>, label: isAr ? 'المستخدمون' : 'Users', badge: profiles.length },
+    { id: 'users', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>, label: isAr ? 'العملاء والبطاقات' : 'Customers & Cards', badge: profiles.length },
     { id: 'products', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>, label: isAr ? 'المنتجات' : 'Products' },
   ]
 
@@ -160,12 +237,10 @@ export default function Admin() {
             </div>
             <div className="adm-logo-text-wrap">
               <span className="adm-logo-text">Lamsa</span>
-              <span className="adm-logo-sub">{isAr ? 'لوحة التحكم' : 'Admin Panel'}</span>
+              <span className="adm-logo-sub">{isAr ? 'لوحة الإدارة الشاملة' : 'Admin Panel'}</span>
             </div>
           </Link>
-          <button className="adm-sidebar-close" onClick={() => setSidebarOpen(false)}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+          <button className="adm-sidebar-close" onClick={() => setSidebarOpen(false)}>✕</button>
         </div>
 
         <nav className="adm-nav">
@@ -179,12 +254,12 @@ export default function Admin() {
           ))}
           <div className="adm-nav-section" style={{ marginTop: 24 }}>{isAr ? 'روابط سريعة' : 'Quick Links'}</div>
           <Link to="/dashboard" className="adm-nav-item" onClick={() => setSidebarOpen(false)}>
-            <span className="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-            <span className="adm-nav-label">{isAr ? 'لوحة التحكم' : 'Dashboard'}</span>
+            <span className="adm-nav-icon"><IconUser /></span>
+            <span className="adm-nav-label">{isAr ? 'لوحة بطاقتي الشخصية' : 'My Dashboard'}</span>
           </Link>
           <Link to="/" className="adm-nav-item" onClick={() => setSidebarOpen(false)}>
-            <span className="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></span>
-            <span className="adm-nav-label">{isAr ? 'الموقع' : 'Website'}</span>
+            <span className="adm-nav-icon"><NfcIcon /></span>
+            <span className="adm-nav-label">{isAr ? 'الموقع العام' : 'Website'}</span>
           </Link>
         </nav>
 
@@ -199,7 +274,6 @@ export default function Admin() {
             </div>
           </div>
           <button className="adm-logout-btn" onClick={() => { logout(); nav('/') }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             <span>{isAr ? 'تسجيل الخروج' : 'Sign Out'}</span>
           </button>
         </div>
@@ -207,19 +281,82 @@ export default function Admin() {
 
       <main className="adm-main">
         <header className="adm-topbar">
-          <button className="adm-hamburger" onClick={() => setSidebarOpen(true)}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          </button>
+          <button className="adm-hamburger" onClick={() => setSidebarOpen(true)}>☰</button>
           <div className="adm-topbar-left">
             <h1 className="adm-page-title">{tabs.find(t => t.id === tab)?.label}</h1>
           </div>
-          <div className="adm-topbar-right">
+          <div className="adm-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Notification Bell */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className="adm-topbar-btn"
+                onClick={() => setShowNotifs(!showNotifs)}
+                style={{ position: 'relative', padding: '8px 14px' }}
+                title={isAr ? 'الإشعارات' : 'Notifications'}
+              >
+                🔔 {isAr ? 'الإشعارات' : 'Alerts'}
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -4, right: -4, background: '#ef4444', color: '#fff',
+                    borderRadius: 99, fontSize: '0.72rem', fontWeight: 800, padding: '2px 6px',
+                  }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {showNotifs && (
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, marginTop: 8, width: 340,
+                  background: 'var(--card, #ffffff)', border: '1.5px solid var(--line, #e2e8f0)',
+                  borderRadius: 16, boxShadow: '0 16px 40px rgba(0,0,0,0.15)', zIndex: 100,
+                  overflow: 'hidden',
+                }}>
+                  <div style={{ padding: '12px 16px', background: 'var(--bg, #f8fafc)', borderBottom: '1px solid var(--line, #e2e8f0)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <b style={{ fontSize: '0.9rem' }}>{isAr ? '🔔 أحدث الإشعارات' : '🔔 Recent Alerts'}</b>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{notifications.length} {isAr ? 'إشعار' : 'alerts'}</span>
+                  </div>
+                  <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: '0.85rem' }}>
+                        {isAr ? 'لا توجد إشعارات حالياً' : 'No notifications'}
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          style={{
+                            padding: '10px 16px', borderBottom: '1px solid var(--line, #f1f5f9)',
+                            display: 'flex', gap: 10, alignItems: 'center', cursor: 'pointer',
+                          }}
+                          onClick={() => {
+                            if (n.type === 'order') setTab('orders')
+                            if (n.type === 'user') {
+                              setSelectedUser(n.raw)
+                              setTab('users')
+                            }
+                            setShowNotifs(false)
+                          }}
+                        >
+                          <span style={{ fontSize: '1.2rem' }}>{n.type === 'order' ? '🛒' : '👤'}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.84rem' }}>{n.title}</div>
+                            <div style={{ fontSize: '0.76rem', color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.desc}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button className="adm-topbar-btn" onClick={loadAll}>
-              <IconRefresh /> {isAr ? 'تحديث' : 'Refresh'}
+              <IconRefresh /> {isAr ? 'تحديث البيانات' : 'Refresh'}
             </button>
             {tab === 'orders' && (
               <button className="adm-topbar-btn adm-topbar-btn-primary" onClick={exportOrders}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 {isAr ? 'تصدير CSV' : 'Export CSV'}
               </button>
             )}
@@ -237,7 +374,6 @@ export default function Admin() {
 
           {tab === 'orders' && (
             <div className="adm-search">
-              <svg className="adm-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input
                 type="text"
                 placeholder={isAr ? 'بحث بالاسم، الهاتف، الإيميل، أو رقم الطلب…' : 'Search by name, phone, email, or order ID…'}
@@ -258,12 +394,23 @@ export default function Admin() {
           ) : tab === 'orders' ? (
             <AdminOrders orders={filteredOrders} change={setStatus} i18n={i18n} cur={cur} isAr={isAr} />
           ) : tab === 'users' ? (
-            <AdminUsers profiles={profiles} isAr={isAr} />
+            <AdminUsers profiles={profiles} onSelectUser={setSelectedUser} onToggleActivation={toggleCustomerActivation} isAr={isAr} />
           ) : (
             <AdminProducts products={products} toggle={toggleProduct} saveProduct={saveProduct} onSync={syncProductsToFirebase} isAr={isAr} />
           )}
         </div>
       </main>
+
+      {/* Customer Inspector & Editor Modal */}
+      {selectedUser && (
+        <CustomerInspectorModal
+          userProfile={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onSave={handleCustomerSave}
+          onToggleActivation={toggleCustomerActivation}
+          isAr={isAr}
+        />
+      )}
 
       {sidebarOpen && <div className="adm-overlay" onClick={() => setSidebarOpen(false)} />}
     </div>
@@ -281,223 +428,32 @@ function AdminLoading() {
 }
 
 function AdminOverview({ orders, total, pending, processing, shipped, completed, cancelled, users, productCount, cur, isAr }) {
-  const recent = orders.slice(0, 5)
-
-  const barData = useMemo(() => {
-    const days = 7
-    const now = Date.now()
-    return Array.from({ length: days }, (_, i) => {
-      const dayStart = now - (days - i) * 86400000
-      const dayEnd = dayStart + 86400000
-      const dayOrders = orders.filter((o) => {
-        const t = o.createdAt ? new Date(o.createdAt).getTime() : 0
-        return t >= dayStart && t < dayEnd
-      })
-      const dayRevenue = dayOrders.reduce((s, o) => s + Number(o.total || 0), 0)
-      return {
-        label: new Date(dayStart).toLocaleDateString(isAr ? 'ar' : 'en', { weekday: 'short' }),
-        count: dayOrders.length,
-        revenue: dayRevenue,
-      }
-    })
-  }, [orders, isAr])
-
-  const maxRevenue = Math.max(...barData.map((d) => d.revenue), 1)
-  const hasData = orders.length > 0
-
   return (
     <div className="adm-overview">
-      <div className="adm-stats">
-        <div className="adm-stat-card adm-stat-green">
-          <div className="adm-stat-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          </div>
-          <div className="adm-stat-body">
-            <div className="adm-stat-num">{currency(total)}</div>
-            <div className="adm-stat-label">{isAr ? 'إجمالي الإيرادات' : 'Total Revenue'}</div>
-          </div>
-          <div className="adm-stat-sparkline" />
-        </div>
-        <div className="adm-stat-card adm-stat-blue">
-          <div className="adm-stat-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-          </div>
-          <div className="adm-stat-body">
-            <div className="adm-stat-num">{orders.length}</div>
-            <div className="adm-stat-label">{isAr ? 'إجمالي الطلبات' : 'Total Orders'}</div>
+      <div className="adm-kpi-grid">
+        <div className="adm-kpi-card" style={{ '--kpi-color': '#1854e8' }}>
+          <div className="adm-kpi-info">
+            <span className="adm-kpi-label">{isAr ? 'إجمالي المبيعات' : 'Total Revenue'}</span>
+            <div className="adm-kpi-value">{currency(total)} <span className="adm-kpi-cur">{cur}</span></div>
           </div>
         </div>
-        <div className="adm-stat-card adm-stat-amber">
-          <div className="adm-stat-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <div className="adm-stat-body">
-            <div className="adm-stat-num">{pending}</div>
-            <div className="adm-stat-label">{isAr ? 'قيد الانتظار' : 'Pending'}</div>
+        <div className="adm-kpi-card" style={{ '--kpi-color': '#f59e0b' }}>
+          <div className="adm-kpi-info">
+            <span className="adm-kpi-label">{isAr ? 'طلبات قيد الانتظار' : 'Pending Orders'}</span>
+            <div className="adm-kpi-value">{pending}</div>
           </div>
         </div>
-        <div className="adm-stat-card adm-stat-purple">
-          <div className="adm-stat-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-          </div>
-          <div className="adm-stat-body">
-            <div className="adm-stat-num">{users}</div>
-            <div className="adm-stat-label">{isAr ? 'المستخدمون' : 'Users'}</div>
+        <div className="adm-kpi-card" style={{ '--kpi-color': '#10b981' }}>
+          <div className="adm-kpi-info">
+            <span className="adm-kpi-label">{isAr ? 'العملاء والبطاقات' : 'Customers & Cards'}</span>
+            <div className="adm-kpi-value">{users}</div>
           </div>
         </div>
-      </div>
-
-      <div className="adm-card adm-chart-card">
-        <div className="adm-card-header">
-          <div>
-            <h3>{isAr ? 'الإيرادات هذا الأسبوع' : 'Revenue This Week'}</h3>
-            <p className="adm-card-subtitle">{isAr ? 'آخر 7 أيام' : 'Last 7 days'}</p>
+        <div className="adm-kpi-card" style={{ '--kpi-color': '#8b5cf6' }}>
+          <div className="adm-kpi-info">
+            <span className="adm-kpi-label">{isAr ? 'الطلبات المكتملة' : 'Completed'}</span>
+            <div className="adm-kpi-value">{completed}</div>
           </div>
-        </div>
-        {!hasData ? (
-          <div className="adm-empty-chart">
-            <div className="adm-empty-chart-bars">
-              {[0.3, 0.5, 0.2, 0.6, 0.4, 0.7, 0.35].map((h, i) => (
-                <div key={i} className="adm-empty-bar-col">
-                  <div className="adm-empty-bar-track">
-                    <div className="adm-empty-bar" style={{ height: `${h * 100}%` }} />
-                  </div>
-                  <div className="adm-empty-bar-label">{['سبت', 'أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة'][i]}</div>
-                </div>
-              ))}
-            </div>
-            <div className="adm-empty-overlay">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-              <p>{isAr ? 'ستظهر البيانات هنا بعد أول طلب' : 'Data will appear after the first order'}</p>
-            </div>
-          </div>
-        ) : (
-        <div className="adm-chart">
-          {barData.map((d, i) => (
-            <div key={i} className="adm-bar-col">
-              <div className="adm-bar-val">{d.revenue > 0 ? currency(d.revenue) : ''}</div>
-              <div className="adm-bar-track">
-                <div className="adm-bar" style={{ height: `${Math.max((d.revenue / maxRevenue) * 100, d.count > 0 ? 8 : 2)}%` }} />
-              </div>
-              <div className="adm-bar-label">{d.label}</div>
-              <div className="adm-bar-count">{d.count > 0 ? d.count : ''}</div>
-            </div>
-          ))}
-        </div>
-        )}
-      </div>
-
-      <div className="adm-grid-2">
-        <div className="adm-card">
-          <div className="adm-card-header">
-            <h3>{isAr ? 'أحدث الطلبات' : 'Recent Orders'}</h3>
-            <Link to="#" className="adm-card-link" onClick={(e) => { e.preventDefault() }}>{isAr ? 'عرض الكل' : 'View All'}</Link>
-          </div>
-          {!hasData ? (
-            <div className="adm-empty-state">
-              <div className="adm-empty-state-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-              </div>
-              <p className="adm-empty-title">{isAr ? 'لا طلبات بعد' : 'No orders yet'}</p>
-              <p className="adm-empty-desc">{isAr ? 'ستظهر الطلبات هنا automáticamente' : 'Orders will appear here automatically'}</p>
-            </div>
-          ) : (
-            <div className="adm-list">
-              {recent.map((o) => (
-                <div key={o.id} className="adm-list-item">
-                  <div className="adm-list-left">
-                    <div className="adm-list-avatar" style={{ background: STATUS_COLORS[o.status]?.bg || '#f3f4f6', color: STATUS_COLORS[o.status]?.text || '#6b7280' }}>
-                      {(o.customer?.name || '?').charAt(0).toUpperCase()}
-                    </div>
-                    <div className="adm-list-info">
-                      <div className="adm-list-name">{o.customer?.name || '—'}</div>
-                      <div className="adm-list-sub">#{o.id.slice(0, 6)}</div>
-                    </div>
-                  </div>
-                  <div className="adm-list-right">
-                    <div className="adm-list-amount">{currency(o.total)} {cur}</div>
-                    <StatusBadge s={o.status} isAr={isAr} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="adm-card">
-          <div className="adm-card-header">
-            <h3>{isAr ? 'ملخص سريع' : 'Quick Summary'}</h3>
-          </div>
-          {!hasData ? (
-            <div className="adm-empty-state">
-              <div className="adm-empty-state-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-              </div>
-              <p className="adm-empty-title">{isAr ? 'لا توجد بيانات' : 'No data yet'}</p>
-              <p className="adm-empty-desc">{isAr ? 'ستظهر الإحصائيات هنا' : 'Stats will show here'}</p>
-            </div>
-          ) : (
-          <div className="adm-summary">
-            <div className="adm-summary-row">
-              <div className="adm-summary-left">
-                <div className="adm-summary-dot" style={{ background: '#10b981' }} />
-                <span>{isAr ? 'معدل الإتمام' : 'Completion Rate'}</span>
-              </div>
-              <div className="adm-summary-right">
-                <div className="adm-summary-bar">
-                  <div className="adm-summary-fill" style={{ width: `${(completed / orders.length) * 100}%`, background: 'linear-gradient(90deg, #10b981, #34d399)' }} />
-                </div>
-                <span className="adm-summary-val" style={{ color: '#10b981' }}>{Math.round((completed / orders.length) * 100)}%</span>
-              </div>
-            </div>
-            <div className="adm-summary-row">
-              <div className="adm-summary-left">
-                <div className="adm-summary-dot" style={{ background: '#ef4444' }} />
-                <span>{isAr ? 'معدل الإلغاء' : 'Cancellation Rate'}</span>
-              </div>
-              <div className="adm-summary-right">
-                <div className="adm-summary-bar">
-                  <div className="adm-summary-fill" style={{ width: `${(cancelled / orders.length) * 100}%`, background: 'linear-gradient(90deg, #ef4444, #f87171)' }} />
-                </div>
-                <span className="adm-summary-val" style={{ color: '#ef4444' }}>{Math.round((cancelled / orders.length) * 100)}%</span>
-              </div>
-            </div>
-            <div className="adm-summary-divider" />
-            <div className="adm-summary-stats">
-              <div className="adm-summary-stat">
-                <div className="adm-summary-stat-val">{orders.length > 0 ? currency(total / orders.length) : 0}</div>
-                <div className="adm-summary-stat-label">{isAr ? 'متوسط الطلب' : 'Avg Order'}</div>
-              </div>
-              <div className="adm-summary-stat">
-                <div className="adm-summary-stat-val">{productCount}</div>
-                <div className="adm-summary-stat-label">{isAr ? 'منتجات نشطة' : 'Active Products'}</div>
-              </div>
-            </div>
-          </div>
-          )}
-        </div>
-      </div>
-
-      <div className="adm-card adm-status-overview-card">
-        <div className="adm-card-header">
-          <h3>{isAr ? 'حالة الطلبات' : 'Order Status'}</h3>
-        </div>
-        <div className="adm-status-grid">
-          {[
-            { label: isAr ? 'قيد الانتظار' : 'Pending', count: pending, color: '#f59e0b', bg: '#fffbeb' },
-            { label: isAr ? 'قيد المعالجة' : 'Processing', count: processing, color: '#3b82f6', bg: '#eff6ff' },
-            { label: isAr ? 'تم الشحن' : 'Shipped', count: shipped, color: '#8b5cf6', bg: '#f5f3ff' },
-            { label: isAr ? 'مكتمل' : 'Completed', count: completed, color: '#10b981', bg: '#ecfdf5' },
-            { label: isAr ? 'ملغي' : 'Cancelled', count: cancelled, color: '#ef4444', bg: '#fef2f2' },
-          ].map((s, i) => (
-            <div key={i} className="adm-status-item" style={{ '--accent': s.color }}>
-              <div className="adm-status-dot" style={{ background: s.color }} />
-              <div className="adm-status-info">
-                <div className="adm-status-count">{s.count}</div>
-                <div className="adm-status-label">{s.label}</div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>
@@ -505,7 +461,6 @@ function AdminOverview({ orders, total, pending, processing, shipped, completed,
 }
 
 function AdminOrders({ orders, change, i18n, cur, isAr }) {
-  const [open, setOpen] = useState(null)
   const [statusFilter, setStatusFilter] = useState('all')
 
   const filtered = useMemo(() => {
@@ -517,7 +472,7 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
     <div className="adm-card">
       <div className="adm-card-header">
         <div>
-          <h3>{isAr ? 'الطلبات' : 'Orders'} <span className="adm-count">({filtered.length})</span></h3>
+          <h3>{isAr ? 'سجل الطلبات' : 'Orders List'} <span className="adm-count">({filtered.length})</span></h3>
         </div>
         <div className="adm-filter-pills">
           <button className={`adm-pill ${statusFilter === 'all' ? 'on' : ''}`} onClick={() => setStatusFilter('all')}>{isAr ? 'الكل' : 'All'}</button>
@@ -528,11 +483,7 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
       </div>
       {filtered.length === 0 ? (
         <div className="adm-empty-state">
-          <div className="adm-empty-state-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-          </div>
-          <p className="adm-empty-title">{isAr ? 'لا توجد طلبات' : 'No orders found'}</p>
-          <p className="adm-empty-desc">{isAr ? 'لم يتم العثور على طلبات تطابق البحث' : 'No orders match your search'}</p>
+          <p className="adm-empty-title">{isAr ? 'لا توجد طلبات بعد' : 'No orders found'}</p>
         </div>
       ) : (
         <div className="adm-table-wrap">
@@ -545,13 +496,41 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
                 <th>{isAr ? 'الإجمالي' : 'Total'}</th>
                 <th>{isAr ? 'التاريخ' : 'Date'}</th>
                 <th>{isAr ? 'الحالة' : 'Status'}</th>
-                <th></th>
+                <th>{isAr ? 'تواصل' : 'Contact'}</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((o) => (
-                <OrderRow key={o.id} o={o} open={open === o.id} onToggle={() => setOpen(open === o.id ? null : o.id)} change={change} i18n={i18n} cur={cur} isAr={isAr} />
-              ))}
+              {filtered.map((o) => {
+                const phone = o.customer?.phone ? o.customer.phone.replace(/[^0-9]/g, '') : ''
+                const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(`مرحباً ${o.customer?.name || ''}، بخصوص طلبك من منصة لمسة NFC رقم #${o.id.slice(0, 6)}...`)}` : ''
+
+                return (
+                  <tr key={o.id}>
+                    <td className="adm-mono">#{o.id.slice(0, 8)}</td>
+                    <td>
+                      <div>
+                        <b>{o.customer?.name || '—'}</b>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{o.customer?.phone} · {o.customer?.city || ''}</div>
+                      </div>
+                    </td>
+                    <td>{(o.items || []).map((i) => `${i.name} ×${i.qty}`).join(', ') || '—'}</td>
+                    <td className="adm-money">{currency(o.total)} {cur}</td>
+                    <td className="adm-date">{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '—'}</td>
+                    <td>
+                      <select className="adm-status-select" value={o.status || 'pending'} onChange={(e) => change(o.id, e.target.value)}>
+                        {STATUSES.map((s) => <option key={s} value={s}>{i18n(s)}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      {waUrl && (
+                        <a href={waUrl} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ color: '#16a34a', fontWeight: 800 }}>
+                          💬 واتساب
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -560,125 +539,289 @@ function AdminOrders({ orders, change, i18n, cur, isAr }) {
   )
 }
 
-function OrderRow({ o, open, onToggle, change, i18n, cur, isAr }) {
-  const date = o.createdAt ? new Date(o.createdAt).toLocaleDateString(isAr ? 'ar' : 'en', { month: 'short', day: 'numeric' }) : '—'
-  return (
-    <>
-      <tr className={open ? 'expanded' : ''}>
-        <td className="adm-mono">#{o.id.slice(0, 8)}</td>
-        <td>
-          <div className="adm-order-customer">
-            <div className="adm-list-avatar small" style={{ background: STATUS_COLORS[o.status]?.bg || '#f3f4f6', color: STATUS_COLORS[o.status]?.text || '#6b7280' }}>
-              {(o.customer?.name || '?').charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <b>{o.customer?.name || '—'}</b>
-              <div className="adm-order-contact">{o.customer?.phone} · {o.email}</div>
-            </div>
-          </div>
-        </td>
-        <td className="adm-order-items">{(o.items || []).map((i) => `${i.name} ×${i.qty}`).join(', ') || '—'}</td>
-        <td className="adm-money">{currency(o.total)} {cur}</td>
-        <td className="adm-date">{date}</td>
-        <td>
-          <select className="adm-status-select" value={o.status || 'pending'} onChange={(e) => change(o.id, e.target.value)}>
-            {STATUSES.map((s) => <option key={s} value={s}>{i18n(s)}</option>)}
-          </select>
-        </td>
-        <td><button className="adm-expand-btn" onClick={onToggle}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: '0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
-        </button></td>
-      </tr>
-      {open && (
-        <tr className="adm-detail-row">
-          <td colSpan={7}>
-            <div className="adm-detail">
-              <div className="adm-detail-grid">
-                <div className="adm-detail-field"><span>{isAr ? 'الاسم' : 'Name'}</span><b>{o.customer?.name || '—'}</b></div>
-                <div className="adm-detail-field"><span>{isAr ? 'الهاتف' : 'Phone'}</span><b>{o.customer?.phone || '—'}</b></div>
-                <div className="adm-detail-field"><span>{isAr ? 'البريد' : 'Email'}</span><b>{o.email || '—'}</b></div>
-                <div className="adm-detail-field"><span>{isAr ? 'المدينة' : 'City'}</span><b>{o.customer?.city || '—'}</b></div>
-                <div className="adm-detail-field"><span>{isAr ? 'العنوان' : 'Address'}</span><b>{o.customer?.address || '—'}</b></div>
-                <div className="adm-detail-field"><span>UID</span><b className="adm-mono">{o.uid}</b></div>
-              </div>
-              {(o.items || []).length > 0 && (
-                <div className="adm-detail-items">
-                  <span className="adm-detail-items-title">{isAr ? 'المنتجات' : 'Items'}</span>
-                  {(o.items || []).map((it, i) => (
-                    <div key={i} className="adm-detail-item">
-                      <span>· {it.name} × {it.qty}</span>
-                      <b className="adm-money">{currency(it.qty * it.price)} {cur}</b>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {o.customer?.notes && (
-                <div className="adm-detail-notes">
-                  <span>{isAr ? 'ملاحظات' : 'Notes'}</span>
-                  <p>{o.customer.notes}</p>
-                </div>
-              )}
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
-  )
-}
-
-function AdminUsers({ profiles, isAr }) {
+function AdminUsers({ profiles, onSelectUser, onToggleActivation, isAr }) {
   const [search, setSearch] = useState('')
+  const [filterActive, setFilterActive] = useState('all')
 
   const filtered = useMemo(() => {
-    if (!search) return profiles
-    const q = search.toLowerCase()
-    return profiles.filter((p) =>
-      (p.name || '').toLowerCase().includes(q) ||
-      (p.email || '').toLowerCase().includes(q)
-    )
-  }, [profiles, search])
+    return profiles.filter((p) => {
+      if (filterActive === 'active' && p.activated !== true) return false
+      if (filterActive === 'preview' && p.activated === true) return false
+      if (search) {
+        const q = search.toLowerCase()
+        const matchName = (p.name || '').toLowerCase().includes(q)
+        const matchEmail = (p.email || '').toLowerCase().includes(q)
+        const matchPhone = (p.phone || '').includes(q)
+        const matchRole = (p.role || '').toLowerCase().includes(q)
+        if (!matchName && !matchEmail && !matchPhone && !matchRole) return false
+      }
+      return true
+    })
+  }, [profiles, search, filterActive])
 
   return (
     <div className="adm-card">
       <div className="adm-card-header">
-        <h3>{isAr ? 'المستخدمون' : 'Users'} <span className="adm-count">({filtered.length})</span></h3>
+        <div>
+          <h3>{isAr ? 'العملاء والبطاقات الذكية 👑' : 'Customers & Smart Cards 👑'} <span className="adm-count">({filtered.length})</span></h3>
+          <p style={{ fontSize: '0.84rem', color: 'var(--muted)', margin: '4px 0 0' }}>
+            {isAr ? 'تحكم في حسابات العملاء، افتح لينكاتهم، فعّل أو أوقف بطاقاتهم الذكية بلمسة واحدة.' : 'Inspect customer links, manage profiles, and toggle smart card activation status.'}
+          </p>
+        </div>
+        <div className="adm-filter-pills">
+          <button className={`adm-pill ${filterActive === 'all' ? 'on' : ''}`} onClick={() => setFilterActive('all')}>{isAr ? 'الكل' : 'All'}</button>
+          <button className={`adm-pill ${filterActive === 'active' ? 'on' : ''}`} onClick={() => setFilterActive('active')}>{isAr ? 'مفعلة ✓' : 'Active Cards'}</button>
+          <button className={`adm-pill ${filterActive === 'preview' ? 'on' : ''}`} onClick={() => setFilterActive('preview')}>{isAr ? 'قيد الانتظار (معاينة)' : 'Preview Mode'}</button>
+        </div>
       </div>
+
       <div className="adm-search" style={{ marginBottom: 16 }}>
-        <svg className="adm-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input
           type="text"
-          placeholder={isAr ? 'بحث بالاسم أو الإيميل…' : 'Search by name or email…'}
+          placeholder={isAr ? 'بحث بالاسم، الإيميل، الهاتف، المهنة…' : 'Search by name, email, phone, role…'}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
       {filtered.length === 0 ? (
         <div className="adm-empty-state">
-          <div className="adm-empty-state-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-          </div>
-          <p className="adm-empty-title">{isAr ? 'لا مستخدمين بعد' : 'No users yet'}</p>
-          <p className="adm-empty-desc">{isAr ? 'سيظهر المستخدمون هنا عند التسجيل' : 'Users will appear here upon registration'}</p>
+          <p className="adm-empty-title">{isAr ? 'لا مستخدمين يطابقون البحث' : 'No users found'}</p>
         </div>
       ) : (
-        <div className="adm-list">
-          {filtered.map((p) => (
-            <div key={p.id} className="adm-list-item">
-              <div className="adm-list-left">
-                <div className="adm-list-avatar">{(p.name || '?').charAt(0).toUpperCase()}</div>
-                <div className="adm-list-info">
-                  <div className="adm-list-name">{p.name || '—'}</div>
-                  <div className="adm-list-sub">{p.email || '—'}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
+          {filtered.map((p) => {
+            const uid = p.uid || p.id
+            const isActivated = p.activated === true
+            const linksCount = (Array.isArray(p.links) ? p.links : []).length
+            const socialCount = p.social ? Object.values(p.social).filter(Boolean).length : 0
+
+            return (
+              <div
+                key={uid}
+                style={{
+                  border: '1.5px solid var(--line, #e2e8f0)',
+                  borderRadius: 16,
+                  padding: 16,
+                  background: 'var(--card, #fff)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  transition: '0.2s',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 46, height: 46, borderRadius: '50%', background: 'linear-gradient(135deg, #1854e8, #0aa5c8)',
+                    color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: '1.2rem', flexShrink: 0,
+                    overflow: 'hidden',
+                  }}>
+                    {p.avatar ? <img src={p.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (p.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <b style={{ fontSize: '0.98rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name || 'مستخدم بدون اسم'}</b>
+                      {isActivated && <IconVerified size="1.05em" />}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email || '—'}</div>
+                  </div>
+                  <span style={{
+                    padding: '4px 10px', borderRadius: 99, fontSize: '0.75rem', fontWeight: 800,
+                    background: isActivated ? '#ecfdf5' : '#fffbeb',
+                    color: isActivated ? '#047857' : '#b45309',
+                    border: `1px solid ${isActivated ? '#a7f3d0' : '#fde68a'}`,
+                  }}>
+                    {isActivated ? (isAr ? 'مفعلة ✓' : 'Active') : (isAr ? 'معاينة' : 'Preview')}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, fontSize: '0.82rem', color: 'var(--muted)', background: 'var(--bg, #f8fafc)', padding: '8px 12px', borderRadius: 10 }}>
+                  <span>🔗 {linksCount} {isAr ? 'روابط' : 'links'}</span>
+                  <span>🌐 {socialCount} {isAr ? 'سوشيال' : 'socials'}</span>
+                  {p.phone && <span>📱 {p.phone}</span>}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    style={{ flex: 1 }}
+                    onClick={() => onSelectUser(p)}
+                  >
+                    ⚙️ {isAr ? 'إدارة وتحكم' : 'Manage'}
+                  </button>
+                  <a
+                    href={`https://lamsa.ink/u/${uid}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-ghost btn-sm"
+                    title={isAr ? 'معاينة البطاقة' : 'View Card'}
+                  >
+                    👁️
+                  </a>
                 </div>
               </div>
-              <div className="adm-list-right">
-                <div className="adm-list-sub">{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}</div>
-                <div className="adm-list-sub adm-mono">{(p.uid || p.id || '').slice(0, 8)}</div>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
+    </div>
+  )
+}
+
+function CustomerInspectorModal({ userProfile, onClose, onSave, onToggleActivation, isAr }) {
+  const uid = userProfile.uid || userProfile.id
+  const [form, setForm] = useState({
+    name: userProfile.name || '',
+    role: userProfile.role || '',
+    phone: userProfile.phone || '',
+    bio: userProfile.bio || '',
+    email: userProfile.email || '',
+    theme: userProfile.theme || 'default',
+    activated: userProfile.activated === true,
+  })
+
+  const links = Array.isArray(userProfile.links) ? userProfile.links : []
+  const social = userProfile.social || {}
+
+  const setV = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  function handleSaveClick() {
+    onSave(uid, form)
+  }
+
+  const phoneClean = form.phone ? form.phone.replace(/[^0-9]/g, '') : ''
+  const waUrl = phoneClean ? `https://wa.me/${phoneClean}` : ''
+
+  return (
+    <div className="adm-modal-overlay" style={{ zIndex: 9999, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.65)' }}>
+      <div className="adm-modal" style={{ maxWidth: 640, width: '92%', maxHeight: '90vh', overflowY: 'auto', borderRadius: 20 }}>
+        <div className="adm-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h3 style={{ margin: 0 }}>⚙️ {isAr ? 'لوحة التحكم في حساب العميل' : 'Customer Account Control'}</h3>
+            <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>UID: {uid}</span>
+          </div>
+          <button className="adm-modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="adm-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Activation Switcher */}
+          <div style={{
+            padding: '14px 18px', borderRadius: 14,
+            background: form.activated ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+            border: `1.5px solid ${form.activated ? '#10b981' : '#f59e0b'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div>
+              <b style={{ color: form.activated ? '#059669' : '#d97706', fontSize: '0.96rem' }}>
+                {form.activated ? (isAr ? '✅ البطاقة الذكية مفعلة رسمياً' : 'Smart Card Active') : (isAr ? '⚠️ البطاقة في وضع المعاينة (غير مفعلة)' : 'Card in Preview Mode')}
+              </b>
+              <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--muted)' }}>
+                {isAr ? 'يمكنك تفعيل أو إلغاء تفعيل بطاقة العميل مباشرة من هنا.' : 'Toggle NFC activation status instantly.'}
+              </p>
+            </div>
+            <button
+              className={`btn ${form.activated ? 'btn-ghost' : 'btn-primary'} btn-sm`}
+              onClick={() => {
+                const next = !form.activated
+                setForm((f) => ({ ...f, activated: next }))
+                onToggleActivation(uid, form.activated)
+              }}
+            >
+              {form.activated ? (isAr ? 'إلغاء التفعيل' : 'Deactivate') : (isAr ? 'تفعيل البطاقة الآن' : 'Activate Card')}
+            </button>
+          </div>
+
+          {/* Quick Direct Actions */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <a href={`https://lamsa.ink/u/${uid}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ flex: 1 }}>
+              🌐 {isAr ? 'فتح صفحة العميل' : 'Open Public Card'}
+            </a>
+            {waUrl && (
+              <a href={waUrl} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ flex: 1, color: '#16a34a', fontWeight: 800 }}>
+                💬 {isAr ? 'مراسلة واتساب' : 'WhatsApp'}
+              </a>
+            )}
+            {form.phone && (
+              <a href={`tel:${form.phone}`} className="btn btn-ghost btn-sm" style={{ flex: 1 }}>
+                📞 {isAr ? 'اتصال هاتف' : 'Call'}
+              </a>
+            )}
+          </div>
+
+          {/* Editable Fields */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="adm-form-group">
+              <label>{isAr ? 'اسم العميل' : 'Customer Name'}</label>
+              <input type="text" value={form.name} onChange={setV('name')} />
+            </div>
+            <div className="adm-form-group">
+              <label>{isAr ? 'المهنة / اللقب' : 'Role / Title'}</label>
+              <input type="text" value={form.role} onChange={setV('role')} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="adm-form-group">
+              <label>{isAr ? 'البريد الإلكتروني' : 'Email'}</label>
+              <input type="email" value={form.email} disabled />
+            </div>
+            <div className="adm-form-group">
+              <label>{isAr ? 'رقم الهاتف' : 'Phone'}</label>
+              <input type="text" value={form.phone} onChange={setV('phone')} />
+            </div>
+          </div>
+
+          <div className="adm-form-group">
+            <label>{isAr ? 'نبذة عن العميل (Bio)' : 'Bio'}</label>
+            <textarea rows={2} value={form.bio} onChange={setV('bio')} />
+          </div>
+
+          {/* Inspect Links */}
+          <div>
+            <h4 style={{ margin: '8px 0 8px 0', fontSize: '0.92rem' }}>🔗 {isAr ? 'الروابط المخصصة في بطاقة العميل' : 'Customer Custom Links'} ({links.length})</h4>
+            {links.length === 0 ? (
+              <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: 0 }}>{isAr ? 'لم يضف العميل أي روابط بعد.' : 'No custom links added yet.'}</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 160, overflowY: 'auto' }}>
+                {links.map((l, i) => {
+                  const det = detectPlatformInfo(l.url, l.label)
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: 'var(--bg, #f8fafc)', borderRadius: 10, fontSize: '0.84rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 22, height: 22, borderRadius: 6, background: det.color, color: '#fff', display: 'grid', placeItems: 'center', fontSize: '0.75rem' }}>
+                          <PlatformIcon name={det.icon} />
+                        </span>
+                        <b>{l.label || l.url}</b>
+                        {l.subtitle && <span style={{ color: 'var(--muted)', fontSize: '0.76rem' }}>({l.subtitle})</span>}
+                      </div>
+                      <a href={l.url} target="_blank" rel="noreferrer" style={{ color: 'var(--cobalt)', fontSize: '0.8rem', textDecoration: 'underline' }}>
+                        {isAr ? 'تجربة' : 'Test'} ↗
+                      </a>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Inspect Socials */}
+          <div>
+            <h4 style={{ margin: '8px 0 8px 0', fontSize: '0.92rem' }}>🌐 {isAr ? 'قنوات السوشيال ميديا' : 'Connected Social Channels'}</h4>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {Object.entries(social).filter(([_, v]) => Boolean(v)).map(([k, v]) => (
+                <a key={k} href={normalizeSocialUrl(k, v)} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 99, background: 'var(--bg, #f8fafc)', border: '1px solid var(--line, #e2e8f0)', fontSize: '0.78rem', color: 'var(--text)' }}>
+                  <PlatformIcon name={k} /> {k}: <b>{v}</b>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="adm-modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14 }}>
+          <button className="btn btn-ghost" onClick={onClose}>{isAr ? 'إلغاء' : 'Cancel'}</button>
+          <button className="btn btn-primary" onClick={handleSaveClick}>💾 {isAr ? 'حفظ التعديلات' : 'Save Changes'}</button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -762,17 +905,6 @@ function AdminProducts({ products, toggle, saveProduct, onSync, isAr }) {
         </div>
       )}
     </div>
-  )
-}
-
-function StatusBadge({ s, isAr }) {
-  const c = STATUS_COLORS[s] || STATUS_COLORS.pending
-  const labels = { pending: isAr ? 'قيد الانتظار' : 'Pending', processing: isAr ? 'قيد المعالجة' : 'Processing', shipped: isAr ? 'تم الشحن' : 'Shipped', done: isAr ? 'مكتمل' : 'Completed', cancelled: isAr ? 'ملغي' : 'Cancelled' }
-  return (
-    <span className="adm-status-badge" style={{ background: c.bg, color: c.text }}>
-      <span className="adm-status-dot" style={{ background: c.dot }} />
-      {labels[s] || s}
-    </span>
   )
 }
 

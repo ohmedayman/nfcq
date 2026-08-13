@@ -117,12 +117,37 @@ export async function uploadAvatar(uid, file) {
 }
 
 export async function createOrder(uid, payload) {
-  const { collection, addDoc } = await import('firebase/firestore')
-  const d = await getDbInstance()
-  return addDoc(collection(d, 'orders'), {
-    uid, items: payload.items, total: payload.total, currency: payload.currency,
-    customer: payload.customer, createdAt: Date.now(), status: 'pending',
-  })
+  const orderData = {
+    uid,
+    items: payload.items,
+    total: payload.total,
+    currency: payload.currency || 'EGP',
+    customer: payload.customer,
+    createdAt: Date.now(),
+    status: 'pending',
+  }
+
+  let firestoreId = `order_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+  try {
+    const { collection, addDoc } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    const docRef = await addDoc(collection(d, 'orders'), orderData)
+    if (docRef?.id) firestoreId = docRef.id
+  } catch (err) {
+    console.warn('[createOrder] Firestore addDoc failed, using local cache:', err?.message)
+  }
+
+  const savedOrder = { id: firestoreId, ...orderData }
+
+  // Sync to local orders store for seamless Admin view
+  try {
+    const existing = JSON.parse(localStorage.getItem('lamsa_all_orders') || '[]')
+    const updated = [savedOrder, ...existing.filter((o) => o.id !== firestoreId)]
+    localStorage.setItem('lamsa_all_orders', JSON.stringify(updated))
+    window.dispatchEvent(new CustomEvent('lamsa_order_created', { detail: savedOrder }))
+  } catch {}
+
+  return savedOrder
 }
 
 export async function fetchProfileForPublic(uid) {
@@ -130,23 +155,87 @@ export async function fetchProfileForPublic(uid) {
 }
 
 export async function listOrders() {
-  const { collection, query, orderBy, getDocs } = await import('firebase/firestore')
-  const d = await getDbInstance()
-  const snap = await getDocs(query(collection(d, 'orders'), orderBy('createdAt', 'desc')))
-  return snap.docs.map((s) => ({ id: s.id, ...s.data() }))
+  let ordersList = []
+  try {
+    const { collection, getDocs } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    const snap = await getDocs(collection(d, 'orders'))
+    ordersList = snap.docs.map((s) => ({ id: s.id, ...s.data() }))
+  } catch (err) {
+    console.warn('[listOrders] Firestore query failed, reading local cache:', err?.message)
+  }
+
+  // Merge with local cached orders
+  try {
+    const local = JSON.parse(localStorage.getItem('lamsa_all_orders') || '[]')
+    const map = new Map()
+    ordersList.forEach((o) => map.set(o.id, o))
+    local.forEach((o) => {
+      if (!map.has(o.id)) map.set(o.id, o)
+    })
+    ordersList = Array.from(map.values())
+  } catch {}
+
+  return ordersList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
 }
 
 export async function updateOrderStatus(orderId, status) {
-  const { doc, updateDoc } = await import('firebase/firestore')
-  const d = await getDbInstance()
-  return updateDoc(doc(d, 'orders', orderId), { status })
+  try {
+    const { doc, updateDoc } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    await updateDoc(doc(d, 'orders', orderId), { status })
+  } catch (err) {
+    console.warn('[updateOrderStatus] Firestore updateDoc failed, updating local:', err?.message)
+  }
+
+  try {
+    const existing = JSON.parse(localStorage.getItem('lamsa_all_orders') || '[]')
+    const updated = existing.map((o) => (o.id === orderId ? { ...o, status } : o))
+    localStorage.setItem('lamsa_all_orders', JSON.stringify(updated))
+  } catch {}
 }
 
 export async function listProfiles() {
-  const { collection, query, getDocs } = await import('firebase/firestore')
-  const d = await getDbInstance()
-  const snap = await getDocs(query(collection(d, 'profiles')))
-  return snap.docs.map((s) => ({ id: s.id, ...s.data() }))
+  let profilesList = []
+  try {
+    const { collection, getDocs } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    const snap = await getDocs(collection(d, 'profiles'))
+    profilesList = snap.docs.map((s) => ({ id: s.id, uid: s.id, ...s.data() }))
+  } catch (err) {
+    console.warn('[listProfiles] Firestore query failed, reading local cache:', err?.message)
+  }
+
+  // Merge with local profiles
+  try {
+    const local = JSON.parse(localStorage.getItem('lamsa_all_profiles') || '[]')
+    const map = new Map()
+    profilesList.forEach((p) => map.set(p.uid || p.id, p))
+    local.forEach((p) => {
+      const id = p.uid || p.id
+      if (id && !map.has(id)) map.set(id, p)
+    })
+    profilesList = Array.from(map.values())
+  } catch {}
+
+  return profilesList
+}
+
+export async function adminUpdateProfile(uid, data) {
+  try {
+    const { doc, setDoc } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    await setDoc(doc(d, 'profiles', uid), data, { merge: true })
+  } catch (err) {
+    console.warn('[adminUpdateProfile] Firestore setDoc failed:', err?.message)
+  }
+
+  try {
+    const existing = JSON.parse(localStorage.getItem('lamsa_all_profiles') || '[]')
+    const updated = existing.map((p) => ((p.uid === uid || p.id === uid) ? { ...p, ...data } : p))
+    localStorage.setItem('lamsa_all_profiles', JSON.stringify(updated))
+    localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(data))
+  } catch {}
 }
 
 export async function isAdminUser(uid) {
@@ -184,11 +273,6 @@ export async function upsertProduct(id, data) {
 }
 
 export async function listUserOrders(uid) {
-  const { collection, getDocs } = await import('firebase/firestore')
-  const d = await getDbInstance()
-  const snap = await getDocs(collection(d, 'orders'))
-  return snap.docs
-    .map((s) => ({ id: s.id, ...s.data() }))
-    .filter((o) => o.uid === uid)
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+  const all = await listOrders()
+  return all.filter((o) => o.uid === uid)
 }

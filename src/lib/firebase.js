@@ -132,6 +132,7 @@ export async function fetchPublic(uid) {
 export async function listOrders() { return (await loadServices()).listOrders() }
 export async function updateOrderStatus(orderId, status) { return (await loadServices()).updateOrderStatus(orderId, status) }
 export async function listProfiles() { return (await loadServices()).listProfiles() }
+export async function adminUpdateProfile(uid, data) { return (await loadServices()).adminUpdateProfile(uid, data) }
 export async function isAdminUser(uid) { return (await loadServices()).isAdminUser(uid) }
 export async function grantAdmin(uid) { return (await loadServices()).grantAdmin(uid) }
 export async function listProducts() { return (await loadServices()).listProducts() }
