@@ -1971,3 +1971,15 @@ svg.icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
   border-top-color: var(--cobalt); border-radius: 50%;
   animation: spin 0.8s linear infinite; margin: 0 auto;
 }
+.adm-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.adm-modal { background: #fff; width: 100%; max-width: 500px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; }
+.adm-modal-header { padding: 16px 20px; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; }
+.adm-modal-header h3 { margin: 0; font-size: 1.1rem; }
+.adm-modal-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6b7280; }
+.adm-modal-body { padding: 20px; }
+.adm-form-group { margin-bottom: 16px; }
+.adm-form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem; color: #374151; }
+.adm-form-group input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; outline: none; }
+.adm-form-group input:focus { border-color: var(--primary); }
+.adm-modal-footer { padding: 16px 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 12px; background: #f9fafb; }
+

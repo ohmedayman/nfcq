@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
-import { PRODUCTS, CURRENCY } from '../data/content'
+import { useProducts } from '../context/ProductContext'
+import { CURRENCY } from '../data/content'
 import { createOrder } from '../lib/firebase'
 import { FIREBASE_READY } from '../firebase.config'
 import { toast } from '../components/Toast'
@@ -19,8 +20,9 @@ const STEPS = ['cart', 'shipping', 'done']
 
 export default function Store() {
   const { text, lang } = useLang()
-  const isAr = lang === 'ar'
   const { user } = useAuth()
+  const { products } = useProducts()
+  const isAr = lang === 'ar'
   const nav = useNavigate()
   const [cart, setCartState] = useState(getCart)
   const [pending, setPending] = useState(false)
@@ -35,7 +37,7 @@ export default function Store() {
     return next
   })
 
-  const items = PRODUCTS.map((p) => {
+  const items = products.map((p) => {
     const variant = selectedVariants[p.id] || (p.variants ? p.variants[0].id : null)
     const cartKey = variant ? `${p.id}_${variant}` : p.id
     return { product: p, qty: cart[cartKey] || 0, variant }
@@ -145,7 +147,7 @@ export default function Store() {
         ) : items.length === 0 ? (
           <>
             <div className="store-grid">
-              {PRODUCTS.map((p) => {
+              {products.map((p) => {
                 const currentVariant = selectedVariants[p.id] || (p.variants ? p.variants[0].id : null)
                 const cartKey = currentVariant ? `${p.id}_${currentVariant}` : p.id
                 const inCart = cart[cartKey] || 0

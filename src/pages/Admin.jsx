@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
-import { listOrders, updateOrderStatus, listProfiles, listProducts, setProductActive } from '../lib/firebase'
-import { PRODUCTS } from '../data/content'
+import { listOrders, updateOrderStatus, listProfiles, listProducts, setProductActive, upsertProduct } from '../lib/firebase'
+import { PRODUCTS as STATIC_PRODUCTS } from '../data/content'
 import { toast } from '../components/Toast'
 import { IconRefresh } from '../components/icons'
 
@@ -27,7 +27,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview')
   const [orders, setOrders] = useState([])
   const [profiles, setProfiles] = useState([])
-  const [products, setProducts] = useState(PRODUCTS)
+  const [products, setProducts] = useState(STATIC_PRODUCTS)
   const [boot, setBoot] = useState(true)
   const [timeFilter, setTimeFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -63,6 +63,21 @@ export default function Admin() {
     await setProductActive(id, on)
     setProducts((p) => p.map((x) => (x.id === id ? { ...x, active: on } : x)))
     toast(on ? (isAr ? 'تم تنشيط المنتج' : 'Enabled') : isAr ? 'تم إيقاف المنتج' : 'Disabled')
+  }
+
+  async function saveProduct(productObj) {
+    await upsertProduct(productObj.id, productObj)
+    setProducts((p) => p.map((x) => (x.id === productObj.id ? productObj : x)))
+    toast(isAr ? 'تم حفظ المنتج ✓' : 'Product saved ✓')
+  }
+
+  async function syncProductsToFirebase() {
+    if (!window.confirm(isAr ? 'هل أنت متأكد من مزامنة المنتجات الأساسية؟' : 'Are you sure you want to sync default products?')) return
+    for (const p of STATIC_PRODUCTS) {
+      await upsertProduct(p.id, p)
+    }
+    loadAll()
+    toast(isAr ? 'تمت المزامنة بنجاح ✓' : 'Sync completed ✓')
   }
 
   function exportOrders() {
@@ -245,7 +260,7 @@ export default function Admin() {
           ) : tab === 'users' ? (
             <AdminUsers profiles={profiles} isAr={isAr} />
           ) : (
-            <AdminProducts products={products} toggle={toggleProduct} isAr={isAr} />
+            <AdminProducts products={products} toggle={toggleProduct} saveProduct={saveProduct} onSync={syncProductsToFirebase} isAr={isAr} />
           )}
         </div>
       </main>
@@ -668,11 +683,27 @@ function AdminUsers({ profiles, isAr }) {
   )
 }
 
-function AdminProducts({ products, toggle, isAr }) {
+function AdminProducts({ products, toggle, saveProduct, onSync, isAr }) {
+  const [editing, setEditing] = useState(null)
+  
+  const handleEdit = (p) => {
+    setEditing({ ...p })
+  }
+  
+  const handleSave = () => {
+    if (editing) {
+      saveProduct(editing)
+      setEditing(null)
+    }
+  }
+
   return (
     <div className="adm-card">
       <div className="adm-card-header">
         <h3>{isAr ? 'المنتجات' : 'Products'}</h3>
+        <button className="btn btn-primary btn-sm" onClick={onSync}>
+          {isAr ? 'مزامنة المنتجات الأساسية' : 'Sync Default Products'}
+        </button>
       </div>
       <div className="adm-product-grid">
         {products.map((p) => (
@@ -685,20 +716,51 @@ function AdminProducts({ products, toggle, isAr }) {
             <div className="adm-product-body">
               <h4>{isAr ? p.nameAr : p.nameEn}</h4>
               <div className="adm-product-price">{p.price} {isAr ? 'ج.م' : 'EGP'}</div>
-              {p.variants && (
-                <div className="adm-product-variants">
-                  {p.variants.map((v) => (
-                    <span key={v.id} className="adm-variant-chip">{isAr ? v.nameAr : v.nameEn}</span>
-                  ))}
-                </div>
-              )}
-              <button className={`btn ${p.active === false ? 'btn-primary' : 'btn-ghost'} btn-sm btn-block`} onClick={() => toggle(p.id, p.active !== false ? false : true)}>
-                {p.active === false ? (isAr ? 'تفعيل' : 'Enable') : (isAr ? 'إيقاف' : 'Disable')}
-              </button>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => handleEdit(p)}>
+                  {isAr ? 'تعديل' : 'Edit'}
+                </button>
+                <button className={`btn ${p.active === false ? 'btn-primary' : 'btn-ghost'} btn-sm`} style={{ flex: 1 }} onClick={() => toggle(p.id, p.active !== false ? false : true)}>
+                  {p.active === false ? (isAr ? 'تفعيل' : 'Enable') : (isAr ? 'إيقاف' : 'Disable')}
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {editing && (
+        <div className="adm-modal-overlay">
+          <div className="adm-modal">
+            <div className="adm-modal-header">
+              <h3>{isAr ? 'تعديل المنتج' : 'Edit Product'}</h3>
+              <button className="adm-modal-close" onClick={() => setEditing(null)}>✕</button>
+            </div>
+            <div className="adm-modal-body">
+              <div className="adm-form-group">
+                <label>{isAr ? 'الاسم بالإنجليزية' : 'Name (EN)'}</label>
+                <input type="text" value={editing.nameEn || ''} onChange={(e) => setEditing({...editing, nameEn: e.target.value})} />
+              </div>
+              <div className="adm-form-group">
+                <label>{isAr ? 'الاسم بالعربية' : 'Name (AR)'}</label>
+                <input type="text" value={editing.nameAr || ''} onChange={(e) => setEditing({...editing, nameAr: e.target.value})} />
+              </div>
+              <div className="adm-form-group">
+                <label>{isAr ? 'السعر' : 'Price'}</label>
+                <input type="number" value={editing.price || ''} onChange={(e) => setEditing({...editing, price: Number(e.target.value)})} />
+              </div>
+              <div className="adm-form-group">
+                <label>{isAr ? 'السعر قبل الخصم' : 'Original Price'}</label>
+                <input type="number" value={editing.originalPrice || ''} onChange={(e) => setEditing({...editing, originalPrice: Number(e.target.value)})} />
+              </div>
+            </div>
+            <div className="adm-modal-footer">
+              <button className="btn btn-ghost" onClick={() => setEditing(null)}>{isAr ? 'إلغاء' : 'Cancel'}</button>
+              <button className="btn btn-primary" onClick={handleSave}>{isAr ? 'حفظ' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

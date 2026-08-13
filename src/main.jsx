@@ -5,6 +5,7 @@ import App from './App'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './components/Toast'
+import { ProductProvider } from './context/ProductContext'
 import './App.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -12,9 +13,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <LanguageProvider>
         <AuthProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
+          <ProductProvider>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </ProductProvider>
         </AuthProvider>
       </LanguageProvider>
     </BrowserRouter>

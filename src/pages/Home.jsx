@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import { useLang } from '../context/LanguageContext'
-import { PRODUCTS, CURRENCY } from '../data/content'
+import { CURRENCY } from '../data/content'
+import { useProducts } from '../context/ProductContext'
 import Reveal from '../components/Reveal'
 import { NfcIcon, IconUser, IconRefresh, IconShield, IconZap } from '../components/icons'
 import StandardCard from '../components/StandardCard'
@@ -44,6 +45,7 @@ function StatCounter({ value, suffix = '', label }) {
 
 export default function Home() {
   const { text, lang } = useLang()
+  const { products } = useProducts()
   const isAr = lang === 'ar'
 
   return (
@@ -278,7 +280,7 @@ export default function Home() {
             <p>{text.store_subtitle}</p>
           </div>
           <div className="store-grid">
-            {PRODUCTS.map((p) => {
+            {products.map((p) => {
               const ar = isAr
               return (
                 <Reveal key={p.id}>

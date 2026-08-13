@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
-import { PRODUCTS, CURRENCY } from '../data/content'
+import { useProducts } from '../context/ProductContext'
+import { CURRENCY } from '../data/content'
 import Reveal from '../components/Reveal'
 import { NfcIcon, IconShield, IconRefresh, IconCheck, IconPlus, IconMinus } from '../components/icons'
 import StandardCard from '../components/StandardCard'
@@ -14,9 +15,10 @@ function saveCart(c) { localStorage.setItem('lamsa_cart', JSON.stringify(c)) }
 export default function ProductDetail() {
   const { id } = useParams()
   const { lang } = useLang()
+  const { products } = useProducts()
   const isAr = lang === 'ar'
   const nav = useNavigate()
-  const product = PRODUCTS.find((p) => p.id === id)
+  const product = products.find((p) => p.id === id)
   const [activeImg, setActiveImg] = useState(0)
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
