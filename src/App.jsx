@@ -80,9 +80,24 @@ function PageLoader() {
   )
 }
 
+const RESERVED_PREFIXES = [
+  'store',
+  'account',
+  'dashboard',
+  'settings',
+  'nfc',
+  'u',
+  'admin',
+  'onboarding',
+  'blog',
+  'contact',
+]
+
 export default function App() {
   const location = useLocation()
-  const isNfc = location.pathname.startsWith('/nfc') || location.pathname.startsWith('/u/')
+  const firstSeg = location.pathname.split('/')[1] || ''
+  const isProfileShortLink = firstSeg && !RESERVED_PREFIXES.includes(firstSeg)
+  const isNfc = location.pathname.startsWith('/nfc') || location.pathname.startsWith('/u/') || isProfileShortLink
 
   return (
     <ErrorBoundary>
@@ -103,6 +118,8 @@ export default function App() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/contact" element={<Contact />} />
+            {/* Custom Short Link Route: lamsa.ink/milano_eg, lamsa.ink/dr_mohamed */}
+            <Route path="/:uid" element={<PublicNfc />} />
             <Route path="*" element={<Home />} />
           </Routes>
         </Suspense>

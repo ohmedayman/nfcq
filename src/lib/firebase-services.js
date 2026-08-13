@@ -46,31 +46,102 @@ export async function initProfileIfMissing(uid, email, name) {
   }
 }
 
-export async function fetchProfile(uid) {
+export async function fetchProfile(identifier) {
+  if (!identifier) return null
+  const cleanId = String(identifier).trim().replace(/^@/, '').toLowerCase()
+
   let profileData = null
   
-  // 1. Try local cache first
+  // 1. Try local cache first by cleanId and direct identifier
   try {
-    const cached = localStorage.getItem(`lamsa_profile_${uid}`)
+    const cached = localStorage.getItem(`lamsa_profile_${cleanId}`) || localStorage.getItem(`lamsa_profile_${identifier}`)
     if (cached) profileData = JSON.parse(cached)
   } catch {}
 
-  // 2. Fetch from Firestore and merge
-  try {
-    const { getDoc } = await import('firebase/firestore')
-    const snap = await getDoc(await getUserProfileRef(uid))
-    if (snap.exists()) {
-      const remote = snap.data()
-      profileData = { ...(profileData || {}), ...remote }
-      try { localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(profileData)) } catch {}
-    }
-  } catch (err) {
-    console.warn('[fetchProfile] Firestore fetch failed, using cached profile:', err?.message)
+  // Check if matches in all_profiles
+  if (!profileData) {
+    try {
+      const all = JSON.parse(localStorage.getItem('lamsa_all_profiles') || '[]')
+      const match = all.find(
+        (p) => (p.username && p.username.toLowerCase() === cleanId) || p.uid === identifier || p.id === identifier
+      )
+      if (match) profileData = match
+    } catch {}
   }
 
-  // 3. Fallback check for avatar
+  // 2. Fetch from Firestore by document ID first
   try {
-    const cachedAvatar = localStorage.getItem(`lamsa_avatar_${uid}`)
+    const { getDoc, doc } = await import('firebase/firestore')
+    const db = await getDbInstance()
+    const snap = await getDoc(doc(db, 'profiles', identifier))
+    if (snap.exists()) {
+      const remote = snap.data()
+      profileData = { ...(profileData || {}), ...remote, uid: identifier }
+      try { localStorage.setItem(`lamsa_profile_${identifier}`, JSON.stringify(profileData)) } catch {}
+      return profileData
+    }
+  } catch (err) {
+    console.warn('[fetchProfile] direct doc lookup failed, trying query:', err?.message)
+  }
+
+  // 3. If not found by direct doc ID, query Firestore by username field
+  try {
+    const { collection, query, where, getDocs } = await import('firebase/firestore')
+    const db = await getDbInstance()
+    const q = query(collection(db, 'profiles'), where('username', '==', cleanId))
+    const snap = await getDocs(q)
+    if (!snap.empty) {
+      const docSnap = snap.docs[0]
+      const remote = docSnap.data()
+      profileData = { ...(profileData || {}), ...remote, uid: docSnap.id }
+      try { localStorage.setItem(`lamsa_profile_${docSnap.id}`, JSON.stringify(profileData)) } catch {}
+      return profileData
+    }
+  } catch (err) {
+    console.warn('[fetchProfile] username query error:', err?.message)
+  }
+
+  // 4. Built-in creator demo handles
+  const DEMO_PROFILES = {
+    'milano_eg': {
+      name: 'متجر ميلانو للأزياء',
+      username: 'milano_eg',
+      role: 'أحدث صيحات الموضة والأزياء الرجالي',
+      bio: 'متجر ميلانو - خامات قطنية بريميوم وتوصيل لجميع المحافظات 🛍️',
+      theme: 'midnight-gold',
+      phone: '01028707543',
+      email: 'milano@lamsa.ink',
+      activated: true,
+      social: { instagram: 'https://instagram.com/milano', whatsapp: '201028707543', facebook: 'https://facebook.com/milano' },
+      links: [
+        { title: 'تشكيلة الصيف الجديدة 2026', url: 'https://lamsa.ink/store', subtitle: 'خصم 50% لفترة محدودة' },
+        { title: 'طلب فوري ومحادثة واتساب', url: 'https://wa.me/201028707543', subtitle: 'خدمة عملاء 24/7' },
+      ],
+    },
+    'dr_mohamed': {
+      name: 'د. محمد أيمن',
+      username: 'dr_mohamed',
+      role: 'طبيب ومنصة تعليمية متكاملة',
+      bio: 'شروحات وكورسات طبية مبسطة + كتب ومنصات رقمية 👨‍⚕️📚',
+      theme: 'midnight-gold',
+      phone: '01028707543',
+      email: 'dr.mohamed@lamsa.ink',
+      activated: true,
+      social: { youtube: 'https://youtube.com', telegram: 'https://t.me', whatsapp: '201028707543', facebook: 'https://facebook.com' },
+      links: [
+        { title: 'قناتي الرسمية على يوتيوب', url: 'https://youtube.com', subtitle: '2.2M Subscribers' },
+        { title: 'حجز الكورسات والكتب الطبية', url: 'https://lamsa.ink/store', subtitle: 'متوفر الشحن الفوري' },
+      ],
+    },
+  }
+
+  if (DEMO_PROFILES[cleanId]) {
+    return DEMO_PROFILES[cleanId]
+  }
+
+  // 5. Fallback check for avatar
+  try {
+    const cachedAvatar = localStorage.getItem(`lamsa_avatar_${identifier}`)
     if (cachedAvatar && (!profileData || !profileData.avatar)) {
       profileData = { ...(profileData || {}), avatar: cachedAvatar }
     }
@@ -88,6 +159,9 @@ export async function saveProfile(uid, data) {
       merged = { ...prev, ...data, uid, updatedAt: Date.now() }
     }
     localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(merged))
+    if (merged.username) {
+      localStorage.setItem(`lamsa_profile_${merged.username.toLowerCase()}`, JSON.stringify(merged))
+    }
 
     // Also update all_profiles list for Admin
     const all = JSON.parse(localStorage.getItem('lamsa_all_profiles') || '[]')

@@ -27,7 +27,17 @@ export default function Dashboard() {
   const [loadingOrders, setLoadingOrders] = useState(false)
 
   const fallbackName = user?.displayName || (user?.email || '').split('@')[0]
-  const [form, setForm] = useState({ name: fallbackName, role: '', email: user?.email || '', bio: '', phone: '', avatar: '', theme: 'default' })
+  const fallbackUsername = (user?.displayName || (user?.email || '').split('@')[0]).toLowerCase().replace(/[^a-z0-9_]/g, '')
+  const [form, setForm] = useState({
+    name: fallbackName,
+    username: fallbackUsername,
+    role: '',
+    email: user?.email || '',
+    bio: '',
+    phone: '',
+    avatar: '',
+    theme: 'default',
+  })
   const [links, setLinks] = useState([])
   const [social, setSocial] = useState({
     instagram: '',
@@ -58,6 +68,7 @@ export default function Dashboard() {
         if (d) {
           setForm({
             name: d.name || fallbackName,
+            username: d.username || fallbackUsername,
             role: d.role || '',
             email: d.email || user.email || '',
             bio: d.bio || '',
@@ -213,7 +224,8 @@ export default function Dashboard() {
     )
   }
 
-  const url = `https://lamsa.ink/u/${user.uid}`
+  const shortUrl = `https://lamsa.ink/${form.username || user.uid}`
+  const directPath = `/${form.username || user.uid}`
   const linkCount = links.length
   const socialCount = Object.values(social).filter(Boolean).length
   const hasProfile = !!(form.name && form.role)
@@ -232,7 +244,7 @@ export default function Dashboard() {
       <div className="container">
         {/* Activation Banner */}
         {!activated && (
-          <div className="dash-alert-banner" style={{ marginBottom: 24, borderLeft: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.08)' }}>
+          <div className="dash-alert-banner" style={{ marginBottom: 20, borderLeft: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.08)' }}>
             <div className="dash-alert-icon" style={{ fontSize: '2rem' }}>💳</div>
             <div className="dash-alert-body" style={{ flex: 1 }}>
               <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)' }}>
@@ -249,6 +261,27 @@ export default function Dashboard() {
             </Link>
           </div>
         )}
+
+        {/* Custom Short Link Hero Bar */}
+        <div className="dash-shortlink-card">
+          <div className="dsl-info">
+            <span className="dsl-badge">⚡ {isAr ? 'رابط بطاقتك الذكية المختصر' : 'Your Short Bio Link'}</span>
+            <div className="dsl-url-row">
+              <b className="dsl-url-text">https://lamsa.ink/<span style={{ color: 'var(--cobalt)' }}>{form.username || user.uid}</span></b>
+            </div>
+          </div>
+          <div className="dsl-buttons">
+            <button className="btn btn-primary btn-sm" onClick={() => {
+              navigator.clipboard.writeText(shortUrl)
+              toast(isAr ? 'تم نسخ الرابط المختصر ✓' : 'Short link copied ✓')
+            }}>
+              📋 {isAr ? 'نسخ الرابط' : 'Copy'}
+            </button>
+            <a href={directPath} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">
+              👁️ {isAr ? 'معاينة' : 'Preview'}
+            </a>
+          </div>
+        </div>
 
         <div className="dash-header">
           <div className="dash-header-left">
@@ -267,12 +300,12 @@ export default function Dashboard() {
           </div>
           <div className="dash-header-actions">
             <button className="btn btn-ghost" onClick={() => {
-              navigator.clipboard.writeText(url)
-              toast(isAr ? 'اتنسخ الرابط ✓' : 'Link copied ✓')
+              navigator.clipboard.writeText(shortUrl)
+              toast(isAr ? 'اتنسخ الرابط المختصر ✓' : 'Link copied ✓')
             }}>
               <IconCheck /> {isAr ? 'نسخ الرابط' : 'Copy link'}
             </button>
-            <a href={url} target="_blank" rel="noreferrer" className="btn btn-ghost">
+            <a href={directPath} target="_blank" rel="noreferrer" className="btn btn-ghost">
               <IconRefresh /> {isAr ? ' شوف' : 'Preview'}
             </a>
           </div>
@@ -321,6 +354,25 @@ export default function Dashboard() {
                   <p>{isAr ? 'البيانات بتاعتك اللي بتظهر لما حد يلمس البطاقة.' : 'Details shown when your card is tapped.'}</p>
                 </div>
                 <AvatarUpload avatar={form.avatar} name={form.name || 'L'} uploading={uploading} onUpload={onUpload} isAr={isAr} />
+                
+                {/* Custom Username Field */}
+                <div className="field" style={{ marginBottom: 18 }}>
+                  <label>{isAr ? 'اسم الرابط المختصر (Username)' : 'Custom Short URL (Username)'} *</label>
+                  <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface, rgba(0,0,0,0.03))', border: '2px solid var(--line)', borderRadius: 14, padding: '4px 14px' }}>
+                    <span style={{ fontWeight: 800, color: 'var(--muted)', fontSize: '0.95rem', userSelect: 'none' }}>lamsa.ink/</span>
+                    <input
+                      value={form.username || ''}
+                      onChange={(e) => setForm((f) => ({ ...f, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                      placeholder="yourname"
+                      dir="ltr"
+                      style={{ border: 'none', background: 'transparent', outline: 'none', fontWeight: 800, fontSize: '1rem', width: '100%', color: 'var(--cobalt)' }}
+                    />
+                  </div>
+                  <small style={{ color: 'var(--muted)', marginTop: 4, display: 'block' }}>
+                    {isAr ? 'هذا هو الرابط الذكي القصير الذي يفتح بطاقتك فوراً' : 'This is your direct clean link that opens your NFC card'}
+                  </small>
+                </div>
+
                 <div className="form-row">
                   <div className="field"><label>{isAr ? 'الاسم الكامل' : 'Full name'}</label><input value={form.name} onChange={setV('name')} placeholder={isAr ? 'محمد أحمد' : 'John Doe'} /></div>
                   <div className="field"><label>{isAr ? 'المهنة / الدور' : 'Role / Title'}</label><input value={form.role} onChange={setV('role')} placeholder={isAr ? 'مبرمج مواقع · القاهرة' : 'Web Developer · Cairo'} /></div>
@@ -465,9 +517,9 @@ export default function Dashboard() {
                   <div className="nfc-link-icon"><IconRefresh /></div>
                   <div className="nfc-link-info">
                     <b>{isAr ? 'رابط البطاقة بتاعتك' : 'Your card link'}</b>
-                    <span className="nfc-link-url">{url}</span>
+                    <span className="nfc-link-url">{shortUrl}</span>
                   </div>
-                  <button className="btn btn-primary" onClick={() => { navigator.clipboard.writeText(url); toast(isAr ? 'تم النسخ ✓' : 'Copied ✓') }}>
+                  <button className="btn btn-primary" onClick={() => { navigator.clipboard.writeText(shortUrl); toast(isAr ? 'تم النسخ ✓' : 'Copied ✓') }}>
                     <IconCheck /> {isAr ? 'نسخ' : 'Copy'}
                   </button>
                 </div>
@@ -475,7 +527,7 @@ export default function Dashboard() {
                 <div className="nfc-qr-section">
                   <div className="nfc-qr">
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}&format=svg&color=0c1830`}
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shortUrl)}&format=svg&color=0c1830`}
                       alt="QR Code"
                       style={{ borderRadius: 12, width: '100%', height: 'auto' }}
                     />
@@ -483,7 +535,7 @@ export default function Dashboard() {
                   <div className="nfc-qr-info">
                     <h4>{isAr ? 'كود الـ QR' : 'QR Code'}</h4>
                     <p>{isAr ? 'امسح الكود بكاميرا الموبايل بتاعك عشان تفتح صفحتك.' : 'Scan with your phone camera to open your page.'}</p>
-                    <a className="btn btn-ghost btn-sm" href={url} target="_blank" rel="noreferrer"><IconRefresh /> {isAr ? 'افتح الصفحة' : 'Open page'}</a>
+                    <a className="btn btn-ghost btn-sm" href={directPath} target="_blank" rel="noreferrer"><IconRefresh /> {isAr ? 'افتح الصفحة' : 'Open page'}</a>
                   </div>
                 </div>
               </div>
@@ -610,7 +662,7 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
-            <a href={url} target="_blank" rel="noreferrer" className="preview-open">{isAr ? 'افتح الصفحة كلها' : 'Open full page'}</a>
+            <a href={directPath} target="_blank" rel="noreferrer" className="preview-open">{isAr ? 'افتح الصفحة كلها' : 'Open full page'}</a>
           </div>
         </div>
       </div>
