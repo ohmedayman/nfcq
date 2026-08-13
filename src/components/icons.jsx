@@ -302,6 +302,74 @@ export function IconDots() {
   )
 }
 
+export function FlaticonWhatsApp({ size = 32 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" style={{ filter: 'drop-shadow(0 4px 12px rgba(37, 211, 102, 0.45))' }}>
+      <circle cx="24" cy="24" r="22" fill="url(#flati_wa_grad)" />
+      <path d="M34.8 30.5c-.5-.3-2.9-1.4-3.4-1.6-.4-.2-.8-.2-1.1.2-.3.5-1.3 1.6-1.5 1.9-.3.3-.6.3-1.1.1-.5-.2-2.1-.8-3.9-2.4-1.4-1.3-2.4-2.9-2.7-3.4-.3-.5 0-.8.2-1 .2-.2.5-.6.7-.9.2-.3.3-.5.5-.8.2-.3.1-.6 0-.8-.1-.2-1.1-2.6-1.5-3.6-.4-.9-.8-.8-1.1-.8h-.9c-.3 0-.9.1-1.3.6-.5.5-1.7 1.7-1.7 4.1s1.8 4.7 2 5c.3.3 3.5 5.3 8.4 7.4 1.2.5 2.1.8 2.8 1 1.2.4 2.2.3 3.1.2 1-.2 2.9-1.2 3.3-2.3.4-1.1.4-2.1.3-2.3-.1-.2-.4-.3-.9-.6z" fill="#ffffff" />
+      <path d="M24 6.5C14.3 6.5 6.5 14.3 6.5 24c0 3.5 1 6.8 2.8 9.5L7 41l7.8-2c2.6 1.4 5.7 2.2 9.2 2.2 9.7 0 17.5-7.8 17.5-17.5S33.7 6.5 24 6.5zm0 32c-3.1 0-6-.8-8.4-2.3l-.6-.4-4.8 1.2 1.3-4.6-.4-.6c-1.6-2.5-2.5-5.3-2.5-8.3 0-8.5 6.9-15.5 15.5-15.5s15.5 6.9 15.5 15.5-7 15.5-15.5 15.5z" fill="#ffffff" fillOpacity="0.25" />
+      <defs>
+        <linearGradient id="flati_wa_grad" x1="6" y1="6" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#25D366" />
+          <stop offset="1" stopColor="#128C7E" />
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}
+
+export function FlaticonMail({ size = 32 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" style={{ filter: 'drop-shadow(0 4px 12px rgba(234, 67, 53, 0.45))' }}>
+      <rect x="4" y="8" width="40" height="32" rx="10" fill="url(#flati_mail_grad)" />
+      <path d="M4 14l18.4 12.8c1 .7 2.2.7 3.2 0L44 14" stroke="#ffffff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 36l13-11M44 36l-13-11" stroke="#ffffff" strokeWidth="2.2" strokeOpacity="0.4" strokeLinecap="round" />
+      <defs>
+        <linearGradient id="flati_mail_grad" x1="4" y1="8" x2="44" y2="40" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#EA4335" />
+          <stop offset="1" stopColor="#B31412" />
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}
+
+export function FlaticonSocial({ size = 32 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" style={{ filter: 'drop-shadow(0 4px 12px rgba(24, 84, 232, 0.45))' }}>
+      <circle cx="24" cy="24" r="22" fill="url(#flati_soc_grad)" />
+      <circle cx="24" cy="14" r="4.5" fill="#ffffff" />
+      <circle cx="14" cy="31" r="4.5" fill="#ffffff" />
+      <circle cx="34" cy="31" r="4.5" fill="#ffffff" />
+      <path d="M21.5 17.5L16.5 27.5M26.5 17.5L31.5 27.5M18.5 31h11" stroke="#ffffff" strokeWidth="2.8" strokeLinecap="round" />
+      <defs>
+        <linearGradient id="flati_soc_grad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#38bdf8" />
+          <stop offset="0.5" stopColor="#1854e8" />
+          <stop offset="1" stopColor="#0f172a" />
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}
+
+export function FlaticonHeadset({ size = 32 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" style={{ filter: 'drop-shadow(0 4px 12px rgba(245, 158, 11, 0.45))' }}>
+      <circle cx="24" cy="24" r="22" fill="url(#flati_headset_grad)" />
+      <path d="M12 24a12 12 0 0 1 24 0v5a3 3 0 0 1-3 3h-2a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h4v-1a11 11 0 0 0-22 0v1h4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2a3 3 0 0 1-3-3v-5z" fill="#ffffff" />
+      <path d="M33 32v2a3 3 0 0 1-3 3h-7" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="23" cy="37" r="1.5" fill="#ffffff" />
+      <defs>
+        <linearGradient id="flati_headset_grad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#fbbf24" />
+          <stop offset="1" stopColor="#d97706" />
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}
+
 export function PlatformIcon({ name, size = '1.2em' }) {
   const n = (name || '').toLowerCase()
   if (n === 'youtube') return <IconYouTube />
