@@ -385,6 +385,38 @@ export default function Home() {
         </div>
       </section>
 
+      {/* LIVE INTERACTIVE DEMO STUDIO BANNER */}
+      <section className="container" style={{ margin: '36px auto' }}>
+        <div style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1854e8 100%)',
+          borderRadius: 24,
+          padding: '32px 36px',
+          color: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 20,
+          boxShadow: '0 16px 40px rgba(24, 84, 232, 0.25)',
+          border: '1.5px solid rgba(255, 255, 255, 0.15)',
+        }}>
+          <div>
+            <span style={{ background: '#fde047', color: '#0f172a', fontWeight: 900, fontSize: '0.76rem', padding: '4px 10px', borderRadius: 99, display: 'inline-block', marginBottom: 8 }}>
+              ⚡️ {isAr ? 'تجربة حية للعميل' : 'Live Interactive Demo'}
+            </span>
+            <h3 style={{ margin: '0 0 6px', fontSize: '1.45rem', fontWeight: 900, color: '#ffffff' }}>
+              {isAr ? 'جرّب بروفايلك الذكي ومحاكاة لمس بطاقة الـ NFC بنفسك الآن! 🎮' : 'Test your live smart profile & simulate 1-tap NFC sharing! 🎮'}
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.88rem', color: '#cbd5e1', maxWidth: 620 }}>
+              {isAr ? 'اكتب بياناتك، بدّل بين الثيمات الملكية، ونزّل كارت الـ vCard لتجربة حفظ جهة الاتصال بهاتفك مباشرة قبل الشراء.' : 'Customize your details, switch luxury themes, and download a test vCard to your phone right now.'}
+            </p>
+          </div>
+          <Link to="/nfc/demo" className="btn btn-primary btn-lg" style={{ background: '#fde047', color: '#0f172a', fontWeight: 900, padding: '14px 28px' }}>
+            🚀 {isAr ? 'افتح استوديو التجربة الآن' : 'Launch Demo Studio'}
+          </Link>
+        </div>
+      </section>
+
       {/* ==========================================================================
           TAILORED PERSONA USE-CASES (حلول مفصلة ومصممة لكل تخصص)
           ========================================================================== */}

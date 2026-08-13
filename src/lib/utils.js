@@ -233,3 +233,26 @@ export const CARD_THEMES = [
     accent: '#0284c7',
   },
 ]
+
+export function generateVCardDataUri(profile = {}) {
+  const name = profile.name || 'Lamsa Contact'
+  const title = profile.role || ''
+  const phone = profile.phone || ''
+  const email = profile.email || ''
+  const note = profile.bio || 'Connected via Lamsa Smart NFC'
+  const url = profile.website || 'https://lamsa.ink'
+
+  const vcard = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${name}`,
+    `TITLE:${title}`,
+    phone ? `TEL;TYPE=CELL:${phone}` : '',
+    email ? `EMAIL;TYPE=WORK:${email}` : '',
+    url ? `URL:${url}` : '',
+    note ? `NOTE:${note}` : '',
+    'END:VCARD'
+  ].filter(Boolean).join('\n')
+
+  return `data:text/vcard;charset=utf-8,${encodeURIComponent(vcard)}`
+}
