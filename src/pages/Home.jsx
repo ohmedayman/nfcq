@@ -69,7 +69,7 @@ export default function Home() {
             </Reveal>
             <Reveal delay={240}>
               <div className="hero-actions">
-                <Link to="/store" className="btn btn-primary">{text.hero_cta}</Link>
+                <Link to="/account?mode=register&redirect=/store" className="btn btn-primary">{text.hero_cta}</Link>
                 <Link to="/nfc/demo" className="btn btn-ghost">{text.hero_cta2}</Link>
               </div>
             </Reveal>
@@ -262,7 +262,7 @@ export default function Home() {
                 <div className="point"><span className="tick">✓</span><div><b>{isAr ? 'مثالي لـ' : 'Built for'}</b><span>{isAr ? 'رواد أعمال، محترفون، فرق' : 'Founders, professionals, teams'}</span></div></div>
                 <div className="point"><span className="tick">✓</span><div><b>{isAr ? 'قابل للتوسع' : 'Scale ready'}</b><span>{isAr ? 'أصدار وطبع بحجم التيريات' : 'Issue cards at any volume'}</span></div></div>
               </div>
-              <Link to="/account" className="btn btn-primary">{isAr ? 'ابدأ مجاناً' : 'Start free'}</Link>
+              <Link to="/account?mode=register&redirect=/store" className="btn btn-primary">{isAr ? 'ابدأ مجاناً' : 'Start free'}</Link>
             </div>
           </Reveal>
           <Reveal>
@@ -383,8 +383,8 @@ export default function Home() {
           <h2>{isAr ? 'جاهز تشارك قِصتك؟' : 'Ready to tell your story?'}</h2>
           <p>{isAr ? 'أنشئ حسابك، اطلب بطاقة، وابدأ تواصل بلمسة واحدة.' : 'Create an account, order a card, and start connecting.'}</p>
           <div className="hero-actions" style={{ justifyContent: 'center' }}>
-            <Link to="/account" className="btn btn-primary">{text.nav_account}</Link>
-            <Link to="/store" className="btn btn-ghost">{text.buy}</Link>
+            <Link to="/account?mode=register&redirect=/store" className="btn btn-primary">{text.nav_account}</Link>
+            <Link to="/account?mode=register&redirect=/store" className="btn btn-ghost">{text.buy}</Link>
           </div>
         </div>
       </section>

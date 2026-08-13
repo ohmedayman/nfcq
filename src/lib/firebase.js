@@ -95,7 +95,18 @@ export async function uploadAvatar(uid, file) { return (await loadServices()).up
 export async function createOrder(uid, payload) { return (await loadServices()).createOrder(uid, payload) }
 export async function fetchPublic(uid) {
   if (!FIREBASE_READY) return null
-  try { return (await loadServices()).fetchProfile(uid) } catch { return null }
+  try {
+    const svc = await loadServices()
+    const result = await svc.fetchProfile(uid)
+    return result
+  } catch (err) {
+    console.error('[fetchPublic] Error loading profile for uid:', uid, err?.code || '', err?.message || err)
+    // Re-throw permission errors so the UI can show a proper message
+    if (err?.code === 'permission-denied') {
+      throw err
+    }
+    return null
+  }
 }
 export async function listOrders() { return (await loadServices()).listOrders() }
 export async function updateOrderStatus(orderId, status) { return (await loadServices()).updateOrderStatus(orderId, status) }

@@ -40,7 +40,7 @@ export async function initProfileIfMissing(uid, email, name) {
   const ref = await getUserProfileRef(uid)
   const snap = await getDoc(ref)
   if (!snap.exists()) {
-    await setDoc(ref, { uid, email, name, role: '', bio: '', links: [], createdAt: Date.now() })
+    await setDoc(ref, { uid, email, name, role: '', bio: '', links: [], activated: false, createdAt: Date.now() })
   }
 }
 

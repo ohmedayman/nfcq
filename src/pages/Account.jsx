@@ -13,7 +13,7 @@ export default function Account() {
   const nav = useNavigate()
   const [searchParams] = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/dashboard'
-  const [mode, setMode] = useState('register')
+  const [mode, setMode] = useState(searchParams.get('mode') || 'register')
   const [form, setForm] = useState({ name: '', email: '', pass: '' })
   const [busy, setBusy] = useState(false)
   const [ok, setOk] = useState('')
@@ -70,13 +70,33 @@ export default function Account() {
       <div className="container auth-wrap">
         <div className="auth-info">
           <span className="kicker">Lamsa</span>
-          <h2>{user ? (isAr ? 'أهلاً بك مجددًا 👋' : 'Welcome back') : (isAr ? 'ابدأ رحلتك الرقمية' : 'Start your digital journey')}</h2>
-          <p>
-            <NfcIcon style={{ verticalAlign: '-0.2em' }} />{' '}
-            {isAr
-              ? 'سجّل دخولك، أدر بطاقتك، واحفظ ملفك في حسابك الآمن.'
-              : 'Sign in, manage your card, and keep your profile in a secure account.'}
-          </p>
+          <h2>{user ? (isAr ? 'أهلاً بك مجددًا 👋' : 'Welcome back') : (isAr ? 'خطوات تفعيل بطاقتك' : 'Card Activation Steps')}</h2>
+          
+          <div className="funnel-steps">
+            <div className={`funnel-step ${mode === 'register' ? 'active' : 'completed'}`}>
+              <div className="funnel-step-num">{mode === 'register' ? '1' : '✓'}</div>
+              <div className="funnel-step-text">
+                <h4>{isAr ? '١. إنشاء الحساب' : '1. Create Account'}</h4>
+                <p>{isAr ? 'سجّل حسابك الآمن على المنصة كخطوة أولى.' : 'Sign up for a secure account first.'}</p>
+              </div>
+            </div>
+            
+            <div className={`funnel-step ${mode === 'register' ? 'pending' : 'active'}`}>
+              <div className="funnel-step-num">2</div>
+              <div className="funnel-step-text">
+                <h4>{isAr ? '٢. شراء بطاقة NFC' : '2. Purchase NFC Card'}</h4>
+                <p>{isAr ? 'اختر تصميم بطاقتك المفضل وأكمل عملية الشراء.' : 'Select your favorite card design and check out.'}</p>
+              </div>
+            </div>
+            
+            <div className="funnel-step pending">
+              <div className="funnel-step-num">3</div>
+              <div className="funnel-step-text">
+                <h4>{isAr ? '٣. تفعيل وتخصيص الملف' : '3. Activate & Customize'}</h4>
+                <p>{isAr ? 'بعد الشراء يتم تفعيل حسابك مباشرة لضبط ملفك وتعديله.' : 'Upon purchase, customize your live profile instantly.'}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="auth-card">

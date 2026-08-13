@@ -4,7 +4,7 @@ import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../context/ProductContext'
 import { CURRENCY } from '../data/content'
-import { createOrder } from '../lib/firebase'
+import { createOrder, saveProfile } from '../lib/firebase'
 import { FIREBASE_READY } from '../firebase.config'
 import { toast } from '../components/Toast'
 import { NfcIcon, IconCreditCard, IconZap, IconShield, IconPlus, IconMinus, IconCheck } from '../components/icons'
@@ -104,6 +104,11 @@ export default function Store() {
 
   function goToShipping() {
     if (items.length === 0) return toast(isAr ? 'أضف بطاقة أولًا' : 'Add a card first', 'error')
+    if (!user) {
+      toast(isAr ? 'يرجى تسجيل الدخول أو إنشاء حساب لإتمام الشراء' : 'Please sign in or create an account to complete your purchase', 'info')
+      nav('/account?mode=register&redirect=/store')
+      return
+    }
     if (isDigitalOnly) {
       placeOrder()
     } else {
@@ -133,6 +138,9 @@ export default function Store() {
           status: 'pending',
           createdAt: Date.now(),
         })
+        if (user?.uid) {
+          await saveProfile(user.uid, { activated: true })
+        }
       }
       setCart({})
       toast(isAr ? 'تم استلام طلبك ✓' : 'Order received ✓')

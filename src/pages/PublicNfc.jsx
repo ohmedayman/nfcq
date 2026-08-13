@@ -49,21 +49,33 @@ export default function PublicNfc() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [missing, setMissing] = useState(false)
+  const [permError, setPermError] = useState(false)
   const [tapped, setTapped] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  useEffect(() => {
-    let alive = true
+  function loadProfile() {
     setLoading(true)
+    setMissing(false)
+    setPermError(false)
     setTapped(false)
     setSaved(false)
     fetchPublic(uid).then((d) => {
-      if (!alive) return
       if (d) setData(d)
       else setMissing(true)
       setLoading(false)
-    }).catch(() => { if (alive) { setMissing(true); setLoading(false) } })
-    return () => { alive = false }
+    }).catch((err) => {
+      console.error('[PublicNfc] fetch error:', err)
+      if (err?.code === 'permission-denied') {
+        setPermError(true)
+      } else {
+        setMissing(true)
+      }
+      setLoading(false)
+    })
+  }
+
+  useEffect(() => {
+    loadProfile()
   }, [uid])
 
   useEffect(() => {
@@ -85,6 +97,20 @@ export default function PublicNfc() {
     )
   }
 
+  if (permError) {
+    return (
+      <div className="nfc-page">
+        <div className="aurora" />
+        <div className="container nfc-wrap" style={{ textAlign: 'center', paddingTop: 80 }}>
+          <div className="nfc-missing-icon" style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+          <h2 style={{ color: 'var(--text)', marginBottom: 8, fontSize: '1.6rem' }}>{isAr ? 'خطأ في الوصول' : 'Access error'}</h2>
+          <p style={{ color: 'var(--muted)', marginBottom: 24 }}>{isAr ? 'قواعد قاعدة البيانات لا تسمح بالقراءة العامة. يجب تحديث Firestore Security Rules.' : 'Database rules do not allow public reads. Firestore Security Rules need to be updated.'}</p>
+          <button className="btn btn-primary" onClick={loadProfile}>{isAr ? 'إعادة المحاولة' : 'Retry'}</button>
+        </div>
+      </div>
+    )
+  }
+
   if (missing) {
     return (
       <div className="nfc-page">
@@ -94,6 +120,24 @@ export default function PublicNfc() {
           <h2 style={{ color: 'var(--text)', marginBottom: 8, fontSize: '1.6rem' }}>{isAr ? 'الصفحة غير موجودة' : 'Page not found'}</h2>
           <p style={{ color: 'var(--muted)', marginBottom: 24 }}>{isAr ? 'لم ينشئ هذا المستخدم صفحته بعد.' : 'This user has not set up their page yet.'}</p>
           <Link to="/" className="btn btn-primary">{isAr ? 'العودة للرئيسية' : 'Go home'}</Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (data && data.activated === false) {
+    return (
+      <div className="nfc-page">
+        <div className="aurora" />
+        <div className="container nfc-wrap" style={{ textAlign: 'center', paddingTop: 80 }}>
+          <div className="nfc-missing-icon" style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+          <h2 style={{ color: 'var(--text)', marginBottom: 8, fontSize: '1.6rem' }}>{isAr ? 'الملف الشخصي غير نشط' : 'Profile Inactive'}</h2>
+          <p style={{ color: 'var(--muted)', marginBottom: 24 }}>
+            {isAr 
+              ? 'هذا الملف الشخصي لم يتم تفعيله بعد. يرجى إتمام عملية شراء البطاقة لتفعيل هذا الحساب.' 
+              : 'This profile is not activated yet. Please complete a card purchase to activate it.'}
+          </p>
+          <Link to="/store" className="btn btn-primary">{isAr ? 'شراء بطاقة NFC لتفعيل الحساب' : 'Purchase NFC Card to Activate'}</Link>
         </div>
       </div>
     )
