@@ -90,6 +90,7 @@ export default function Store() {
 
   // Coupon discount — only applied when a valid coupon is entered
   const VALID_COUPONS = {
+    'LAMSA': { type: 'percent', value: 50, labelEn: '50% OFF', labelAr: 'خصم 50%' },
     'LAMSA50': { type: 'percent', value: 50, labelEn: '50% OFF', labelAr: 'خصم 50%' },
     'LAMSA20': { type: 'percent', value: 20, labelEn: '20% OFF', labelAr: 'خصم 20%' },
     'WELCOME': { type: 'fixed', value: 50, labelEn: '50 EGP OFF', labelAr: 'خصم 50 ج.م' },

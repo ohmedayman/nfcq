@@ -3400,6 +3400,259 @@ html[dir="rtl"] .dash-alert-banner { text-align: right; }
   100% { transform: translate(100%, 100%) rotate(25deg); }
 }
 
+/* ==========================================================================
+   TOP ANNOUNCEMENT BAR (50% OFF COUPON)
+   ========================================================================== */
+
+.top-announcement-bar {
+  background: linear-gradient(90deg, #1e1b4b 0%, #1854e8 50%, #06b6d4 100%);
+  color: #ffffff;
+  padding: 8px 16px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(24, 84, 232, 0.25);
+  position: relative;
+  z-index: 1001;
+}
+.tab-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+@media (max-width: 768px) {
+  .tab-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+}
+.tab-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.tab-pill {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.tab-msg {
+  color: #ffffff;
+}
+.tab-coupon-code {
+  background: #fde047;
+  color: #0f172a;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 900;
+  font-family: monospace;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin: 0 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.15s ease;
+}
+.tab-coupon-code:hover {
+  transform: scale(1.08);
+}
+.tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tab-copy-btn {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tab-copy-btn:hover {
+  background: #fff;
+  color: #1854e8;
+}
+.tab-shop-btn {
+  background: #fde047;
+  color: #0f172a;
+  padding: 4px 14px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.tab-shop-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(253, 224, 71, 0.4);
+}
+.tab-close-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px;
+}
+.tab-close-btn:hover {
+  color: #fff;
+}
+
+/* ==========================================================================
+   HOMEPAGE LUXURY STORE CARDS GRID
+   ========================================================================== */
+
+.home-store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+  margin-top: 24px;
+}
+.home-product-card {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 24px 60px rgba(24, 84, 232, 0.15);
+  border-color: rgba(24, 84, 232, 0.35);
+}
+
+.hpc-visual {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: hidden;
+}
+.hpc-visual img {
+  max-width: 82%;
+  max-height: 190px;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 30px rgba(0,0,0,0.45));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-product-card:hover .hpc-visual img {
+  transform: scale(1.08) rotate(-1deg);
+}
+
+.hpc-badge-bestseller {
+  position: absolute;
+  top: 14px;
+  inset-inline-start: 14px;
+  background: #f59e0b;
+  color: #0f172a;
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 99px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+.hpc-badge-discount {
+  position: absolute;
+  top: 14px;
+  inset-inline-end: 14px;
+  background: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 99px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.hpc-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.hpc-mat {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--cobalt);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.hpc-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+.hpc-desc {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0 0 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hpc-features-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.hpc-features-mini span {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.hpc-divider {
+  height: 1px;
+  background: var(--line);
+  margin-top: auto;
+  margin-bottom: 16px;
+}
+.hpc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.hpc-price-box {
+  display: flex;
+  flex-direction: column;
+}
+.hpc-price-old {
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-decoration: line-through;
+  font-weight: 600;
+}
+.hpc-price-current {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: var(--cobalt);
+  line-height: 1;
+}
+.hpc-price-current small {
+  font-size: 0.85rem;
+  margin-inline-start: 2px;
+}
+
+
 
 
 

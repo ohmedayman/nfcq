@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
+import { toast } from './Toast'
 import { IconGlobe, IconUser, IconShield, IconMenu, IconClose, IconHome, IconCreditCard } from './icons'
 
 function getCartCount() {
@@ -19,6 +20,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(getCartCount)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
   const userMenuRef = useRef(null)
   const nav = useNavigate()
 
@@ -50,96 +52,131 @@ export default function Navbar() {
 
   const initial = (user?.displayName || user?.email || 'U').charAt(0).toUpperCase()
 
+  function copyCoupon() {
+    navigator.clipboard.writeText('LAMSA')
+    toast(isAr ? 'تم نسخ كوبون الخصم 50% (LAMSA) ✓' : '50% OFF Coupon (LAMSA) copied ✓')
+  }
+
   return (
-    <header className="topbar">
-      <div className="container topbar-inner">
-        <Link to="/" aria-label="home" onClick={close} className="topbar-brand">
-          <Logo markSize={52} light={false} showText={false} />
-        </Link>
+    <>
+      {/* 50% OFF Announcement Banner */}
+      {!bannerDismissed && (
+        <div className="top-announcement-bar">
+          <div className="container tab-inner">
+            <div className="tab-left">
+              <span className="tab-pill">🔥 {isAr ? 'عرض الإطلاق الحصري' : 'Launch Offer'}</span>
+              <span className="tab-msg">
+                {isAr ? (
+                  <>خصم <b style={{ color: '#fde047' }}>50%</b> على جميع البطاقات الذكية بكوبون: <code className="tab-coupon-code" onClick={copyCoupon} title="انقر للنسخ">LAMSA</code> (صالح لمدة شهر ⏳)</>
+                ) : (
+                  <><b style={{ color: '#fde047' }}>50% OFF</b> all smart cards with code: <code className="tab-coupon-code" onClick={copyCoupon}>LAMSA</code></>
+                )}
+              </span>
+            </div>
+            <div className="tab-actions">
+              <button className="tab-copy-btn" onClick={copyCoupon}>
+                📋 {isAr ? 'نسخ الكوبون' : 'Copy Code'}
+              </button>
+              <Link to="/store" className="tab-shop-btn">
+                🛒 {isAr ? 'اطلب الآن' : 'Shop'}
+              </Link>
+              <button className="tab-close-btn" onClick={() => setBannerDismissed(true)} aria-label="Close">✕</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-        <nav className="topbar-nav">
-          {navLinks.map((l) => (
-            <Link key={l.to} onClick={close} to={l.to} className="topbar-link">{l.l}</Link>
-          ))}
-        </nav>
-
-        <div className="topbar-actions">
-          <Link to="/store" className="topbar-cart" aria-label="cart">
-            <IconCreditCard />
-            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+      <header className="topbar">
+        <div className="container topbar-inner">
+          <Link to="/" aria-label="home" onClick={close} className="topbar-brand">
+            <Logo markSize={52} light={false} showText={false} />
           </Link>
 
-          <button className="topbar-lang" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}>
-            <IconGlobe /> {isAr ? 'EN' : 'ع'}
-          </button>
+          <nav className="topbar-nav">
+            {navLinks.map((l) => (
+              <Link key={l.to} onClick={close} to={l.to} className="topbar-link">{l.l}</Link>
+            ))}
+          </nav>
 
-          {user ? (
-            <div className="user-menu-wrap" ref={userMenuRef}>
-              <button className="topbar-avatar" onClick={() => setUserMenuOpen(!userMenuOpen)}>
-                <span className="topbar-avatar-circle">{initial}</span>
-              </button>
-              {userMenuOpen && (
-                <div className="user-dropdown">
-                  <div className="ud-header">
-                    <span className="ud-avatar">{initial}</span>
-                    <div>
-                      <div className="ud-name">{user.displayName || (user.email || '').split('@')[0]}</div>
-                      <div className="ud-email">{user.email}</div>
-                    </div>
-                  </div>
-                  <div className="ud-divider" />
-                  <Link to="/dashboard" className="ud-item" onClick={close}>
-                    <IconHome /> {isAr ? 'لوحة التحكم' : 'Dashboard'}
-                  </Link>
-                  {isAdmin && (
-                    <Link to="/admin" className="ud-item" onClick={close}>
-                      <IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin'}
-                    </Link>
-                  )}
-                  <Link to="/nfc/demo" className="ud-item" onClick={close}>
-                    <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 8C10 8 16 14 16 21"/><path d="M7 8C11.5 8 15 11.5 15 16"/></svg>
-                    {isAr ? 'بطاقتي' : 'My Card'}
-                  </Link>
-                  <div className="ud-divider" />
-                  <button className="ud-item ud-logout" onClick={logout}>
-                    {isAr ? 'تسجيل الخروج' : 'Sign out'}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link to="/account" className="topbar-cta" onClick={close}>
-              {isAr ? 'تسجيل الدخول' : 'Sign in'}
+          <div className="topbar-actions">
+            <Link to="/store" className="topbar-cart" aria-label="cart">
+              <IconCreditCard />
+              {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
             </Link>
-          )}
 
-          <button className="topbar-toggle" aria-label="menu" onClick={toggleMobile}>
-            {mobileOpen ? <IconClose /> : <IconMenu />}
-          </button>
+            <button className="topbar-lang" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}>
+              <IconGlobe /> {isAr ? 'EN' : 'ع'}
+            </button>
+
+            {user ? (
+              <div className="user-menu-wrap" ref={userMenuRef}>
+                <button className="topbar-avatar" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+                  <span className="topbar-avatar-circle">{initial}</span>
+                </button>
+                {userMenuOpen && (
+                  <div className="user-dropdown">
+                    <div className="ud-header">
+                      <span className="ud-avatar">{initial}</span>
+                      <div>
+                        <div className="ud-name">{user.displayName || (user.email || '').split('@')[0]}</div>
+                        <div className="ud-email">{user.email}</div>
+                      </div>
+                    </div>
+                    <div className="ud-divider" />
+                    <Link to="/dashboard" className="ud-item" onClick={close}>
+                      <IconHome /> {isAr ? 'لوحة التحكم' : 'Dashboard'}
+                    </Link>
+                    {isAdmin && (
+                      <Link to="/admin" className="ud-item" onClick={close}>
+                        <IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin'}
+                      </Link>
+                    )}
+                    <Link to="/nfc/demo" className="ud-item" onClick={close}>
+                      <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 8C10 8 16 14 16 21"/><path d="M7 8C11.5 8 15 11.5 15 16"/></svg>
+                      {isAr ? 'معاينة البطاقة' : 'Card Preview'}
+                    </Link>
+                    <div className="ud-divider" />
+                    <button className="ud-item ud-logout" onClick={() => { logout(); close() }}>
+                      {isAr ? 'تسجيل الخروج' : 'Log out'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/account?mode=login" className="btn btn-ghost btn-sm topbar-cta">
+                <IconUser /> {isAr ? 'تسجيل الدخول' : 'Sign in'}
+              </Link>
+            )}
+
+            <button className="topbar-hamburger" onClick={toggleMobile} aria-label="menu">
+              {mobileOpen ? <IconClose /> : <IconMenu />}
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className={`mobile-overlay ${mobileOpen ? 'open' : ''}`} onClick={close} />
-
-      <div className={`mobile-menu ${mobileOpen ? 'open' : ''}`}>
-        <div className="mobile-menu-header">
-          <span>{isAr ? 'القائمة' : 'Menu'}</span>
-          <button className="mobile-menu-close" onClick={close} aria-label="close">
-            <IconClose />
-          </button>
-        </div>
-        {navLinks.map((l) => <button key={l.to} className="mi" onClick={() => go(l.to)}>{l.l}</button>)}
-        <button className="mi" onClick={() => go('/store')}>
-          <IconCreditCard /> {isAr ? 'السلة' : 'Cart'}{cartCount > 0 ? ` (${cartCount})` : ''}
-        </button>
-        {user && isAdmin && <button className="mi" onClick={() => go('/admin')}><IconShield /> {isAr ? 'لوحة الإدارة' : 'Admin'}</button>}
-        <button className="mi" onClick={() => setLang(l => (l === 'ar' ? 'en' : 'ar'))}><IconGlobe /> {isAr ? 'English' : 'العربية'}</button>
-        <div style={{ flex: 1 }} />
-        {user
-          ? <button className="mi mi-auth" onClick={logout}>{isAr ? 'تسجيل الخروج' : 'Sign out'}</button>
-          : <button className="mi mi-auth" onClick={() => go('/account')}>{isAr ? 'تسجيل الدخول' : 'Sign in'}</button>}
-        <div className="mobile-menu-footer">Lamsa NFC © 2026</div>
-      </div>
-    </header>
+        {mobileOpen && (
+          <div className="mobile-menu">
+            <div className="mobile-menu-links">
+              {navLinks.map((l) => (
+                <button key={l.to} className="mobile-menu-link" onClick={() => go(l.to)}>{l.l}</button>
+              ))}
+            </div>
+            {!user ? (
+              <div className="mobile-menu-cta">
+                <button className="btn btn-primary btn-block" onClick={() => go('/account?mode=register')}>
+                  {isAr ? 'إنشاء حساب جديد' : 'Sign up'}
+                </button>
+              </div>
+            ) : (
+              <div className="mobile-menu-cta">
+                <button className="btn btn-ghost btn-block" onClick={() => { logout(); close() }}>
+                  {isAr ? 'تسجيل الخروج' : 'Log out'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </header>
+    </>
   )
 }

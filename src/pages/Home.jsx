@@ -534,35 +534,54 @@ export default function Home() {
       </section>
 
       {/* PRODUCTS PREVIEW */}
-      <section className="section">
+      <section className="section" style={{ background: 'var(--surface-soft, rgba(0,0,0,0.015))' }}>
         <div className="container">
           <div className="section-head">
-            <span className="kicker">{isAr ? 'المتجر' : 'Store'}</span>
+            <span className="kicker">{isAr ? 'المتجر الرسمي' : 'Official Store'}</span>
             <h2>{isAr ? 'اختر بطاقتك الذكية الفاخرة' : 'Choose Your Smart Card'}</h2>
-            <p>{isAr ? 'خامات معدنية ومطفية وخشبية مطبوعة بجودة عالمية وشحن حتى باب بيتك' : 'Luxury materials delivered to your doorstep'}</p>
+            <p>{isAr ? 'خامات معدنية، أكريليك، ومطفية مطبوعة بجودة عالمية وشحن حتى باب بيتك مع ضمان شامل' : 'Luxury materials delivered to your doorstep with full warranty'}</p>
           </div>
-          <div className="products-grid">
+
+          <div className="home-store-grid">
             {products.slice(0, 3).map((p) => (
-              <div key={p.id} className="store-card">
-                <div className="store-card-img" style={{ background: p.color || 'var(--card)' }}>
+              <div key={p.id} className="home-product-card">
+                {/* Visual Image Box */}
+                <div className="hpc-visual" style={{ background: p.color || 'linear-gradient(135deg, #0f172a, #1e293b)' }}>
                   <img src={`/img/${p.img}`} alt={p.nameEn} loading="lazy" />
-                  {p.popular && <span className="store-badge">{isAr ? 'الأكثر مبيعاً' : 'Bestseller'}</span>}
+                  {p.popular && <span className="hpc-badge-bestseller">🔥 {isAr ? 'الأكثر طلباً' : 'Bestseller'}</span>}
+                  <span className="hpc-badge-discount">-50% OFF</span>
                 </div>
-                <div className="store-card-body">
-                  <h3>{isAr ? p.nameAr : p.nameEn}</h3>
-                  <div className="store-price-row">
-                    <span className="store-price">{p.price} {isAr ? 'ج.م' : 'EGP'}</span>
-                    {p.originalPrice && <span className="store-old-price">{p.originalPrice} {isAr ? 'ج.م' : 'EGP'}</span>}
+
+                {/* Body */}
+                <div className="hpc-body">
+                  <div className="hpc-mat">{isAr ? p.materialAr : p.materialEn}</div>
+                  <h3 className="hpc-title">{isAr ? p.nameAr : p.nameEn}</h3>
+                  <p className="hpc-desc">{isAr ? p.descAr : p.descEn}</p>
+
+                  <div className="hpc-features-mini">
+                    <span>✓ {isAr ? 'شريحة NFC مدمجة فائقة السرعة' : 'High-speed NFC built-in'}</span>
+                    <span>✓ {isAr ? 'صفحة بروفايل مخصصة وتعديل لحظي' : 'Free customizable profile'}</span>
+                    <span>✓ {isAr ? 'شحن لجميع المحافظات والدفع عند الاستلام' : 'Nationwide shipping & COD'}</span>
                   </div>
-                  <Link to={`/store/${p.id}`} className="btn btn-primary" style={{ width: '100%', marginTop: 12 }}>
-                    {isAr ? 'اطلب وتفعيل الحساب' : 'Order & Activate'}
-                  </Link>
+
+                  <div className="hpc-divider" />
+
+                  <div className="hpc-footer">
+                    <div className="hpc-price-box">
+                      <span className="hpc-price-old">{p.originalPrice || p.price * 2} {isAr ? 'ج.م' : 'EGP'}</span>
+                      <span className="hpc-price-current">{p.price} <small>{isAr ? 'ج.م' : 'EGP'}</small></span>
+                    </div>
+                    <Link to={`/store/${p.id}`} className="btn btn-primary btn-sm">
+                      🛒 {isAr ? 'اطلب الآن' : 'Order Now'}
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-          <div style={{ textAlign: 'center', marginTop: 32 }}>
-            <Link to="/store" className="btn btn-ghost">
+
+          <div style={{ textAlign: 'center', marginTop: 36 }}>
+            <Link to="/store" className="btn btn-ghost" style={{ padding: '12px 28px', fontWeight: 800 }}>
               {isAr ? 'عرض جميع الخامات والمنتجات في المتجر ←' : 'View all products in Store →'}
             </Link>
           </div>
