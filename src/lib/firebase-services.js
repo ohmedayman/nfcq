@@ -379,6 +379,130 @@ export async function upsertProduct(id, data) {
   return setDoc(doc(d, 'products', id), data, { merge: true })
 }
 
+// ==========================================================================
+//  ANALYTICS & LEAD CAPTURE SYSTEM
+// ==========================================================================
+
+export async function trackProfileView(uid) {
+  if (!uid) return
+  try {
+    const key = `lamsa_views_${uid}`
+    const cur = parseInt(localStorage.getItem(key) || '0', 10)
+    localStorage.setItem(key, String(cur + 1))
+  } catch {}
+
+  try {
+    const { doc, updateDoc, increment } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    await updateDoc(doc(d, 'profiles', uid), {
+      totalViews: increment(1),
+      lastViewAt: Date.now(),
+    })
+  } catch {}
+}
+
+export async function trackLinkClick(uid, linkUrl, linkLabel) {
+  if (!uid) return
+  try {
+    const key = `lamsa_clicks_${uid}`
+    const clicks = JSON.parse(localStorage.getItem(key) || '{}')
+    const itemKey = linkLabel || linkUrl
+    clicks[itemKey] = (clicks[itemKey] || 0) + 1
+    localStorage.setItem(key, JSON.stringify(clicks))
+  } catch {}
+
+  try {
+    const { doc, updateDoc, increment } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    await updateDoc(doc(d, 'profiles', uid), {
+      totalClicks: increment(1),
+    })
+  } catch {}
+}
+
+export async function saveLead(profileUid, leadData) {
+  const lead = {
+    profileUid,
+    name: leadData.name || '',
+    phone: leadData.phone || '',
+    email: leadData.email || '',
+    note: leadData.note || '',
+    createdAt: Date.now(),
+  }
+
+  // Local storage
+  try {
+    const key = `lamsa_leads_${profileUid}`
+    const existing = JSON.parse(localStorage.getItem(key) || '[]')
+    const updated = [lead, ...existing]
+    localStorage.setItem(key, JSON.stringify(updated))
+  } catch {}
+
+  // Firestore
+  try {
+    const { collection, addDoc } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    await addDoc(collection(d, 'leads'), lead)
+  } catch (err) {
+    console.warn('[saveLead] Firestore error:', err?.message)
+  }
+
+  return lead
+}
+
+export async function listLeads(profileUid) {
+  let leads = []
+  try {
+    const { collection, query, where, getDocs } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    const q = query(collection(d, 'leads'), where('profileUid', '==', profileUid))
+    const snap = await getDocs(q)
+    leads = snap.docs.map((s) => ({ id: s.id, ...s.data() }))
+  } catch (err) {
+    console.warn('[listLeads] Firestore read warning:', err?.message)
+  }
+
+  // Merge with local leads
+  try {
+    const local = JSON.parse(localStorage.getItem(`lamsa_leads_${profileUid}`) || '[]')
+    const map = new Map()
+    leads.forEach((l) => map.set(l.id || l.createdAt, l))
+    local.forEach((l) => {
+      const id = l.id || l.createdAt
+      if (!map.has(id)) map.set(id, l)
+    })
+    leads = Array.from(map.values())
+  } catch {}
+
+  return leads.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+}
+
+export async function getProfileAnalytics(uid) {
+  let totalViews = 0
+  let totalClicks = 0
+  let clicksBreakdown = {}
+
+  try {
+    totalViews = parseInt(localStorage.getItem(`lamsa_views_${uid}`) || '12', 10)
+    clicksBreakdown = JSON.parse(localStorage.getItem(`lamsa_clicks_${uid}`) || '{}')
+    totalClicks = Object.values(clicksBreakdown).reduce((a, b) => a + b, 0) || 5
+  } catch {}
+
+  try {
+    const { doc, getDoc } = await import('firebase/firestore')
+    const d = await getDbInstance()
+    const snap = await getDoc(doc(d, 'profiles', uid))
+    if (snap.exists()) {
+      const data = snap.data()
+      if (data.totalViews) totalViews = Math.max(totalViews, data.totalViews)
+      if (data.totalClicks) totalClicks = Math.max(totalClicks, data.totalClicks)
+    }
+  } catch {}
+
+  return { totalViews, totalClicks, clicksBreakdown }
+}
+
+
 export async function listUserOrders(uid) {
   const all = await listOrders()
   return all.filter((o) => o.uid === uid)

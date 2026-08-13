@@ -2,48 +2,15 @@ import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
-import { fetchPublic } from '../lib/firebase'
+import { fetchPublic, trackProfileView, trackLinkClick, saveLead } from '../lib/firebase'
 import { CUSTOMER } from '../data/content'
 import { normalizeUrl, normalizeSocialUrl, detectPlatformInfo } from '../lib/utils'
 import Logo from '../components/Logo'
 import {
   NfcIcon, IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconMail, IconPhone, IconPin,
   IconYouTube, IconFacebook, IconTikTok, IconTelegram, IconSnapchat, IconSpotify, IconDiscord,
-  PlatformIcon, IconVerified, IconShare, IconCheck, IconDots,
+  PlatformIcon, IconVerified, IconShare, IconCheck, IconDots, IconUser, IconZap
 } from '../components/icons'
-
-const LINK_COLORS = [
-  'linear-gradient(135deg,#667eea,#764ba2)',
-  'linear-gradient(135deg,#f093fb,#f5576c)',
-  'linear-gradient(135deg,#4facfe,#00f2fe)',
-  'linear-gradient(135deg,#43e97b,#38f9d7)',
-  'linear-gradient(135deg,#fa709a,#fee140)',
-  'linear-gradient(135deg,#a18cd1,#fbc2eb)',
-  'linear-gradient(135deg,#fccb90,#d57eeb)',
-  'linear-gradient(135deg,#e0c3fc,#8ec5fc)',
-]
-
-function getLinkIcon(url) {
-  if (!url) return '🔗'
-  const u = url.toLowerCase()
-  if (u.includes('github')) return '💻'
-  if (u.includes('linkedin')) return '💼'
-  if (u.includes('instagram')) return '📸'
-  if (u.includes('twitter') || u.includes('x.com')) return '🐦'
-  if (u.includes('youtube')) return '🎬'
-  if (u.includes('tiktok')) return '🎵'
-  if (u.includes('behance') || u.includes('dribbble')) return '🎨'
-  if (u.includes('medium') || u.includes('substack')) return '📝'
-  if (u.includes('wa.me') || u.includes('whatsapp')) return '💬'
-  if (u.includes('tel:') || u.includes('phone')) return '📞'
-  if (u.includes('mailto') || u.includes('email')) return '✉️'
-  if (u.includes('maps') || u.includes('location')) return '📍'
-  if (u.includes('spotify')) return '🎶'
-  if (u.includes('twitch')) return '🎮'
-  if (u.includes('calendly') || u.includes('calendar')) return '📅'
-  if (u.includes('shop') || u.includes('store') || u.includes('buy')) return '🛒'
-  return '🔗'
-}
 
 export default function PublicNfc() {
   const { uid } = useParams()
@@ -54,6 +21,7 @@ export default function PublicNfc() {
   const [loading, setLoading] = useState(true)
   const [tapped, setTapped] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [connectOpen, setConnectOpen] = useState(false)
 
   function loadProfile() {
     setLoading(true)
@@ -62,6 +30,7 @@ export default function PublicNfc() {
     fetchPublic(uid).then((d) => {
       if (d) {
         setData(d)
+        trackProfileView(d.uid || uid)
       } else {
         let found = null
         try {
@@ -70,6 +39,7 @@ export default function PublicNfc() {
         } catch {}
         if (found) {
           setData(found)
+          trackProfileView(found.uid || uid)
         } else {
           const fallbackName = (user && user.uid === uid) ? (user.displayName || user.email?.split('@')[0]) : 'Lamsa Member'
           setData({
@@ -106,47 +76,45 @@ export default function PublicNfc() {
 
   useEffect(() => {
     loadProfile()
-  }, [uid, user])
+  }, [uid])
 
   useEffect(() => {
-    if (data) {
-      const t = setTimeout(() => setTapped(true), 300)
+    if (!loading && data) {
+      const t = setTimeout(() => setTapped(true), 250)
       return () => clearTimeout(t)
     }
-  }, [data])
+  }, [loading, data])
 
   if (loading) {
     return (
-      <div className="nfc-page">
-        <div className="aurora" />
-        <div className="container nfc-wrap" style={{ textAlign: 'center', paddingTop: 120 }}>
+      <div className="nfc-page theme-default">
+        <div className="nfc-loading">
           <div className="nfc-loader" />
-          <p style={{ color: 'var(--muted)', marginTop: 20 }}>{isAr ? 'جاري فتح الصفحة…' : 'Opening page…'}</p>
+          <p style={{ color: '#fff', opacity: 0.7, marginTop: 12 }}>{isAr ? 'جاري فتح البطاقة الذكية…' : 'Loading NFC Card…'}</p>
         </div>
       </div>
     )
   }
 
   const profile = {
-    name: data.name || CUSTOMER.name,
-    role: data.role || CUSTOMER.role,
-    bio: data.bio || CUSTOMER.bio,
-    avatar: data.avatar || '',
-    email: data.email || '',
-    phone: data.phone || '',
-    links: (Array.isArray(data.links) ? data.links : []).filter((l) => l && (l.label || l.url)),
-    social: data.social || {},
-    theme: data.theme || 'default',
+    name: data?.name || 'Lamsa Member',
+    role: data?.role || '',
+    email: data?.email || '',
+    phone: data?.phone || '',
+    bio: data?.bio || '',
+    avatar: data?.avatar || '',
+    theme: data?.theme || 'default',
+    links: Array.isArray(data?.links) ? data.links : [],
+    social: data?.social || {},
+    uid: data?.uid || uid,
   }
 
-  const socialKeys = ['youtube', 'facebook', 'tiktok', 'telegram', 'whatsapp', 'instagram', 'linkedin', 'twitter', 'snapchat', 'spotify']
-  const hasSocial = socialKeys.some((k) => !!profile.social?.[k])
+  const hasSocial = Object.values(profile.social).some(Boolean)
 
   function downloadVCard() {
     const parts = [
       'BEGIN:VCARD',
       'VERSION:3.0',
-      `N:${profile.name.split(' ').slice(-1)[0] || profile.name};${profile.name.split(' ').slice(0, -1).join(' ')};;;`,
       `FN:${profile.name}`,
       profile.role ? `TITLE:${profile.role}` : '',
       profile.email ? `EMAIL;TYPE=INTERNET:${profile.email}` : '',
@@ -181,6 +149,10 @@ export default function PublicNfc() {
     }
   }
 
+  function handleLinkClick(url, label) {
+    trackLinkClick(profile.uid, url, label)
+  }
+
   return (
     <div className={`nfc-page theme-${profile.theme || 'default'}`}>
       <div className="aurora" />
@@ -189,11 +161,14 @@ export default function PublicNfc() {
         <div className={`nfc-topbar-flex ${tapped ? 'show' : ''}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, width: '100%', maxWidth: 440 }}>
           <Link to="/" aria-label="home"><Logo markSize={30} light={false} /></Link>
           <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setConnectOpen(true)} className="btn-chip" title={isAr ? 'تبادل جهات الاتصال' : 'Connect'}>
+              🤝 {isAr ? 'أرسل بياناتك' : 'Connect'}
+            </button>
             <button onClick={downloadVCard} className="btn-chip" title={isAr ? 'حفظ جهة الاتصال' : 'Save Contact'}>
               {saved ? <IconCheck /> : '💾'} {isAr ? (saved ? 'تم الحفظ' : 'حفظ') : (saved ? 'Saved' : 'Save')}
             </button>
             <button onClick={shareCard} className="btn-chip" title={isAr ? 'مشاركة' : 'Share'}>
-              <IconShare /> {isAr ? 'مشاركة' : 'Share'}
+              <IconShare />
             </button>
           </div>
         </div>
@@ -252,52 +227,52 @@ export default function PublicNfc() {
             {hasSocial && (
               <div className="nfc-socials">
                 {profile.social.youtube && (
-                  <a href={normalizeSocialUrl('youtube', profile.social.youtube)} target="_blank" rel="noreferrer" aria-label="YouTube" className="nfc-social-btn" style={{ '--sc': '#FF0000' }}>
+                  <a href={normalizeSocialUrl('youtube', profile.social.youtube)} onClick={() => handleLinkClick(profile.social.youtube, 'YouTube')} target="_blank" rel="noreferrer" aria-label="YouTube" className="nfc-social-btn" style={{ '--sc': '#FF0000' }}>
                     <IconYouTube />
                   </a>
                 )}
                 {profile.social.facebook && (
-                  <a href={normalizeSocialUrl('facebook', profile.social.facebook)} target="_blank" rel="noreferrer" aria-label="Facebook" className="nfc-social-btn" style={{ '--sc': '#1877F2' }}>
+                  <a href={normalizeSocialUrl('facebook', profile.social.facebook)} onClick={() => handleLinkClick(profile.social.facebook, 'Facebook')} target="_blank" rel="noreferrer" aria-label="Facebook" className="nfc-social-btn" style={{ '--sc': '#1877F2' }}>
                     <IconFacebook />
                   </a>
                 )}
                 {profile.social.tiktok && (
-                  <a href={normalizeSocialUrl('tiktok', profile.social.tiktok)} target="_blank" rel="noreferrer" aria-label="TikTok" className="nfc-social-btn" style={{ '--sc': '#000000' }}>
+                  <a href={normalizeSocialUrl('tiktok', profile.social.tiktok)} onClick={() => handleLinkClick(profile.social.tiktok, 'TikTok')} target="_blank" rel="noreferrer" aria-label="TikTok" className="nfc-social-btn" style={{ '--sc': '#000000' }}>
                     <IconTikTok />
                   </a>
                 )}
                 {profile.social.telegram && (
-                  <a href={normalizeSocialUrl('telegram', profile.social.telegram)} target="_blank" rel="noreferrer" aria-label="Telegram" className="nfc-social-btn" style={{ '--sc': '#229ED9' }}>
+                  <a href={normalizeSocialUrl('telegram', profile.social.telegram)} onClick={() => handleLinkClick(profile.social.telegram, 'Telegram')} target="_blank" rel="noreferrer" aria-label="Telegram" className="nfc-social-btn" style={{ '--sc': '#229ED9' }}>
                     <IconTelegram />
                   </a>
                 )}
                 {profile.social.whatsapp && (
-                  <a href={normalizeSocialUrl('whatsapp', profile.social.whatsapp)} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="nfc-social-btn" style={{ '--sc': '#25D366' }}>
+                  <a href={normalizeSocialUrl('whatsapp', profile.social.whatsapp)} onClick={() => handleLinkClick(profile.social.whatsapp, 'WhatsApp')} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="nfc-social-btn" style={{ '--sc': '#25D366' }}>
                     <IconWhatsApp />
                   </a>
                 )}
                 {profile.social.instagram && (
-                  <a href={normalizeSocialUrl('instagram', profile.social.instagram)} target="_blank" rel="noreferrer" aria-label="Instagram" className="nfc-social-btn" style={{ '--sc': '#E4405F' }}>
+                  <a href={normalizeSocialUrl('instagram', profile.social.instagram)} onClick={() => handleLinkClick(profile.social.instagram, 'Instagram')} target="_blank" rel="noreferrer" aria-label="Instagram" className="nfc-social-btn" style={{ '--sc': '#E4405F' }}>
                     <IconInstagram />
                   </a>
                 )}
                 {profile.social.linkedin && (
-                  <a href={normalizeSocialUrl('linkedin', profile.social.linkedin)} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="nfc-social-btn" style={{ '--sc': '#0A66C2' }}>
+                  <a href={normalizeSocialUrl('linkedin', profile.social.linkedin)} onClick={() => handleLinkClick(profile.social.linkedin, 'LinkedIn')} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="nfc-social-btn" style={{ '--sc': '#0A66C2' }}>
                     <IconLinkedin />
                   </a>
                 )}
                 {profile.social.twitter && (
-                  <a href={normalizeSocialUrl('twitter', profile.social.twitter)} target="_blank" rel="noreferrer" aria-label="X" className="nfc-social-btn" style={{ '--sc': '#000000' }}>
+                  <a href={normalizeSocialUrl('twitter', profile.social.twitter)} onClick={() => handleLinkClick(profile.social.twitter, 'Twitter')} target="_blank" rel="noreferrer" aria-label="Twitter" className="nfc-social-btn" style={{ '--sc': '#000000' }}>
                     <IconTwitter />
                   </a>
                 )}
                 {profile.social.snapchat && (
-                  <a href={normalizeSocialUrl('snapchat', profile.social.snapchat)} target="_blank" rel="noreferrer" aria-label="Snapchat" className="nfc-social-btn" style={{ '--sc': '#eab308' }}>
+                  <a href={normalizeSocialUrl('snapchat', profile.social.snapchat)} onClick={() => handleLinkClick(profile.social.snapchat, 'Snapchat')} target="_blank" rel="noreferrer" aria-label="Snapchat" className="nfc-social-btn" style={{ '--sc': '#eab308' }}>
                     <IconSnapchat />
                   </a>
                 )}
                 {profile.social.spotify && (
-                  <a href={normalizeSocialUrl('spotify', profile.social.spotify)} target="_blank" rel="noreferrer" aria-label="Spotify" className="nfc-social-btn" style={{ '--sc': '#1DB954' }}>
+                  <a href={normalizeSocialUrl('spotify', profile.social.spotify)} onClick={() => handleLinkClick(profile.social.spotify, 'Spotify')} target="_blank" rel="noreferrer" aria-label="Spotify" className="nfc-social-btn" style={{ '--sc': '#1DB954' }}>
                     <IconSpotify />
                   </a>
                 )}
@@ -313,6 +288,7 @@ export default function PublicNfc() {
                     <a
                       key={i}
                       href={normalizeUrl(l.url)}
+                      onClick={() => handleLinkClick(l.url, l.label)}
                       className="nfc-rich-link"
                       target="_blank"
                       rel="noreferrer"
@@ -352,10 +328,15 @@ export default function PublicNfc() {
               </div>
             )}
 
-            {/* Main Action Button */}
-            <button className="nfc-action-primary" onClick={downloadVCard} style={{ width: '100%', marginTop: 8 }}>
-              {saved ? (isAr ? 'تم حفظ جهة الاتصال ✓' : 'Contact Saved ✓') : (isAr ? '💾 حفظ جهة الاتصال في الهاتف' : '💾 Save Contact to Phone')}
-            </button>
+            {/* Main Action Buttons Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+              <button className="nfc-action-primary" onClick={downloadVCard}>
+                {saved ? '✓ تم الحفظ' : (isAr ? '💾 حفظ جهة الاتصال' : '💾 Save Contact')}
+              </button>
+              <button className="btn btn-ghost" onClick={() => setConnectOpen(true)} style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: 14, fontWeight: 800, fontSize: '0.86rem' }}>
+                🤝 {isAr ? 'أرسل بياناتك لي' : 'Send Info'}
+              </button>
+            </div>
 
             {/* Scan Prompt */}
             <div className="nfc-scan">
@@ -372,6 +353,115 @@ export default function PublicNfc() {
             <NfcIcon /> {isAr ? 'مدعوم بواسطة' : 'Powered by'} <b>Lamsa NFC</b>
           </div>
         </div>
+      </div>
+
+      {/* Exchange Contact Lead Modal */}
+      {connectOpen && (
+        <ExchangeContactModal
+          isOpen={connectOpen}
+          onClose={() => setConnectOpen(false)}
+          profileName={profile.name}
+          profileUid={profile.uid}
+          isAr={isAr}
+        />
+      )}
+    </div>
+  )
+}
+
+function ExchangeContactModal({ isOpen, onClose, profileName, profileUid, isAr }) {
+  const [form, setForm] = useState({ name: '', phone: '', email: '', note: '' })
+  const [sending, setSending] = useState(false)
+  const [done, setDone] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!form.name || !form.phone) return alert(isAr ? 'يرجى إدخال اسمك ورقم هاتفك' : 'Please enter your name and phone')
+    setSending(true)
+    try {
+      await saveLead(profileUid, form)
+      setDone(true)
+      setTimeout(() => {
+        onClose()
+      }, 2000)
+    } catch {
+      alert(isAr ? 'تعذر الإرسال، حاول مجدداً' : 'Failed to send, try again')
+    }
+    setSending(false)
+  }
+
+  return (
+    <div className="ec-modal-overlay" onClick={onClose}>
+      <div className="ec-modal-box" onClick={(e) => e.stopPropagation()}>
+        <button className="ec-modal-close" onClick={onClose}>✕</button>
+
+        {done ? (
+          <div style={{ textAlign: 'center', padding: '24px 10px' }}>
+            <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎉</div>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#16a34a' }}>
+              {isAr ? `تم إرسال بياناتك بنجاح إلى ${profileName} ✓` : `Your contact info has been sent to ${profileName} ✓`}
+            </h3>
+            <p style={{ color: 'var(--muted)', fontSize: '0.86rem', marginTop: 8 }}>
+              {isAr ? 'سيتم حفظ بياناتك والتواصل معك قريباً.' : 'They will reach out to you shortly.'}
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div style={{ textAlign: 'center', marginBottom: 18 }}>
+              <span style={{ fontSize: '2rem' }}>🤝</span>
+              <h3 style={{ margin: '6px 0 2px', fontSize: '1.2rem' }}>{isAr ? 'أرسل بياناتك وتواصل معي' : 'Exchange Contact Details'}</h3>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
+                {isAr ? `شارك معلوماتك مباشرة مع ${profileName}` : `Share your details directly with ${profileName}`}
+              </p>
+            </div>
+
+            <div className="field" style={{ marginBottom: 10 }}>
+              <label style={{ fontSize: '0.84rem' }}>{isAr ? 'اسمك بالكامل *' : 'Your Full Name *'}</label>
+              <input
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder={isAr ? 'مثال: أحمد محمود' : 'e.g. Alex'}
+              />
+            </div>
+
+            <div className="field" style={{ marginBottom: 10 }}>
+              <label style={{ fontSize: '0.84rem' }}>{isAr ? 'رقم الهاتف / واتساب *' : 'Phone / WhatsApp *'}</label>
+              <input
+                required
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="010XXXXXXXX"
+                dir="ltr"
+              />
+            </div>
+
+            <div className="field" style={{ marginBottom: 10 }}>
+              <label style={{ fontSize: '0.84rem' }}>{isAr ? 'البريد الإلكتروني (اختياري)' : 'Email (Optional)'}</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="you@email.com"
+                dir="ltr"
+              />
+            </div>
+
+            <div className="field" style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: '0.84rem' }}>{isAr ? 'رسالة أو نبذة قصيرة' : 'Short Note'}</label>
+              <textarea
+                value={form.note}
+                onChange={(e) => setForm({ ...form, note: e.target.value })}
+                rows={2}
+                placeholder={isAr ? 'تشرفت بلقائك في المؤتمر…' : 'Great meeting you…'}
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px' }} disabled={sending}>
+              {sending ? (isAr ? 'جاري الإرسال…' : 'Sending…') : (isAr ? '🚀 إرسال بياناتي الآن' : '🚀 Send My Info')}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   )

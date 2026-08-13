@@ -4,13 +4,16 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
 import { toast } from '../components/Toast'
 import { FIREBASE_READY } from '../firebase.config'
-import { initProfileIfMissing, fetchProfile, saveProfile, uploadAvatar, listUserOrders } from '../lib/firebase'
+import {
+  initProfileIfMissing, fetchProfile, saveProfile, uploadAvatar,
+  listUserOrders, listLeads, getProfileAnalytics
+} from '../lib/firebase'
 import { normalizeUrl, normalizeSocialUrl, detectPlatformInfo, CARD_THEMES } from '../lib/utils'
 import {
   IconUser, IconLink, IconCreditCard, IconCheck, IconPlus, IconRefresh, IconHome,
   IconInstagram, IconLinkedin, IconTwitter, IconWhatsApp, IconShield, IconZap, NfcIcon,
   IconYouTube, IconFacebook, IconTikTok, IconTelegram, IconSnapchat, IconSpotify, IconDiscord,
-  PlatformIcon, IconVerified, IconShare, IconDots,
+  PlatformIcon, IconVerified, IconShare, IconDots, IconPhone, IconMail
 } from '../components/icons'
 
 export default function Dashboard() {
@@ -25,6 +28,8 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(false)
   const [orders, setOrders] = useState([])
   const [loadingOrders, setLoadingOrders] = useState(false)
+  const [leads, setLeads] = useState([])
+  const [analytics, setAnalytics] = useState({ totalViews: 0, totalClicks: 0, clicksBreakdown: {} })
 
   const fallbackName = user?.displayName || (user?.email || '').split('@')[0]
   const fallbackUsername = (user?.displayName || (user?.email || '').split('@')[0]).toLowerCase().replace(/[^a-z0-9_]/g, '')
@@ -55,6 +60,24 @@ export default function Dashboard() {
 
   const setV = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const setS = (k) => (e) => setSocial((s) => ({ ...s, [k]: e.target.value }))
+
+  async function loadLeadsData() {
+    if (user?.uid) {
+      try {
+        const l = await listLeads(user.uid)
+        setLeads(l)
+      } catch {}
+    }
+  }
+
+  async function loadAnalyticsData() {
+    if (user?.uid) {
+      try {
+        const a = await getProfileAnalytics(user.uid)
+        setAnalytics(a)
+      } catch {}
+    }
+  }
 
   useEffect(() => {
     if (!user) { nav('/account'); return }
@@ -91,6 +114,8 @@ export default function Dashboard() {
           })
           setActivated(d.activated === true)
         }
+        await loadLeadsData()
+        await loadAnalyticsData()
       } catch (err) {
         console.error('[Dashboard] Error fetching profile:', err)
       } finally {
@@ -144,49 +169,17 @@ export default function Dashboard() {
     try {
       const url = await uploadAvatar(user.uid, file)
       setForm((f) => ({ ...f, avatar: url }))
-      toast(isAr ? 'تم رفع الصورة بنجاح ✓' : 'Photo uploaded successfully ✓')
+      toast(isAr ? 'تم رفع الصورة بنجاح ✓' : 'Photo uploaded ✓')
     } catch (err) {
-      console.warn('Upload fallback triggered:', err)
-      try {
-        const { compressImage } = await import('../lib/utils')
-        const fallbackUrl = await compressImage(file, 350, 350, 0.85)
-        setForm((f) => ({ ...f, avatar: fallbackUrl }))
-        toast(isAr ? 'تم تحديث الصورة بنجاح ✓' : 'Photo updated successfully ✓')
-      } catch {
-        toast(isAr ? 'حدث خطأ في معالجة الصورة' : 'Failed to process image', 'error')
-      }
-    } finally {
-      setUploading(false)
-      if (e.target) e.target.value = ''
+      console.error('Upload avatar error:', err)
+      toast(isAr ? 'فشل الرفع، يرجى المحاولة مجدداً' : 'Upload failed, please try again', 'error')
     }
+    setUploading(false)
   }
 
-  async function loadOrders() {
-    setLoadingOrders(true)
-    try {
-      const ords = await listUserOrders(user.uid)
-      setOrders(ords || [])
-    } catch {
-      setOrders([])
-    }
-    setLoadingOrders(false)
-  }
-
-  useEffect(() => {
-    if (tab === 'orders') loadOrders()
-  }, [tab])
-
-  function addLink() {
-    setLinks((l) => [...l, { label: '', url: '', subtitle: '' }])
-  }
-
-  function updateLink(idx, key, val) {
-    setLinks((l) => l.map((item, i) => (i === idx ? { ...item, [key]: val } : item)))
-  }
-
-  function delLink(idx) {
-    setLinks((l) => l.filter((_, i) => i !== idx))
-  }
+  const addLink = () => setLinks((l) => [...l, { label: '', url: '', subtitle: '' }])
+  const updateLink = (i, k, val) => setLinks((l) => l.map((item, idx) => (idx === i ? { ...item, [k]: val } : item)))
+  const delLink = (i) => setLinks((l) => l.filter((_, idx) => idx !== i))
 
   function moveLink(idx, dir) {
     const target = idx + dir
@@ -199,12 +192,21 @@ export default function Dashboard() {
     })
   }
 
+  async function loadOrders() {
+    setLoadingOrders(true)
+    try {
+      const o = await listUserOrders(user.uid)
+      setOrders(o)
+    } catch {}
+    setLoadingOrders(false)
+  }
+
   if (loading) {
     return (
       <section className="section">
         <div className="container dash-loading">
           <div className="nfc-loader" />
-          <p style={{ color: 'var(--muted)', marginTop: 16 }}>{isAr ? 'بيتحمّل يا معلم...' : 'Loading your profile…'}</p>
+          <p style={{ color: 'var(--muted)', marginTop: 16 }}>{isAr ? 'جاري تحميل لوحة التحكم…' : 'Loading your profile…'}</p>
         </div>
       </section>
     )
@@ -235,6 +237,8 @@ export default function Dashboard() {
     { id: 'themes', icon: <span style={{ fontSize: '1.1rem' }}>🎨</span>, label: isAr ? 'الثيمات' : 'Themes' },
     { id: 'social', icon: <IconLink />, label: isAr ? 'سوشيال' : 'Social', badge: socialCount || null },
     { id: 'links', icon: <IconZap />, label: isAr ? 'الروابط' : 'Links', badge: linkCount || null },
+    { id: 'leads', icon: <span style={{ fontSize: '1.1rem' }}>👥</span>, label: isAr ? 'جهات الاتصال' : 'Contacts', badge: leads.length || null },
+    { id: 'analytics', icon: <span style={{ fontSize: '1.1rem' }}>📊</span>, label: isAr ? 'التحليلات' : 'Analytics' },
     { id: 'orders', icon: <IconCreditCard />, label: isAr ? 'طلباتي' : 'Orders' },
     { id: 'nfc', icon: <NfcIcon />, label: isAr ? 'بطاقة NFC' : 'NFC Card' },
   ]
@@ -265,7 +269,7 @@ export default function Dashboard() {
         {/* Custom Short Link Hero Bar */}
         <div className="dash-shortlink-card">
           <div className="dsl-info">
-            <span className="dsl-badge">⚡ {isAr ? 'رابط بطاقتك الذكية المختصر' : 'Your Short Bio Link'}</span>
+            <span className="dsl-badge">⚡ {isAr ? 'رابط بطاقتك الذكية المختصر (Link-in-Bio)' : 'Your Short NFC Link'}</span>
             <div className="dsl-url-row">
               <b className="dsl-url-text">https://lamsa.ink/<span style={{ color: 'var(--cobalt)' }}>{form.username || user.uid}</span></b>
             </div>
@@ -324,6 +328,10 @@ export default function Dashboard() {
           <div className={`dash-stat ${linkCount > 0 ? 'active' : ''}`}>
             <div className="ds-icon"><IconZap /></div>
             <div><b>{linkCount}</b><span>{isAr ? 'رابط خاص' : 'Custom links'}</span></div>
+          </div>
+          <div className={`dash-stat ${leads.length > 0 ? 'active' : ''}`}>
+            <div className="ds-icon"><span style={{ fontSize: '1.2rem' }}>👥</span></div>
+            <div><b>{leads.length}</b><span>{isAr ? 'جهات الاتصال' : 'Contacts'}</span></div>
           </div>
           <div className={`dash-stat ${activated ? 'active' : 'inactive'}`}>
             <div className="ds-icon"><NfcIcon /></div>
@@ -474,6 +482,14 @@ export default function Dashboard() {
               </div>
             )}
 
+            {tab === 'leads' && (
+              <LeadsTab leads={leads} isAr={isAr} onRefresh={loadLeadsData} />
+            )}
+
+            {tab === 'analytics' && (
+              <AnalyticsTab analytics={analytics} links={links} isAr={isAr} onRefresh={loadAnalyticsData} />
+            )}
+
             {tab === 'orders' && (
               <div className="dash-card">
                 <div className="dash-card-header">
@@ -559,17 +575,16 @@ export default function Dashboard() {
                           try {
                             await saveProfile(user.uid, { theme: t.id })
                             toast(isAr ? `تم تفعيل ثيم: ${t.nameAr} ✓` : `${t.nameEn} theme active ✓`)
-                          } catch (err) {
-                            console.error(err)
-                          }
+                          } catch {}
                         }}
                       >
-                        <div className="theme-preview" style={{ background: t.previewGrad }}>
-                          <span className="theme-preview-badge">{isAr ? t.nameAr : t.nameEn}</span>
+                        <div className="theme-card-preview" style={{ background: t.preview }}>
+                          <span className="theme-accent-dot" style={{ background: t.accent }} />
+                          {isSelected && <span className="theme-active-badge">✓</span>}
                         </div>
                         <div className="theme-card-info">
-                          <span className="theme-card-title">{isAr ? t.nameAr : t.nameEn}</span>
-                          <div className="theme-card-radio" />
+                          <b>{isAr ? t.nameAr : t.nameEn}</b>
+                          <small>{isAr ? t.descAr : t.descEn}</small>
                         </div>
                       </div>
                     )
@@ -579,9 +594,8 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Live Preview */}
-          <div className="dash-preview">
-            <div className="preview-label"><NfcIcon /> {isAr ? 'شكل مباشر' : 'Live preview'}</div>
+          {/* Right Mobile Live Mockup */}
+          <div className="dash-sidebar">
             <div className={`preview-phone theme-${form.theme || 'default'}`}>
               <div className="preview-notch" />
               <div className="preview-screen">
@@ -697,6 +711,202 @@ function SocialField({ icon, lbl, ph, v, onChange, color }) {
         <input value={v} onChange={onChange} placeholder={ph} dir="ltr" style={{ textAlign: 'left' }} />
       </div>
       {v && <span className="sf-check">✓</span>}
+    </div>
+  )
+}
+
+function AnalyticsTab({ analytics, links, isAr, onRefresh }) {
+  const views = analytics?.totalViews || 0
+  const clicks = analytics?.totalClicks || 0
+  const ctr = views > 0 ? Math.min(100, Math.round((clicks / views) * 100)) : 0
+  const breakdown = analytics?.clicksBreakdown || {}
+
+  return (
+    <div className="dash-card">
+      <div className="dash-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h3>{isAr ? 'تحليلات ونقرات بطاقتك 📊' : 'Analytics & Tap Insights 📊'}</h3>
+          <p>{isAr ? 'تابع عدد المشاهدات، والنقرات، ومعدل التفاعل مع روابطك الذكية.' : 'Track profile views, link clicks and audience engagement.'}</p>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={onRefresh}>🔄 {isAr ? 'تحديث' : 'Refresh'}</button>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="analytics-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 24 }}>
+        <div className="ak-card" style={{ background: 'rgba(24, 84, 232, 0.06)', border: '1.5px solid rgba(24, 84, 232, 0.2)', padding: 18, borderRadius: 18 }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 800 }}>{isAr ? 'إجمالي المشاهدات' : 'Profile Views'}</span>
+          <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--cobalt)', margin: '4px 0' }}>{views.toLocaleString()}</div>
+          <small style={{ color: '#16a34a', fontWeight: 700 }}>{isAr ? 'مباشر من الهواتف والـ NFC' : 'Live from NFC & web'}</small>
+        </div>
+
+        <div className="ak-card" style={{ background: 'rgba(16, 185, 129, 0.06)', border: '1.5px solid rgba(16, 185, 129, 0.2)', padding: 18, borderRadius: 18 }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 800 }}>{isAr ? 'إجمالي النقرات' : 'Total Clicks'}</span>
+          <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#10b981', margin: '4px 0' }}>{clicks.toLocaleString()}</div>
+          <small style={{ color: '#16a34a', fontWeight: 700 }}>{isAr ? 'تفاعل مع الروابط والسوشيال' : 'Links & socials'}</small>
+        </div>
+
+        <div className="ak-card" style={{ background: 'rgba(245, 158, 11, 0.06)', border: '1.5px solid rgba(245, 158, 11, 0.2)', padding: 18, borderRadius: 18 }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 800 }}>{isAr ? 'معدل التفاعل (CTR)' : 'Engagement Rate'}</span>
+          <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#f59e0b', margin: '4px 0' }}>{ctr}%</div>
+          <small style={{ color: '#f59e0b', fontWeight: 700 }}>{isAr ? 'نسبة نقر الزوار للروابط' : 'Click through rate'}</small>
+        </div>
+      </div>
+
+      {/* Clicks Breakdown */}
+      <div>
+        <h4 style={{ margin: '0 0 14px', fontSize: '1.05rem' }}>{isAr ? 'الروابط الأكثر تفاعلاً وزيارة 🚀' : 'Most Clicked Links 🚀'}</h4>
+        {Object.keys(breakdown).length === 0 ? (
+          <div className="empty-state" style={{ padding: '24px 10px' }}>
+            <p>{isAr ? 'شارك بطاقتك لبدء تسجيل النقرات والتحليلات الحية.' : 'Share your card to start tracking real-time clicks.'}</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {Object.entries(breakdown).sort(([, a], [, b]) => b - a).map(([name, count], idx) => {
+              const maxCount = Math.max(...Object.values(breakdown), 1)
+              const pct = Math.round((count / maxCount) * 100)
+              return (
+                <div key={idx} style={{ background: 'var(--surface, rgba(0,0,0,0.02))', border: '1px solid var(--line)', borderRadius: 14, padding: '10px 14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <b style={{ fontSize: '0.9rem' }}>{name}</b>
+                    <span style={{ fontWeight: 800, color: 'var(--cobalt)', fontSize: '0.92rem' }}>{count} {isAr ? 'نقرة' : 'clicks'}</span>
+                  </div>
+                  <div style={{ width: '100%', height: 6, background: 'var(--line)', borderRadius: 99, overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, var(--cobalt), #06b6d4)', borderRadius: 99 }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function LeadsTab({ leads, isAr, onRefresh }) {
+  const [search, setSearch] = useState('')
+
+  const filtered = useMemo(() => {
+    if (!search) return leads
+    const q = search.toLowerCase()
+    return leads.filter((l) => (l.name || '').toLowerCase().includes(q) || (l.phone || '').includes(q) || (l.email || '').toLowerCase().includes(q))
+  }, [leads, search])
+
+  function exportCSV() {
+    if (leads.length === 0) return alert(isAr ? 'لا توجد جهات اتصال للتصدير' : 'No contacts to export')
+    const headers = ['Name', 'Phone', 'Email', 'Note', 'Date']
+    const rows = leads.map((l) => [
+      `"${l.name || ''}"`,
+      `"${l.phone || ''}"`,
+      `"${l.email || ''}"`,
+      `"${(l.note || '').replace(/"/g, '""')}"`,
+      `"${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : ''}"`
+    ])
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `lamsa_contacts_${Date.now()}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className="dash-card">
+      <div className="dash-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <h3>{isAr ? 'جهات الاتصال المستلمة (Leads) 👥' : 'Received Contacts (Leads) 👥'}</h3>
+          <p>{isAr ? 'بيانات الأشخاص الذين قاموا بإرسال معلوماتهم إليك من بطاقتك الذكية.' : 'Contacts received when visitors exchanged details with your card.'}</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-primary btn-sm" onClick={exportCSV}>
+            📥 {isAr ? 'تصدير إكسل (CSV)' : 'Export CSV'}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={onRefresh}>
+            🔄
+          </button>
+        </div>
+      </div>
+
+      {leads.length > 0 && (
+        <div className="dash-search" style={{ marginBottom: 16 }}>
+          <input
+            type="text"
+            placeholder={isAr ? 'بحث بالاسم، رقم الهاتف، الإيميل…' : 'Search by name, phone, email…'}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--card)' }}
+          />
+        </div>
+      )}
+
+      {leads.length === 0 ? (
+        <div className="empty-state" style={{ padding: '40px 10px' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🤝</div>
+          <h4>{isAr ? 'لسه مفيش جهات اتصال مستلمة' : 'No contacts received yet'}</h4>
+          <p style={{ maxWidth: 420, margin: '0 auto', fontSize: '0.88rem' }}>
+            {isAr ? 'عندما يفتح أي شخص بطاقتك الذكية ويضغط على "أرسل بياناتك"، ستظهر معلوماته هنا فوراً.' : 'When someone taps "Connect / Send Info" on your card, their details will appear here.'}
+          </p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="empty-state">
+          <p>{isAr ? 'لا توجد نتائج تطابق بحثك' : 'No results matching your search'}</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+          {filtered.map((l, idx) => {
+            let phone = l.phone ? l.phone.replace(/[^0-9]/g, '') : ''
+            if (phone.startsWith('01')) phone = '2' + phone
+            const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(`مرحباً ${l.name || ''} 👋، تشرفت بالتواصل معك عبر بطاقتي الذكية على منصة لمسة...`)}` : ''
+
+            return (
+              <div key={idx} style={{ background: 'var(--surface, rgba(0,0,0,0.02))', border: '1.5px solid var(--line)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <b style={{ fontSize: '1rem', color: 'var(--text)' }}>{l.name}</b>
+                    <small style={{ color: 'var(--muted)', fontSize: '0.74rem' }}>{l.createdAt ? new Date(l.createdAt).toLocaleDateString() : ''}</small>
+                  </div>
+
+                  <div style={{ margin: '10px 0', display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.86rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text)' }}>
+                      <IconPhone size="0.95em" />
+                      <span>{l.phone}</span>
+                    </div>
+                    {l.email && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted)', fontSize: '0.82rem' }}>
+                        <IconMail size="0.95em" />
+                        <span>{l.email}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {l.note && (
+                    <div style={{ background: 'rgba(0,0,0,0.04)', padding: '6px 10px', borderRadius: 8, fontSize: '0.8rem', color: 'var(--muted)', margin: '8px 0 14px' }}>
+                      "{l.note}"
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  {waUrl && (
+                    <a href={waUrl} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ flex: 1, color: '#16a34a', fontWeight: 800, textAlign: 'center' }}>
+                      💬 واتساب
+                    </a>
+                  )}
+                  {l.phone && (
+                    <a href={`tel:${l.phone}`} className="btn btn-ghost btn-sm" style={{ color: 'var(--cobalt)', fontWeight: 800 }}>
+                      📞 اتصال
+                    </a>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
