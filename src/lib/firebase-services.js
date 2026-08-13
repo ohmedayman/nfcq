@@ -47,32 +47,63 @@ export async function initProfileIfMissing(uid, email, name) {
 }
 
 export async function fetchProfile(uid) {
+  let profileData = null
+  
+  // 1. Try local cache first
+  try {
+    const cached = localStorage.getItem(`lamsa_profile_${uid}`)
+    if (cached) profileData = JSON.parse(cached)
+  } catch {}
+
+  // 2. Fetch from Firestore and merge
   try {
     const { getDoc } = await import('firebase/firestore')
     const snap = await getDoc(await getUserProfileRef(uid))
     if (snap.exists()) {
-      const data = snap.data()
-      try { localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(data)) } catch {}
-      return data
+      const remote = snap.data()
+      profileData = { ...(profileData || {}), ...remote }
+      try { localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(profileData)) } catch {}
     }
   } catch (err) {
-    console.warn('[fetchProfile] Firestore fetch failed, checking local storage cache:', err?.message)
+    console.warn('[fetchProfile] Firestore fetch failed, using cached profile:', err?.message)
   }
+
+  // 3. Fallback check for avatar
   try {
-    const cached = localStorage.getItem(`lamsa_profile_${uid}`)
-    if (cached) return JSON.parse(cached)
+    const cachedAvatar = localStorage.getItem(`lamsa_avatar_${uid}`)
+    if (cachedAvatar && (!profileData || !profileData.avatar)) {
+      profileData = { ...(profileData || {}), avatar: cachedAvatar }
+    }
   } catch {}
-  return null
+
+  return profileData
 }
 
 export async function saveProfile(uid, data) {
-  const { setDoc } = await import('firebase/firestore')
+  let merged = { ...data, uid, updatedAt: Date.now() }
   try {
     const cached = localStorage.getItem(`lamsa_profile_${uid}`)
-    const merged = { ...(cached ? JSON.parse(cached) : {}), ...data, uid }
+    if (cached) {
+      const prev = JSON.parse(cached)
+      merged = { ...prev, ...data, uid, updatedAt: Date.now() }
+    }
     localStorage.setItem(`lamsa_profile_${uid}`, JSON.stringify(merged))
+
+    // Also update all_profiles list for Admin
+    const all = JSON.parse(localStorage.getItem('lamsa_all_profiles') || '[]')
+    const updatedAll = [merged, ...all.filter((p) => (p.uid !== uid && p.id !== uid))]
+    localStorage.setItem('lamsa_all_profiles', JSON.stringify(updatedAll))
   } catch {}
-  return setDoc(await getUserProfileRef(uid), data, { merge: true })
+
+  try {
+    const { setDoc } = await import('firebase/firestore')
+    const ref = await getUserProfileRef(uid)
+    await setDoc(ref, merged, { merge: true })
+  } catch (err) {
+    console.warn('[saveProfile] Firestore setDoc warning:', err?.message)
+  }
+
+  return merged
 }
 
 export async function uploadAvatar(uid, file) {

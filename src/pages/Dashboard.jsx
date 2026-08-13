@@ -55,34 +55,33 @@ export default function Dashboard() {
         await initProfileIfMissing(user.uid, user.email, user.displayName || '')
         const d = await fetchProfile(user.uid)
         if (!alive) return
-        const initialForm = {
-          name: d?.name || fallbackName,
-          role: d?.role || '',
-          email: d?.email || user.email || '',
-          bio: d?.bio || '',
-          phone: d?.phone || '',
-          avatar: d?.avatar || '',
-          theme: d?.theme || 'default',
+        if (d) {
+          setForm({
+            name: d.name || fallbackName,
+            role: d.role || '',
+            email: d.email || user.email || '',
+            bio: d.bio || '',
+            phone: d.phone || '',
+            avatar: d.avatar || '',
+            theme: d.theme || 'default',
+          })
+          setLinks(Array.isArray(d.links) ? d.links : [])
+          setSocial({
+            instagram: d.social?.instagram || '',
+            whatsapp: d.social?.whatsapp || '',
+            facebook: d.social?.facebook || '',
+            youtube: d.social?.youtube || '',
+            tiktok: d.social?.tiktok || '',
+            telegram: d.social?.telegram || '',
+            twitter: d.social?.twitter || '',
+            linkedin: d.social?.linkedin || '',
+            snapchat: d.social?.snapchat || '',
+            spotify: d.social?.spotify || '',
+          })
+          setActivated(d.activated === true)
         }
-        setForm(initialForm)
-        setLinks(Array.isArray(d?.links) ? d.links : [])
-        setSocial({
-          instagram: d?.social?.instagram || '',
-          whatsapp: d?.social?.whatsapp || '',
-          facebook: d?.social?.facebook || '',
-          youtube: d?.social?.youtube || '',
-          tiktok: d?.social?.tiktok || '',
-          telegram: d?.social?.telegram || '',
-          twitter: d?.social?.twitter || '',
-          linkedin: d?.social?.linkedin || '',
-          snapchat: d?.social?.snapchat || '',
-          spotify: d?.social?.spotify || '',
-        })
-        const isAct = d?.activated === true
-        setActivated(isAct)
-
-        // Save local cache with exact activation status
-        saveProfile(user.uid, { ...initialForm, activated: isAct }).catch(() => {})
+      } catch (err) {
+        console.error('[Dashboard] Error fetching profile:', err)
       } finally {
         if (alive) setLoading(false)
       }
