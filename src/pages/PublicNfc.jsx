@@ -201,7 +201,7 @@ export default function PublicNfc() {
       <div className="container nfc-wrap">
         {/* Brand */}
         <div className={`nfc-brand ${tapped ? 'show' : ''}`}>
-          <Link to="/" aria-label="home"><Logo markSize={28} /></Link>
+          <Link to="/" aria-label="home"><Logo markSize={32} light={false} /></Link>
         </div>
 
         <div className={`nfc-card nfc-glass ${tapped ? 'show' : ''}`}>
@@ -269,7 +269,7 @@ export default function PublicNfc() {
                       {getLinkIcon(l.url)}
                     </span>
                     <span className="nfc-link-label">{l.label || l.url}</span>
-                    <span className="nfc-link-arrow">→</span>
+                    <span className="nfc-link-arrow">{isAr ? '←' : '→'}</span>
                   </a>
                 ))}
               </div>
