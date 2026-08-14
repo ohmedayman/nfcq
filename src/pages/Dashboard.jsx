@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [loadingOrders, setLoadingOrders] = useState(false)
   const [leads, setLeads] = useState([])
   const [analytics, setAnalytics] = useState({ totalViews: 0, totalClicks: 0, clicksBreakdown: {} })
+  const [qrColor, setQrColor] = useState('0c1830')
 
   const fallbackName = user?.displayName || (user?.email || '').split('@')[0]
   const fallbackUsername = (user?.displayName || (user?.email || '').split('@')[0]).toLowerCase().replace(/[^a-z0-9_]/g, '')
@@ -191,6 +192,51 @@ export default function Dashboard() {
       arr.splice(target, 0, item)
       return arr
     })
+  }
+
+  function downloadVCard() {
+    const vcard = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `FN:${form.name || 'Lamsa User'}`,
+      `TITLE:${form.role || ''}`,
+      `NOTE:${form.bio || ''}`,
+      form.phone ? `TEL;TYPE=CELL:${form.phone}` : '',
+      form.email || user?.email ? `EMAIL:${form.email || user?.email}` : '',
+      `URL:${shortUrl}`,
+      'END:VCARD'
+    ].filter(Boolean).join('\n')
+
+    const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${(form.name || 'contact').replace(/\s+/g, '_')}.vcf`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toast(isAr ? 'تم تحميل ملف جهة الاتصال (vCard) بنجاح ✓' : 'vCard downloaded! ✓')
+  }
+
+  function downloadQR(format = 'png') {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(shortUrl)}&format=${format}&color=${qrColor}`
+    fetch(qrUrl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `lamsa_qr_${form.username || 'code'}.${format}`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        toast(isAr ? `تم تحميل كود الـ QR (${format.toUpperCase()}) بنجاح ✓` : `QR Code (${format.toUpperCase()}) downloaded! ✓`)
+      })
+      .catch(() => {
+        window.open(qrUrl, '_blank')
+      })
   }
 
   async function loadOrders() {
@@ -505,8 +551,8 @@ export default function Dashboard() {
             {tab === 'nfc' && (
               <div className="dash-card">
                 <div className="dash-card-header">
-                  <h3>{isAr ? 'صفحة البطاقة بتاعتك' : 'NFC Card page'}</h3>
-                  <p>{isAr ? 'الرابط اللي البطاقة بتوجّه إليه لما حد يلمسها.' : 'The link your card points to when tapped.'}</p>
+                  <h3>{isAr ? 'استوديو المشاركة وكود الـ QR الذكي 📇⚡️' : 'Smart Sharing & Dynamic QR Studio 📇⚡️'}</h3>
+                  <p>{isAr ? 'حمّل كود الـ QR بدقة عالية، صدّر بطاقة الـ vCard، وشارك بروفايلك بلمسة واحدة.' : 'Download HD QR code, export vCard, and share your profile instantly.'}</p>
                 </div>
 
                 {!activated ? (
@@ -531,29 +577,119 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                <div className="nfc-link-box">
+                {/* Short Link Box */}
+                <div className="nfc-link-box" style={{ background: 'var(--surface, rgba(0,0,0,0.03))', borderRadius: 16, padding: '14px 18px' }}>
                   <div className="nfc-link-icon"><IconRefresh /></div>
                   <div className="nfc-link-info">
-                    <b>{isAr ? 'رابط البطاقة بتاعتك' : 'Your card link'}</b>
-                    <span className="nfc-link-url">{shortUrl}</span>
+                    <b style={{ fontSize: '0.85rem' }}>{isAr ? 'رابط بطاقتك الذكية الرسمي:' : 'Official Smart NFC Link:'}</b>
+                    <span className="nfc-link-url" style={{ fontWeight: 900, color: 'var(--cobalt)', fontSize: '0.95rem' }}>{shortUrl}</span>
                   </div>
-                  <button className="btn btn-primary" onClick={() => { navigator.clipboard.writeText(shortUrl); toast(isAr ? 'تم النسخ ✓' : 'Copied ✓') }}>
+                  <button className="btn btn-primary btn-sm" onClick={() => { navigator.clipboard.writeText(shortUrl); toast(isAr ? 'تم النسخ بنجاح ✓' : 'Copied successfully ✓') }}>
                     <IconCheck /> {isAr ? 'نسخ' : 'Copy'}
                   </button>
                 </div>
-                <div style={{ height: 18 }} />
-                <div className="nfc-qr-section">
-                  <div className="nfc-qr">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shortUrl)}&format=svg&color=0c1830`}
-                      alt="QR Code"
-                      style={{ borderRadius: 12, width: '100%', height: 'auto' }}
-                    />
+
+                {/* DYNAMIC QR STUDIO */}
+                <div style={{ marginTop: 24, padding: 22, background: 'var(--card)', border: '1.5px solid var(--line)', borderRadius: 20 }}>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '1.05rem', fontWeight: 900 }}>
+                    🎯 {isAr ? 'تخصيص وتحميل كود الـ QR للطباعة والمشاركة' : 'Dynamic QR Code Studio & Export'}
+                  </h4>
+
+                  {/* QR Color Palette Picker */}
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--muted)', display: 'block', marginBottom: 8 }}>
+                      🎨 {isAr ? 'اختر لون كود الـ QR:' : 'Select QR Color:'}
+                    </label>
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      {[
+                        { id: '0c1830', name: isAr ? 'كحلي ليلي' : 'Midnight Navy', hex: '#0c1830' },
+                        { id: '1854e8', name: isAr ? 'أزرق ملكي' : 'Royal Cobalt', hex: '#1854e8' },
+                        { id: 'd97706', name: isAr ? 'ذهبي فاخر' : 'Luxury Gold', hex: '#d97706' },
+                        { id: '10b981', name: isAr ? 'زمردي ذكي' : 'Emerald Green', hex: '#10b981' },
+                        { id: '9333ea', name: isAr ? 'سايبر نيون' : 'Cyber Purple', hex: '#9333ea' },
+                      ].map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setQrColor(c.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '6px 12px',
+                            borderRadius: 10,
+                            border: qrColor === c.id ? `2px solid ${c.hex}` : '1px solid var(--line)',
+                            background: qrColor === c.id ? 'rgba(0,0,0,0.06)' : 'var(--card)',
+                            cursor: 'pointer',
+                            fontSize: '0.78rem',
+                            fontWeight: 800,
+                          }}
+                        >
+                          <span style={{ width: 12, height: 12, borderRadius: 99, background: c.hex }} />
+                          <span>{c.name}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="nfc-qr-info">
-                    <h4>{isAr ? 'كود الـ QR' : 'QR Code'}</h4>
-                    <p>{isAr ? 'امسح الكود بكاميرا الموبايل بتاعك عشان تفتح صفحتك.' : 'Scan with your phone camera to open your page.'}</p>
-                    <a className="btn btn-ghost btn-sm" href={directPath} target="_blank" rel="noreferrer"><IconRefresh /> {isAr ? 'افتح الصفحة' : 'Open page'}</a>
+
+                  <div className="nfc-qr-section" style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div className="nfc-qr" style={{ background: '#ffffff', padding: 12, borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', border: '1px solid var(--line)' }}>
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(shortUrl)}&format=svg&color=${qrColor}`}
+                        alt="QR Code"
+                        style={{ width: 150, height: 150, display: 'block' }}
+                      />
+                    </div>
+
+                    <div className="nfc-qr-info" style={{ flex: 1, minWidth: 220 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <button className="btn btn-primary btn-sm" onClick={() => downloadQR('png')}>
+                          📥 {isAr ? 'تحميل QR صورة عالية الدقة (PNG)' : 'Download HD QR (PNG)'}
+                        </button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => downloadQR('svg')}>
+                          📄 {isAr ? 'تحميل كود للطباعة والمطبوعات (SVG)' : 'Download Vector Print (SVG)'}
+                        </button>
+                        <button className="btn btn-ghost btn-sm" onClick={downloadVCard} style={{ color: '#16a34a', borderColor: '#16a34a' }}>
+                          📇 {isAr ? 'تحميل بطاقة جهة الاتصال (vCard 3.0)' : 'Download vCard (.vcf)'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instant Share Bar */}
+                <div style={{ marginTop: 20, padding: 18, background: 'rgba(24, 84, 232, 0.05)', border: '1px solid rgba(24, 84, 232, 0.15)', borderRadius: 16 }}>
+                  <b style={{ display: 'block', marginBottom: 10, fontSize: '0.9rem' }}>
+                    🚀 {isAr ? 'مشاركة بطاقتك مباشرة على منصات التواصل:' : 'Direct Profile Share:'}
+                  </b>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(`تفضل بزيارة بطاقتي الذكية على منصة لمسة NFC: ${shortUrl}`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: '#16a34a', fontWeight: 800 }}
+                    >
+                      💬 واتساب
+                    </a>
+                    <a
+                      href={`https://t.me/share/url?url=${encodeURIComponent(shortUrl)}&text=${encodeURIComponent('بطاقتي الذكية على لمسة NFC')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: '#0284c7', fontWeight: 800 }}
+                    >
+                      ✈️ تيليجرام
+                    </a>
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shortUrl)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: '#0a66c2', fontWeight: 800 }}
+                    >
+                      💼 لينكد إن
+                    </a>
                   </div>
                 </div>
               </div>

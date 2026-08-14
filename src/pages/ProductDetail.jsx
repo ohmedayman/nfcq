@@ -8,6 +8,7 @@ import { toast } from '../components/Toast'
 import { NfcIcon, IconShield, IconRefresh, IconCheck, IconPlus, IconMinus, IconVerified } from '../components/icons'
 import StandardCard from '../components/StandardCard'
 import PremiumCard from '../components/PremiumCard'
+import LiveCard3D from '../components/LiveCard3D'
 
 function getCart() {
   try { return JSON.parse(localStorage.getItem('lamsa_cart') || '{}') } catch { return {} }
@@ -38,6 +39,8 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false)
   const [customType, setCustomType] = useState('none') // 'none' | 'print' | 'laser'
   const [customName, setCustomName] = useState('')
+  const [fontStyle, setFontStyle] = useState('modern')
+  const [logoUrl, setLogoUrl] = useState(null)
   const [tapActive, setTapActive] = useState(false)
 
   useEffect(() => { window.scrollTo(0, 0) }, [id])
@@ -127,11 +130,18 @@ export default function ProductDetail() {
           <Reveal>
             <div className="pd-gallery">
               {/* Main Image / 3D Showcase */}
-              <div className={`pd-main-img ${tapActive ? 'tap-pulse' : ''}`} style={{ background: product.color }}>
-                {product.id === 'classic' && activeImg === 0 ? (
-                  <StandardCard />
-                ) : product.id === 'premium' && activeImg === 0 ? (
-                  <PremiumCard />
+              <div className={`pd-main-img ${tapActive ? 'tap-pulse' : ''}`} style={{ background: product.color, minHeight: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {customType !== 'none' || activeImg === 0 ? (
+                  <LiveCard3D
+                    productName={ar ? product.nameAr : product.nameEn}
+                    material={product.id === 'premium' ? 'carbon' : product.id === 'executive' ? 'gold' : 'metal'}
+                    customType={customType}
+                    customName={customName}
+                    fontStyle={fontStyle}
+                    logoUrl={logoUrl}
+                    color={product.color}
+                    isAr={isAr}
+                  />
                 ) : (
                   <img src={`/img/${product.gallery[activeImg]}`} alt={product.nameEn} />
                 )}
@@ -282,15 +292,73 @@ export default function ProductDetail() {
                         placeholder={isAr ? 'مثال: د. محمد أيمن / Milano' : 'e.g. Dr. Mohamed / Milano'}
                         value={customName}
                         onChange={(e) => setCustomName(e.target.value)}
-                        style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--card)', fontWeight: 800 }}
+                        style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--card)', fontWeight: 800, marginBottom: 12 }}
                         autoFocus
                       />
-                      <small style={{ color: 'var(--muted)', marginTop: 6, display: 'block', fontSize: '0.78rem' }}>
-                        {customType === 'laser'
-                          ? (isAr ? '✓ سيتم حفر هذا الاسم بدقة ليزر متناهية على سطح البطاقة وبرمجته على الـ NFC' : 'High precision laser engraving on card face')
-                          : (isAr ? '✓ سيتم طباعة الاسم بألوان UV زاهية ومقاومة للماء والمسح' : 'Vibrant waterproof UV printing')
-                        }
-                      </small>
+
+                      {/* Font Style Switcher */}
+                      <label style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>
+                        🔤 {isAr ? 'نمط الخط للطباعة أو الحفر:' : 'Engraving / Print Font Style:'}
+                      </label>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 12 }}>
+                        {[
+                          { id: 'modern', label: isAr ? 'هندسي' : 'Modern' },
+                          { id: 'luxury', label: isAr ? 'ملكي' : 'Luxury' },
+                          { id: 'english', label: isAr ? 'إنجليزي' : 'English' },
+                          { id: 'tech', label: isAr ? 'تقني' : 'Tech' },
+                        ].map((f) => (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => setFontStyle(f.id)}
+                            style={{
+                              padding: '6px 4px',
+                              borderRadius: 8,
+                              border: fontStyle === f.id ? '1.5px solid var(--cobalt)' : '1px solid var(--line)',
+                              background: fontStyle === f.id ? 'rgba(24, 84, 232, 0.1)' : 'var(--card)',
+                              color: fontStyle === f.id ? 'var(--cobalt)' : 'var(--text)',
+                              fontSize: '0.75rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Logo Uploader */}
+                      <div style={{ background: 'rgba(0,0,0,0.03)', padding: '10px 12px', borderRadius: 12, border: '1px dashed var(--line)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text)' }}>
+                            🖼️ {isAr ? 'معاينة لوجو شركتك على الكارت (اختياري):' : 'Company Logo Preview (Optional):'}
+                          </span>
+                          {logoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setLogoUrl(null)}
+                              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 800 }}
+                            >
+                              ✕ {isAr ? 'إزالة' : 'Remove'}
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (!f) return
+                            const r = new FileReader()
+                            r.onload = (ev) => {
+                              setLogoUrl(ev.target.result)
+                              toast(isAr ? 'تم تطبيق الشعار على مجسم البطاقة 3D بنجاح ✓' : 'Logo preview applied to 3D card! ✓')
+                            }
+                            r.readAsDataURL(f)
+                          }}
+                          style={{ fontSize: '0.75rem', marginTop: 6 }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
